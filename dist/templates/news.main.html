@@ -1,0 +1,38 @@
+<div class="father-inline">
+    <div class="width-33-percentage inline" ng-repeat="vector in news.data">
+        <div class="Rectangle-2" ng-repeat="article in vector">
+            <div class="title father-inline">
+                <section class="width-50-percentage inline category">{{ article.category }}</section>
+                <section class="width-50-percentage inline date ">{{ article.dateFormat  }}</section>
+            </div>
+
+            <div class="title-article">
+                {{ article.title }}
+            </div>
+                        
+            <img ng-if="article.urlImage" src="http://lorempixel.com/business/294/162/" alt="{{ article.title }}" class="main-image">
+
+            <div class="article-content">
+                {{ article.content }}
+            </div>
+
+            <hr class="divider">
+
+            <footer class="father-inline">
+            
+                <div class="width-33-percentage inline text-left">
+                    <i class="fa fa-briefcase"></i>
+                </div>
+
+                <div class="width-33-percentage inline text-center">
+                    <i class="fa fa-thumbs-up"></i>
+                    <span class="count-likes">132</span>
+                </div>
+
+                <div class="width-33-percentage inline text-right">
+                    <i class="fa fa-share"></i>
+                </div>
+            </footer>
+        </div>
+    </div>
+</div>

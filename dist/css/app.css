@@ -1,0 +1,204 @@
+html, body, #wrapper{
+    height:100%;
+}
+
+body, #page-wrapper{
+    background-color: #f9f9f9;
+}
+
+body{
+    /*height: calc(100% - 50px) !important;*/
+}
+
+.navbar-inverse{
+    background-color: #FFF !important;
+    box-shadow: 0 3px 3px rgba(0,0,0,0.2);
+    border-bottom: rgb(102, 102, 102);
+}
+
+.navbar-inverse .navbar-brand{
+    color: #ad1c1c !important;
+}
+
+.top-nav>li>a{
+    color: #444444 !important;
+}
+
+
+.top-nav>li>a:hover, .top-nav>li>a:focus, .top-nav>.open>a, .top-nav>.open>a:hover, .top-nav>.open>a:focus {
+    color: #fff !important;
+    background-color: #ad1c1c;
+}
+
+@media(min-width:768px) {
+    .side-nav {
+        background-color: #FFF !important;
+    }
+
+
+    .side-nav li a:hover,
+    .side-nav li a:focus,
+    .active-tab{
+        background-color: #ad1c1c !important;
+    }
+}
+
+
+.side-nav>li>ul>li>a {
+    display: block;
+    padding: 10px 15px 10px 38px;
+    text-decoration: none;
+    color: #999;
+}
+
+.side-nav>li>ul>li>a:hover {
+    color: #fff;
+}
+
+.active-tab>a {
+    color: #FFF !important;
+}
+
+.navbar-toggle .icon-bar{
+    background-color: #ad1c1c !important;
+}
+
+.navbar-toggle:focus .icon-bar, .navbar-toggle:hover .icon-bar{
+    background-color: #FFF !important;
+}
+
+.navbar-inverse .navbar-toggle {
+    border-color: transparent !important;
+}
+
+.navbar-inverse .navbar-toggle:focus, .navbar-inverse .navbar-toggle:hover{
+    background-color: #ad1c1c !important;
+}
+
+@media (max-width: 767px) {
+    .hidden-bar {
+        display: none !important;
+    }
+}
+
+/*#wrapper{
+    min-height: calc(100% - 150px) !important;
+    margin: 0 auto -50px;
+}
+
+.footer-wrapper {
+    position: relative;
+    height: 50px;
+    z-index: 10000;
+}*/
+
+.centered{
+    display: flex;
+    vertical-align: middle;
+    justify-content: center;
+}
+
+.plan-container{
+    background: #FFF;
+    border-right: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    padding: 25px;
+}
+
+.table{
+    border-bottom: 1px solid #ddd;
+}
+
+.menu-right {
+    border-right: 1px solid #ddd;
+}
+
+.login-form{
+    margin-top: -50px;
+    display: block;
+    top: 65px;
+    max-width: 320px;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 35px;
+    background-color: #fff;
+    box-shadow: 0 0 5px rgba(0,0,0,.1), 0 3px 0 rgba(0,0,0,.1);
+    border-radius: 4px;
+    color: #333;
+    font-weight: bold;
+    font-size: 1.125em;
+    position: relative;
+}
+
+.login-form input {
+    padding: 10px 15px;
+    border: 1px solid transparent;
+    background-color: #f0f0f0;
+    outline: 0;
+    transition: background .15s ease-in, border .25s ease-in;
+    border-radius: 5px;
+    font-size: 1em;
+    margin: 5% 0;
+    box-sizing: border-box;
+}
+
+.login-form a{
+    color: #fff;
+    text-decoration: none;
+}
+
+.login-form button {
+    margin: 20px 0 0;
+    padding: 10px 5px;
+    outline: 0;
+    border: none;
+    background-color: #ad1c1c;
+    transition: background .2s ease-in;
+    font-size: 1.1em;
+    color: #fff;
+    border-radius: 5px;
+}
+
+.login-form input[type=text], .login-form input[type=password], .login-form label, .login-form button {
+    display: block;
+    width: 100%;
+}
+
+
+/* MARGENES */
+.m-0{
+    margin: 0 !important;
+}
+
+.m-b-0{
+    margin-bottom: 0 !important;
+}
+.m-t-0{
+    margin-top: 0 !important;
+}
+.m-r-0{
+    margin-right: 0 !important;
+}
+.m-l-0{
+    margin-left: 0 !important;
+}
+
+.m-10{
+    margin: 10px !important;
+}
+
+.m-b-10{
+    margin-bottom: 10px !important;
+}
+.m-t-10{
+    margin-top: 10px !important;
+}
+.m-r-10{
+    margin-right: 10px !important;
+}
+.m-l-10{
+    margin-left: 10px !important;
+}
