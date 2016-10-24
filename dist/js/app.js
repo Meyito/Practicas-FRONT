@@ -9,7 +9,8 @@
         'ui.bootstrap',
         'vAccordion',
         'ngAnimate',
-        'ngFileUpload'
+        'ngFileUpload',
+        'inform'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
@@ -39,15 +40,31 @@
         });
 
         stateHelperProvider.state({
-            name: 'plan-desarrollo',
+            name: 'development-plan',
             url: '/plan-desarrollo',
             views: {
                 '': {
-                    templateUrl: "templates/template.html"
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
                 },
-                'content@plan-desarrollo': {
+                'content@development-plan': {
                     templateUrl: "templates/plan.detail.html",
                     controller: "PlanDetailCtrl as planCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'secretaries',
+            url: '/secretarias',
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@secretaries': {
+                    templateUrl: "templates/secretaries.list.html",
+                    controller: "SecretariesCtrl as secretariesCtrl"
                 }
             }
         });
@@ -57,6 +74,64 @@
 
     });
 })();
+(function (module) {
+    "use strict";
+
+    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
+
+    module.constant("APP_DEFAULTS", {
+        ENDPOINT: ROOT_PATH + "api/v1",
+        ROOT_PATH: ROOT_PATH
+    });
+
+})(angular.module('app'));
+(function (module) {
+    'use strict';
+
+    module.controller("ModalController", ModalController);
+
+    ModalController.$inject = [
+        "$scope",
+        "$uibModalInstance",
+        "data"
+    ];
+
+    function ModalController($scope, $uibModalInstance, data) {
+
+        var self = this;
+
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
+
+        self.ok = function () {
+            $uibModalInstance.close($scope.data);
+        };
+
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
+
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        /* Date Pickers */
+        $scope.formats = ['yyyy'];
+        $scope.yearOnly = $scope.formats[0];
+        $scope.status = [false, false];
+
+        $scope.open = function ($event, i) {
+            $scope.status[i] = true;
+        };
+
+        $scope.yearOptions = {
+            formatYear: 'yyyy',
+            startingDay: 1,
+            minMode: 'year'
+        };
+    }
+})(angular.module("app"));
+
 (function (module) {
     'use strict';
 
@@ -161,16 +236,74 @@
 (function (module) {
     'use strict';
 
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function NavigationCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function () {
+            $scope.active = $state.current.name;
+            console.log($state.current.name);
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("LoginCtrl", LoginCtrl);
+
+    LoginCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function LoginCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.data;
+
+        self.login = function(){
+            $state.go("development-plan");
+        }
+
+        self.init = function () {
+
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
     module.controller("PlanDetailCtrl", PlanDetailCtrl);
 
     PlanDetailCtrl.$inject = [
         "$scope",
         "$window",
         "APP_DEFAULTS",
-        "$uibModal"
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService"
     ];
 
-    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal) {
+    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
 
         var self = this;
 
@@ -254,13 +387,27 @@
                 controller : 'ModalController',
                 controllerAs: 'modalCtrl',
                 resolve:{
-                    data: {name: "Meli"}
+                    data: {}
                 }
-
             });
 
             modalInstance.result.then(function(data) {
-                console.log(data.name);
+                var d = {
+                    name: "",
+                    slogan: data.slogan,
+                    init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
+                    end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
+                }
+
+                PlanService.uploadPlan(data.file, d).then(
+                    function(response){
+                        inform.add("Se ha cargado el plan de desarrollo correctamente", {type: "info"});
+                        //Refrescar todos los planes de desarrollo
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar el plan de desarrollo", {type: "warning"});
+                        //Descargar reporte de errores 
+                    }
+                );
             });
         }
         
@@ -269,7 +416,6 @@
         }
 
         self.init = function () {
-
         }
 
         self.init();
@@ -278,68 +424,117 @@
     }
 })(angular.module("app"));
 
+
 (function (module) {
-    "use strict";
+    module.service("PlanService", PlanService);
 
-    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
-
-    module.constant("APP_DEFAULTS", {
-        ENDPOINT: ROOT_PATH + "api/v1",
-        ROOT_PATH: ROOT_PATH
-    });
-
-})(angular.module('app'));
-(function (module) {
-    'use strict';
-
-    module.controller("ModalController", ModalController);
-
-    ModalController.$inject = [
-        "$scope",
-        "$uibModalInstance",
-        "data"
+    PlanService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
     ];
 
-    function ModalController($scope, $uibModalInstance, data) {
-
+    function PlanService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
+        self.uploadPlan = function(file, data){
+            /*return Upload.upload({
+                data: {file: file, data: data},
+                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
+            });*/
 
-        self.ok = function () {
-            $uibModalInstance.close($scope.data);
-        };
-
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
-
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-
-        self.hello = function(){
-            console.log("hello");
+            return $http({
+                method: 'GET',
+                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
+            });
         }
     }
 })(angular.module("app"));
-
 (function (module) {
     'use strict';
 
-    module.controller("LoginCtrl", LoginCtrl);
+    module.controller("SecretariesCtrl", SecretariesCtrl);
 
-    LoginCtrl.$inject = [
-        "$scope"
+    SecretariesCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService"
     ];
 
-    function LoginCtrl($scope) {
+    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
 
+        var self = this;
 
-        self.init = function () {
+        $scope.secretaries = [
+            {
+                name: "Secretaría de Atención Integral a Victimas"
+            },
+            {
+                name: "Secretaría de Planeación y Desarrollo Territorial"
+            },
+            {
+                name: "Secretaría de Tecnologías de la Información y Comunicaciones "
+            },
+            {
+                name: "Secretaría General"
+            },
+            {
+                name: "Secretaría Privada "
+            },
+            {
+                name: "Secretaría de Agua Potable y Saneamiento Básico"
+            },
+            {
+                name: "Secretaría de Cultura"
+            },
+            {
+                name: "Secretaría de Desarollo Económico"
+            },
+            {
+                name: "Secretaría de Desarrollo Social"
+            },
+            {
+                name: "Secretaría de Educación"
+            },
+            {
+                name: "Secretaría de Fronteras y Cooperación Internacional"
+            },
+            {
+                name: "Secretaría de Gobierno"
+            },
+            {
+                name: "Secretaría de Hacienda"
+            },
+            {
+                name: "Secretaría de Infraestructura"
+            },
+            {
+                name: "Secretaría de la Mujer"
+            },
+            {
+                name: "Secretaría de Minas y Energía"
+            },
+            {
+                name: "Secretaría de Tránsito"
+            },
+            {
+                name: "Secretaría de Vivienda y Medio Ambiente"
+            },
+            {
+                name: "Secretaría Jurídica"
+            }
+        ];
 
+        self.add = function(){
+
+        }
+
+        self.init = function() {
         }
 
         self.init();

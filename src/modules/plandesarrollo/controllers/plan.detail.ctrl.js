@@ -7,10 +7,13 @@
         "$scope",
         "$window",
         "APP_DEFAULTS",
-        "$uibModal"
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService"
     ];
 
-    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal) {
+    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
 
         var self = this;
 
@@ -94,13 +97,27 @@
                 controller : 'ModalController',
                 controllerAs: 'modalCtrl',
                 resolve:{
-                    data: {name: "Meli"}
+                    data: {}
                 }
-
             });
 
             modalInstance.result.then(function(data) {
-                console.log(data.name);
+                var d = {
+                    name: "",
+                    slogan: data.slogan,
+                    init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
+                    end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
+                }
+
+                PlanService.uploadPlan(data.file, d).then(
+                    function(response){
+                        inform.add("Se ha cargado el plan de desarrollo correctamente", {type: "info"});
+                        //Refrescar todos los planes de desarrollo
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar el plan de desarrollo", {type: "warning"});
+                        //Descargar reporte de errores 
+                    }
+                );
             });
         }
         
@@ -109,7 +126,6 @@
         }
 
         self.init = function () {
-
         }
 
         self.init();

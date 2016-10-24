@@ -28,9 +28,19 @@
             $uibModalInstance.dismiss('cancel');
         };
 
+        /* Date Pickers */
+        $scope.formats = ['yyyy'];
+        $scope.yearOnly = $scope.formats[0];
+        $scope.status = [false, false];
 
-        self.hello = function(){
-            console.log("hello");
-        }
+        $scope.open = function ($event, i) {
+            $scope.status[i] = true;
+        };
+
+        $scope.yearOptions = {
+            formatYear: 'yyyy',
+            startingDay: 1,
+            minMode: 'year'
+        };
     }
 })(angular.module("app"));

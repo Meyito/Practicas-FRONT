@@ -202,3 +202,39 @@ body{
 .m-l-10{
     margin-left: 10px !important;
 }
+
+.m-20{
+    margin: 20px !important;
+}
+
+.m-b-20{
+    margin-bottom: 20px !important;
+}
+.m-t-20{
+    margin-top: 20px !important;
+}
+.m-r-20{
+    margin-right: 20px !important;
+}
+.m-l-20{
+    margin-left: 20px !important;
+}
+.button-md{
+    width: 147px;
+}
+
+.button-sm{
+    width: 82px;
+}
+
+.inform-front{
+    z-index: 99999;
+}
+
+.edit{
+    color: #5cb85c;
+}
+
+.heading-secretaries{
+    height: 81px !important;
+}

@@ -24,14 +24,14 @@
 
         <div class="collapse navbar-collapse navbar-ex1-collapse">
             <ul class="nav navbar-nav side-nav menu-right">
-                <li class="active-tab">
-                    <a href="index.html"><i class="fa fa-fw fa-file-text-o"></i> Plan de Desarrollo</a>
+                <li ng-class="active == 'development-plan' ? 'active-tab' : '' ">
+                    <a ui-sref="development-plan"><i class="fa fa-fw fa-file-text-o"></i> Plan de Desarrollo</a>
                 </li>
                 <li>
                     <a href="charts.html"><i class="fa fa-fw fa-map-o"></i> Entes Territoriales</a>
                 </li>
-                <li>
-                    <a href="tables.html"><i class="fa fa-fw fa-bank"></i> Secretarias</a>
+                <li ng-class="active == 'secretaries' ? 'active-tab' : '' ">
+                    <a ui-sref="secretaries"><i class="fa fa-fw fa-bank"></i> Secretarias</a>
                 </li>
                 <li>
                     <a href="forms.html"><i class="fa fa-fw fa-cubes"></i> Proyectos</a>

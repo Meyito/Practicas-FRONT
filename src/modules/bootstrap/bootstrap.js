@@ -9,7 +9,8 @@
         'ui.bootstrap',
         'vAccordion',
         'ngAnimate',
-        'ngFileUpload'
+        'ngFileUpload',
+        'inform'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
@@ -39,15 +40,31 @@
         });
 
         stateHelperProvider.state({
-            name: 'plan-desarrollo',
+            name: 'development-plan',
             url: '/plan-desarrollo',
             views: {
                 '': {
-                    templateUrl: "templates/template.html"
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
                 },
-                'content@plan-desarrollo': {
+                'content@development-plan': {
                     templateUrl: "templates/plan.detail.html",
                     controller: "PlanDetailCtrl as planCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'secretaries',
+            url: '/secretarias',
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@secretaries': {
+                    templateUrl: "templates/secretaries.list.html",
+                    controller: "SecretariesCtrl as secretariesCtrl"
                 }
             }
         });
