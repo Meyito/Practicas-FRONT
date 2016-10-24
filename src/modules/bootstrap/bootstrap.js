@@ -69,6 +69,21 @@
             }
         });
 
+        stateHelperProvider.state({
+            name: 'projects',
+            url: '/proyectos',
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@projects': {
+                    templateUrl: "templates/projects.list.html",
+                    controller: "ProjectsCtrl as projectsCtrl"
+                }
+            }
+        });
+
 
     }).run(function ($rootScope) {
 

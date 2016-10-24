@@ -69,6 +69,21 @@
             }
         });
 
+        stateHelperProvider.state({
+            name: 'projects',
+            url: '/proyectos',
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@projects': {
+                    templateUrl: "templates/projects.list.html",
+                    controller: "ProjectsCtrl as projectsCtrl"
+                }
+            }
+        });
+
 
     }).run(function ($rootScope) {
 
@@ -307,6 +322,8 @@
 
         var self = this;
 
+        $scope.active = true;
+
         $scope.plan = {
             slogan: "Un norte productivo para todos",
             init_year: 2016,
@@ -451,6 +468,38 @@
         }
     }
 })(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("ProjectsCtrl", ProjectsCtrl);
+
+    ProjectsCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService"
+    ];
+
+    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+
+        var self = this;
+
+        self.add = function(){
+
+        }
+
+        self.init = function() {
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
 (function (module) {
     'use strict';
 

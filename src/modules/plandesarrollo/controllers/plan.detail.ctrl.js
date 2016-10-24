@@ -17,6 +17,8 @@
 
         var self = this;
 
+        $scope.active = true;
+
         $scope.plan = {
             slogan: "Un norte productivo para todos",
             init_year: 2016,
