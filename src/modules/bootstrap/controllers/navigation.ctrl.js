@@ -14,9 +14,12 @@
 
         $scope.active = "";
 
-        self.init = function () {
+        self.init = function() {
             $scope.active = $state.current.name;
-            console.log($state.current.name);
+        }
+
+        self.logOut = function(){
+            $state.go("login");
         }
 
         self.init();

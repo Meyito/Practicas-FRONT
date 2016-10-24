@@ -209,6 +209,10 @@ body{
     margin-left: 10px !important;
 }
 
+.m-t-27{
+    margin-top: 27px;
+}
+
 .m-20{
     margin: 20px !important;
 }
@@ -225,6 +229,44 @@ body{
 .m-l-20{
     margin-left: 20px !important;
 }
+
+/* PADDING */
+.p-15{
+    padding: 15px !important;
+} 
+
+.p-t-15{
+    padding-top: 15px !important;
+} 
+
+.p-b-15{
+    padding-bottom: 15px !important;
+} 
+.p-r-15{
+    padding-right: 15px !important;
+} 
+.p-l-15{
+    padding-left: 15px !important;
+} 
+
+.p-25{
+    padding: 25px !important;
+} 
+
+.p-t-25{
+    padding-top: 25px !important;
+} 
+
+.p-b-25{
+    padding-bottom: 25px !important;
+} 
+.p-r-25{
+    padding-right: 25px !important;
+} 
+.p-l-25{
+    padding-left: 25px !important;
+} 
+
 .button-md{
     width: 147px;
 }
@@ -243,4 +285,8 @@ body{
 
 .heading-secretaries{
     height: 81px !important;
+}
+
+.chevron-filter{
+    height: 59px;
 }

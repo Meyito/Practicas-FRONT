@@ -10,7 +10,9 @@
         'vAccordion',
         'ngAnimate',
         'ngFileUpload',
-        'inform'
+        'inform',
+        'daterangepicker',
+        'chart.js'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
@@ -80,6 +82,66 @@
                 'content@projects': {
                     templateUrl: "templates/projects.list.html",
                     controller: "ProjectsCtrl as projectsCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'statistics',
+            url: '/estadisticas',
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@statistics': {
+                    templateUrl: "templates/statistics.list.html",
+                    controller: "StatisticsCtrl as statisticsCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'users',
+            url: '/usuarios',
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@users': {
+                    templateUrl: "templates/empty.html",
+                    //controller: "StatisticsCtrl as statisticsCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'contracts',
+            url: '/contratistas',
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@contracts': {
+                    templateUrl: "templates/empty.html",
+                    //controller: "StatisticsCtrl as statisticsCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'territorial-entities',
+            url: '/entes-territoriales',
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@territorial-entities': {
+                    templateUrl: "templates/empty.html",
+                    //controller: "StatisticsCtrl as statisticsCtrl"
                 }
             }
         });
