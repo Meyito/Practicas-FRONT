@@ -676,6 +676,7 @@
 
         var self = this;
 
+    
         $scope.expanded = false;
 
         $scope.secretaries = [
@@ -768,6 +769,10 @@
 
         $scope.datePicker.date = { startDate: null, endDate: null };
 
+        self.updateGraph = function(){
+            
+        }
+
         self.add = function () {
 
         }
@@ -780,6 +785,8 @@
         //EXAMPLE CHART
         $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
         $scope.data = [300, 500, 100];
+
+        
 
     }
 })(angular.module("app"));

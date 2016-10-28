@@ -28,7 +28,7 @@
 						<i class="fa m-t-27" ng-class="expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
 					</div>
 				</div>
-				<div class="row" ng-show="expanded">s
+				<div class="row" ng-show="expanded">
 					<div class="form-group col-lg-6">
 						<label>Dimensión</label>
 						<select class="form-control">
@@ -59,7 +59,12 @@
                         <option ng-repeat="secretary in secretaries">{{ secretary.name }}</option>
                     </select>
 					</div>
-
+					<div class="form-group col-lg-6">
+						<label>Municipio</label>
+						<select class="form-control">
+                        <option ng-repeat="program in programs">{{ program.name }}</option>
+                    </select>
+					</div>
 				</div>
 			</div>
 
@@ -68,7 +73,7 @@
 	<!-- /.row -->
 
 	<div class="row">
-		<div class="col-lg-8">
+		<div class="col-lg-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-bar-chart-o fa-fw"></i> Resultados </h3>
@@ -79,27 +84,302 @@
 				</div>
 			</div>
 		</div>
-		<div class="col-lg-4">
+		<!--div class="col-lg-4">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-clock-o fa-fw"></i> Caracterización</h3>
 				</div>
 				<div class="panel-body">
 					<div class="list-group">
-						<a href="#" class="list-group-item">
-							<span class="badge">4 minutes ago</span>
-							<i class="fa fa-fw fa-comment"></i> Commented on a post
-						</a>
-						<a href="#" class="list-group-item">
-							<span class="badge">23 minutes ago</span>
-							<i class="fa fa-fw fa-truck"></i> Order 392 shipped
-						</a>
+						<div class="list-group-item">
+							<div ng-click="statisticsCtrl.displayOptions(5)">
+								<i class="fa fa-fw fa-wheelchair"></i> Discapacidad Motriz
+							</div>
+						</div>
+					</div>
+
+					<div class="row centered m-10">
+						<button type="button" class="btn btn-success button-md" ng-click="statisticsCtrl.updateGraph()">Actualizar</button>
+					</div>
+				</div>
+			</div>
+		</div-->
+	</div>
+	<!-- /.row -->
+
+	<div class="row">
+		<div class="col-lg-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-birthday-cake fa-fw"></i> Edad </h3>
+				</div>
+				<div class="panel-body">
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="parentScrollable"> Niño
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="parentRelative"> Adolescente
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="parentRelative1"> Adulto
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="parentRelative2"> Adulto Mayor
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-venus-mars fa-fw"></i> Género </h3>
+				</div>
+				<div class="panel-body">
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="f"> Femenino
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="m"> Masculino
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="lgtbi"> LGBTI
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-street-view fa-fw"></i> Condición Especial </h3>
+				</div>
+				<div class="panel-body">
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="i"> I
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="r"> R
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="o"> O
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-users fa-fw"></i> Grupo Étnico </h3>
+				</div>
+				<div class="panel-body">
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="ii"> Indigena
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="aa"> Afrodescendiente
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="rr"> Raizal 
+						</label>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	<!-- /.row -->
+
+	<div class="row">
+		<div class="col-lg-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-exclamation-triangle fa-fw"></i> Tipo Victima </h3>
+				</div>
+				<div class="panel-body">
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="1000"> ?
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-volume-down fa-fw"></i> Discapacidad Auditiva </h3>
+				</div>
+				<div class="panel-body">
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="100"> 0
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="101"> 1
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="102"> 2 
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-eye-slash fa-fw"></i> Discapacidad Visual </h3>
+				</div>
+				<div class="panel-body">
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="000"> 0
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="001"> 1
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="002"> 2 
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-puzzle-piece fa-fw"></i> Discapacidad Mental </h3>
+				</div>
+				<div class="panel-body">
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="0"> 0
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="1"> 1
+						</label>
+					</div>
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" ng-model="2"> 2 
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-lg-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-wheelchair fa-fw"></i> Discapacidad Motriz </h3>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="00"> 00
+								</label>
+							</div>
+						</div>
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="01"> 01
+								</label>
+							</div>
+						</div>
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="02"> 02
+								</label>
+							</div>
+						</div>
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="10"> 10
+								</label>
+							</div>
+						</div>
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="11"> 11
+								</label>
+							</div>
+						</div>
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="12"> 12
+								</label>
+							</div>
+						</div>
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="20"> 20
+								</label>
+							</div>
+						</div>
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="21"> 21
+								</label>
+							</div>
+						</div>
+						<div class="col-lg-3">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" ng-model="22"> 22
+								</label>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row centered m-10">
+		<button type="button" class="btn btn-success button-md" ng-click="statisticsCtrl.updateGraph()">Actualizar</button>
+	</div>
 
 	<!-- /.row -->
 </div>
