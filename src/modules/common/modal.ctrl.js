@@ -16,7 +16,7 @@
         $scope.data = angular.copy(data);
         $scope.new_data = {};
 
-        self.ok = function () {
+        self.update = function () {
             $uibModalInstance.close($scope.data);
         };
 

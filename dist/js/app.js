@@ -1,3 +1,61 @@
+(function (module) {
+    "use strict";
+
+    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
+
+    module.constant("APP_DEFAULTS", {
+        ENDPOINT: ROOT_PATH + "api/v1",
+        ROOT_PATH: ROOT_PATH
+    });
+
+})(angular.module('app'));
+(function (module) {
+    'use strict';
+
+    module.controller("ModalController", ModalController);
+
+    ModalController.$inject = [
+        "$scope",
+        "$uibModalInstance",
+        "data"
+    ];
+
+    function ModalController($scope, $uibModalInstance, data) {
+
+        var self = this;
+
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
+
+        self.update = function () {
+            $uibModalInstance.close($scope.data);
+        };
+
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
+
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        /* Date Pickers */
+        $scope.formats = ['yyyy'];
+        $scope.yearOnly = $scope.formats[0];
+        $scope.status = [false, false];
+
+        $scope.open = function ($event, i) {
+            $scope.status[i] = true;
+        };
+
+        $scope.yearOptions = {
+            formatYear: 'yyyy',
+            startingDay: 1,
+            minMode: 'year'
+        };
+    }
+})(angular.module("app"));
+
 (function () {
     'use strict';
 
@@ -151,62 +209,21 @@
 
     });
 })();
-(function (module) {
-    "use strict";
+(function(module){
+  module.service("AnalyticsService", AnalyticsService);
 
-    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
+  AnalyticsService.$inject = [
+      "$http"
+  ];
 
-    module.constant("APP_DEFAULTS", {
-        ENDPOINT: ROOT_PATH + "api/v1",
-        ROOT_PATH: ROOT_PATH
-    });
+  function AnalyticsService($http){
+    var self = this;
 
-})(angular.module('app'));
-(function (module) {
-    'use strict';
-
-    module.controller("ModalController", ModalController);
-
-    ModalController.$inject = [
-        "$scope",
-        "$uibModalInstance",
-        "data"
-    ];
-
-    function ModalController($scope, $uibModalInstance, data) {
-
-        var self = this;
-
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
-
-        self.ok = function () {
-            $uibModalInstance.close($scope.data);
-        };
-
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
-
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-        /* Date Pickers */
-        $scope.formats = ['yyyy'];
-        $scope.yearOnly = $scope.formats[0];
-        $scope.status = [false, false];
-
-        $scope.open = function ($event, i) {
-            $scope.status[i] = true;
-        };
-
-        $scope.yearOptions = {
-            formatYear: 'yyyy',
-            startingDay: 1,
-            minMode: 'year'
-        };
+    self.getData = function () {
+        return $http.get("/data/activity-data.json");
     }
+    
+  }
 })(angular.module("app"));
 
 (function (module) {
@@ -291,23 +308,6 @@
 
 
     }
-})(angular.module("app"));
-
-(function(module){
-  module.service("AnalyticsService", AnalyticsService);
-
-  AnalyticsService.$inject = [
-      "$http"
-  ];
-
-  function AnalyticsService($http){
-    var self = this;
-
-    self.getData = function () {
-        return $http.get("/data/activity-data.json");
-    }
-    
-  }
 })(angular.module("app"));
 
 (function (module) {
@@ -542,21 +542,93 @@
         "$scope",
         "$window",
         "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
+        "$uibModal",
+        "$filter",
         "inform",
-        "PlanService"
+        "ProjectsService"
     ];
 
-    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ProjectsService) {
 
         var self = this;
 
-        self.add = function(){
+        self.edit = function(proyect, status){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/updateProject.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        project: {
+                            name: proyect,
+                            description: "Descripción del proyecto",
+                            id: 1,
+                            status: status,
+                            seppi: 123123,
+                            subprogram: {
+                                name: "Educación"
+                            }
+                        }
+                    }
+                }
+            });
 
+            modalInstance.result.then(function (data) {
+                inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
+
+                /*ProjectsService.updateProject(data, id).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
+                        //Refrescar los proyectos
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                    }
+                );*/
+            });
         }
 
-        self.init = function() {
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/createProject.modad.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        subprograms: [
+                            {
+                                id: 1,
+                                name: "Subprograma 1"
+                            },
+                            {
+                                id: 2,
+                                name: "Subprograma 2"
+                            }
+                        ]
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
+
+                /*ProjectsService.addProject(data).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
+                        //Refrescar los proyectos
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                    }
+                );*/
+            });
+        }
+
+        self.init = function () {
         }
 
         self.init();
@@ -565,6 +637,38 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ProjectsService", ProjectsService);
+
+    ProjectsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + ""
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $hhtp({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + ""
+            })
+        }
+
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
