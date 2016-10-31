@@ -15,7 +15,7 @@
         $scope.active = "";
 
         self.init = function() {
-            $scope.active = $state.current.name;
+            $scope.active = $state.current.data.state;
         }
 
         self.logOut = function(){

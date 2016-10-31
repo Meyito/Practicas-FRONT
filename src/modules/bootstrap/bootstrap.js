@@ -44,6 +44,9 @@
         stateHelperProvider.state({
             name: 'development-plan',
             url: '/plan-desarrollo',
+            data: {
+                state: "development-plan"
+            },
             views: {
                 '': {
                     templateUrl: "templates/template.html",
@@ -59,6 +62,9 @@
         stateHelperProvider.state({
             name: 'secretaries',
             url: '/secretarias',
+            data: {
+                state: "secretaries"
+            },
             views: {
                 '': {
                     templateUrl: "templates/template.html",
@@ -74,6 +80,9 @@
         stateHelperProvider.state({
             name: 'projects',
             url: '/proyectos',
+            data: {
+                state: "projects"
+            },
             views: {
                 '': {
                     templateUrl: "templates/template.html",
@@ -89,6 +98,9 @@
         stateHelperProvider.state({
             name: 'statistics',
             url: '/estadisticas',
+            data: {
+                state: "statistics"
+            },
             views: {
                 '': {
                     templateUrl: "templates/template.html",
@@ -104,6 +116,9 @@
         stateHelperProvider.state({
             name: 'users',
             url: '/usuarios',
+            data: {
+                state: "users"
+            },
             views: {
                 '': {
                     templateUrl: "templates/template.html",
@@ -119,6 +134,9 @@
         stateHelperProvider.state({
             name: 'contracts',
             url: '/contratistas',
+            data: {
+                state: "contracts"
+            },
             views: {
                 '': {
                     templateUrl: "templates/template.html",
@@ -134,12 +152,33 @@
         stateHelperProvider.state({
             name: 'territorial-entities',
             url: '/entes-territoriales',
+            data: {
+                state: "territorial-entities"
+            },
             views: {
                 '': {
                     templateUrl: "templates/template.html",
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@territorial-entities': {
+                    templateUrl: "templates/empty.html",
+                    //controller: "StatisticsCtrl as statisticsCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'activities',
+            url: '/actividades',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@activities': {
                     templateUrl: "templates/empty.html",
                     //controller: "StatisticsCtrl as statisticsCtrl"
                 }
