@@ -34,28 +34,55 @@
 							<div class="col-sm-6 form-group">
 								<label>Programa</label>
 								<select class="form-control" ng-model="activity.program" ng-required="!saved">
-                                    <option ng-repeat="program in programs" ng-value="program.id">{{ program.name }}</option>
+                                    <!--option ng-repeat="program in programs" ng-value="program.id">{{ program.name }}</option-->
+									<option value="55">Programa 1</option>
+									<option value="66">Programa 2</option>
+									<option value="77">Programa 3</option>
+									<option value="88">Programa 4</option>
                                 </select>
 							</div>
 
 							<div class="col-sm-6 form-group">
 								<label>Subprograma</label>
 								<select class="form-control" ng-model="activity.subprogram" ng-required="!saved">
-                                    <option ng-repeat="subprogram in subprograms" ng-value="subprogram.id">{{ subprogram.name }}</option>
+                                    <!--option ng-repeat="subprogram in subprograms" ng-value="subprogram.id">{{ subprogram.name }}</option-->
+									<option value="11">Subprograma 1</option>
+									<option value="22">Subprograma 2</option>
+									<option value="33">Subprograma 3</option>
+									<option value="44">Subprograma 4</option>
                                 </select>
 							</div>
 
 							<div class="col-sm-6 form-group">
 								<label>Proyecto</label>
 								<select class="form-control" ng-model="activity.project" ng-required="!saved">
-                                    <option ng-repeat="project in projects" ng-value="project.id">{{ project.name }}</option>
+                                    <!--option ng-repeat="project in projects" ng-value="project.id">{{ project.name }}</option-->
+									<option value="1">Proyecto 1</option>
+									<option value="2">Proyecto 2</option>
+									<option value="3">Proyecto 3</option>
+									<option value="4">Proyecto 4</option>
                                 </select>
 							</div>
 
-							<div class="col-sm-12 form-group">
+							<div class="col-sm-6 form-group">
 								<label>Meta</label>
-								<select class="form-control" ng-model="activity.project" ng-required="!saved">
-                                    <option ng-repeat="project in projects" ng-value="project.id">{{ project.name }}</option>
+								<select class="form-control" ng-model="activity.goal" ng-required="!saved">
+                                    <!--option ng-repeat="project in projects" ng-value="project.id">{{ project.name }}</option-->
+									<option value="22">Meta 1</option>
+									<option value="33">Meta 2</option>
+									<option value="44">Meta 3</option>
+									<option value="55">Meta 4</option>
+                                </select>
+							</div>
+
+							<div class="col-sm-6 form-group">
+								<label>Contratista</label>
+								<select class="form-control" ng-model="activity.goal" ng-required="!saved">
+                                    <!--option ng-repeat="project in projects" ng-value="project.id">{{ project.name }}</option-->
+									<option value="c22">Contratista 1</option>
+									<option value="c33">Contratista 2</option>
+									<option value="c44">Contratista 3</option>
+									<option value="c55">Contratista 4</option>
                                 </select>
 							</div>
 
@@ -81,7 +108,7 @@
 					<h3 class="panel-title"><i class="fa fa-users fa-fw"></i> Asistentes </h3>
 				</div>
 				<div class="panel-body">
-					<div class="col-lg-12 ">
+					<div class="col-lg-12">
 						<div class="table-responsive">
 							<table class="table table-hover" id="activity-table">
 								<thead>
@@ -99,6 +126,7 @@
 										<th uib-tooltip="Discapacidad Motriz" tooltip-placement="top" tooltip-append-to-body="true">DMM</th>
 										<th uib-tooltip="Discapacidad Visual" tooltip-placement="top" tooltip-append-to-body="true">DV</th>
 										<th uib-tooltip="Discapacidad Auditiva" tooltip-placement="top" tooltip-append-to-body="true">DA</th>
+										<th></th>
 									</tr>
 								</thead>
 								<tbody>
@@ -116,10 +144,18 @@
 										<td>{{ assistant.dmm }}</td>
 										<td>{{ assistant.dv }}</td>
 										<td>{{ assistant.da }}</td>
+										<td>
+											<div ng-click="newActCtrl.deleteAssistant($index)">
+												<i class="fa fa-fw fa-close"></i>
+											</div>
+										</td>
 									</tr>
 								</tbody>
 							</table>
 						</div>
+					</div>
+					<div class="col-lg-12 centered" ng-show="assistants.length > 0">
+						<button type="button" class="btn btn-success" ng-click="newActCtrl.saveAssistants()">Guardar</button>
 					</div>
 				</div>
 			</div>
@@ -261,7 +297,11 @@
 							</div>
 						</div>
 						<div class="row centered">
-							<button type="button" class="btn btn-success" ng-click="newActCtrl.addAssistant()" ng-disabled="assistant_form.$invalid">Guardar</button>
+							<p>
+								<button type="button" class="btn btn-success btn-md" ng-click="newActCtrl.upload()">Cargar Asistentes</button>
+							<button type="button" class="btn btn-success btn-md" ng-click="newActCtrl.addAssistant()" ng-disabled="assistant_form.$invalid">Agregar Asistente</button>	
+							</p>
+							
 						</div>
 					</form>
 
@@ -270,6 +310,7 @@
 
 		</div>
 	</div>
+
 
 	<!-- /.row -->
 </div>
