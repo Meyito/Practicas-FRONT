@@ -179,8 +179,26 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@activities': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "StatisticsCtrl as statisticsCtrl"
+                    templateUrl: "templates/activities.list.html",
+                    controller: "ActivitiesCtrl as actCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'new-activity',
+            url: '/actividades/nueva',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@new-activity': {
+                    templateUrl: "templates/activities.new.html",
+                    controller: "NewActivityCtrl as newActCtrl"
                 }
             }
         });

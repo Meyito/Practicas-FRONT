@@ -310,3 +310,55 @@ body{
 #projects-table tr :nth-child(5){
     width: 5%;
 }
+
+#activity-table tr :nth-child(1){
+    width: 20%;
+}
+
+#activity-table tr :nth-child(2){
+    width: 20%;
+}
+
+#activity-table tr :nth-child(3){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(4){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(5){
+    width: 10%;
+}
+
+#activity-table tr :nth-child(6){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(7){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(8){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(9){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(10){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(11){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(12){
+    width: 5%;
+}
+
+#activity-table tr :nth-child(13){
+    width: 5%;
+}

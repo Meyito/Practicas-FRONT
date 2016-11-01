@@ -179,8 +179,26 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@activities': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "StatisticsCtrl as statisticsCtrl"
+                    templateUrl: "templates/activities.list.html",
+                    controller: "ActivitiesCtrl as actCtrl"
+                }
+            }
+        });
+
+        stateHelperProvider.state({
+            name: 'new-activity',
+            url: '/actividades/nueva',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@new-activity': {
+                    templateUrl: "templates/activities.new.html",
+                    controller: "NewActivityCtrl as newActCtrl"
                 }
             }
         });
@@ -245,6 +263,159 @@
             startingDay: 1,
             minMode: 'year'
         };
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("ActivitiesCtrl", ActivitiesCtrl);
+
+    ActivitiesCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService",
+        "$state"
+    ];
+
+    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, $state) {
+
+        var self = this;
+
+        $scope.expanded = false;
+
+        $scope.datePicker = {
+            date: { startDate: null, endDate: null }
+        } 
+
+        $scope.development_plans = [
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2016,
+                end_year: 2019
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2012,
+                end_year: 2015
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2008,
+                end_year: 2011
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2008,
+                end_year: 2011
+            }
+        ]
+
+        $scope.activities = [
+            {
+                date: "09-12-2015",
+                count: 50,
+                place: "San Calixto",
+                contratista: "Javier Plazas",
+                subprogram: "El nombre de un suprograma algo largo solo para probar",
+                goal: "100% cumplido, meta larga para probar, ajustes de CSS"
+            },
+            {
+                date: "09-12-2015",
+                count: 80,
+                place: "Bochalema",
+                contratista: "Andres Rodriguez",
+                subprogram: "Subprograma 2",
+                goal: "Apoyar el desarrollo de "
+            },
+        ];
+
+        self.statistics = function(){
+            $state.go("statistics");
+        }
+
+        self.newActivity = function(){
+            $state.go("new-activity");
+        }
+
+        self.search = function(){
+
+        }
+
+        self.init = function() {
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("NewActivityCtrl", NewActivityCtrl);
+
+    NewActivityCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "PlanService",
+        "$state"
+    ];
+
+    function NewActivityCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, $state) {
+
+        var self = this;
+
+        $scope.dateOptions = {
+            formatYear: 'yy',
+            maxDate: new Date(2020, 5, 22),
+            minDate: new Date(2000, 1, 1),
+            startingDay: 1
+        };
+
+        $scope.popup1 = {
+            opened: false
+        };
+
+        $scope.open1 = function () {
+            $scope.popup1.opened = true;
+        };
+
+        $scope.assistants = [];
+        $scope.new_activity = {};
+        
+
+        self.saveActivity = function(){
+            $scope.saved = true;
+        } 
+
+        self.addAssistant = function(){
+            $scope.assistants.push( $scope.new_activity );
+            $scope.new_activity = {};
+        }
+
+        
+
+        self.init = function () {
+            //$scope.saved = false;
+            $scope.saved = true;
+        }
+
+        self.init();
+
+
+
+
+
     }
 })(angular.module("app"));
 
