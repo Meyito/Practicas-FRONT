@@ -7,8 +7,8 @@
         "$scope",
         "$window",
         "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
+        "$uibModal",
+        "$filter",
         "inform",
         "PlanService"
     ];
@@ -77,11 +77,35 @@
             }
         ];
 
-        self.add = function(){
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nueva Secretaría',
+                ariaDescribedBy: 'nueva-secretaría',
+                templateUrl: 'templates/new-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
 
+            modalInstance.result.then(function (data) {
+                inform.add("Se han creado la nueva secretaría.", { type: "success" });
+
+                /*PlanService.uploadPlan(data.file, d).then(
+                    function (response) {
+                        inform.add("Se ha cargado el plan de desarrollo correctamente", { type: "info" });
+                        //Refrescar todos los planes de desarrollo
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el plan de desarrollo", { type: "warning" });
+                        //Descargar reporte de errores 
+                    }
+                );*/
+            });
         }
 
-        self.init = function() {
+        self.init = function () {
         }
 
         self.init();

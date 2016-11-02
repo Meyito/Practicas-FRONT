@@ -143,8 +143,8 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@contracts': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "StatisticsCtrl as statisticsCtrl"
+                    templateUrl: "templates/contracts.list.html",
+                    controller: "ContractsCtrl as contractsCtrl"
                 }
             }
         });
@@ -587,6 +587,34 @@
 (function (module) {
     'use strict';
 
+    module.controller("ContractsCtrl", ContractsCtrl);
+
+    ContractsCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService"
+    ];
+
+    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+
+        var self = this;
+
+        self.init = function () {
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
     module.controller("LoginCtrl", LoginCtrl);
 
     LoginCtrl.$inject = [
@@ -924,8 +952,8 @@
         "$scope",
         "$window",
         "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
+        "$uibModal",
+        "$filter",
         "inform",
         "PlanService"
     ];
@@ -994,11 +1022,35 @@
             }
         ];
 
-        self.add = function(){
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nueva Secretaría',
+                ariaDescribedBy: 'nueva-secretaría',
+                templateUrl: 'templates/new-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
 
+            modalInstance.result.then(function (data) {
+                inform.add("Se han creado la nueva secretaría.", { type: "success" });
+
+                /*PlanService.uploadPlan(data.file, d).then(
+                    function (response) {
+                        inform.add("Se ha cargado el plan de desarrollo correctamente", { type: "info" });
+                        //Refrescar todos los planes de desarrollo
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el plan de desarrollo", { type: "warning" });
+                        //Descargar reporte de errores 
+                    }
+                );*/
+            });
         }
 
-        self.init = function() {
+        self.init = function () {
         }
 
         self.init();

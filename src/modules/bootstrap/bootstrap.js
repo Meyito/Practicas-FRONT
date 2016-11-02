@@ -143,8 +143,8 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@contracts': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "StatisticsCtrl as statisticsCtrl"
+                    templateUrl: "templates/contracts.list.html",
+                    controller: "ContractsCtrl as contractsCtrl"
                 }
             }
         });
