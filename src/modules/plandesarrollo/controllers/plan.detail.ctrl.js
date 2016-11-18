@@ -105,7 +105,7 @@
 
             modalInstance.result.then(function(data) {
                 var d = {
-                    name: "",
+                    name: "x",
                     slogan: data.slogan,
                     init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
                     end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')

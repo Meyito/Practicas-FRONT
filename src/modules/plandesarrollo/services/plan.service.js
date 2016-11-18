@@ -13,13 +13,8 @@
         var self = this;
 
         self.uploadPlan = function(file, data){
-            /*return Upload.upload({
+            return Upload.upload({
                 data: {file: file, data: data},
-                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
-            });*/
-
-            return $http({
-                method: 'GET',
                 url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
             });
         }
