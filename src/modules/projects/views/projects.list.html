@@ -33,68 +33,13 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr>
-							<td>12345</td>
-							<td>Proyecto 1</td>
-							<td>Educación</td>
-							<td>Activo</td>
+						<tr ng-repeat="project in projects">
+							<td>{{project.code}}</td>
+							<td>{{project.name}}</td>
+							<td>{{project.subprogram.name}}</td>
+							<td>{{project.status}}</td>
 							<td>
-								<div ng-click="projectsCtrl.edit('Proyecto 1', true)">
-									<i class="fa fa-fw fa-pencil-square-o"></i>
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<td>12345</td>
-							<td>Proyecto 2</td>
-							<td>Vivienda</td>
-							<td>Activo</td>
-							<td>
-								<div ng-click="projectsCtrl.edit('Proyecto 2', true)">
-									<i class="fa fa-fw fa-pencil-square-o"></i>
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<td>12345</td>
-							<td>Proyecto 3</td>
-							<td>Salud</td>
-							<td>Activo</td>
-							<td>
-								<div ng-click="projectsCtrl.edit('Proyecto 3', true)">
-									<i class="fa fa-fw fa-pencil-square-o"></i>
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<td>12345</td>
-							<td>Proyecto 4</td>
-							<td>Vive Digital</td>
-							<td>Inactivo</td>
-							<td>
-								<div ng-click="projectsCtrl.edit('Proyecto 4', false)">
-									<i class="fa fa-fw fa-pencil-square-o"></i>
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<td>12345</td>
-							<td>Proyecto 5</td>
-							<td>Educación</td>
-							<td>Activo</td>
-							<td>
-								<div ng-click="projectsCtrl.edit('Proyecto 5', true)">
-									<i class="fa fa-fw fa-pencil-square-o"></i>
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<td>12345</td>
-							<td>Proyecto 6</td>
-							<td>Educación</td>
-							<td>Inactivo</td>
-							<td>
-								<div ng-click="projectsCtrl.edit('Proyecto 6', false)">
+								<div ng-click="projectsCtrl.edit(project.id , true)">
 									<i class="fa fa-fw fa-pencil-square-o"></i>
 								</div>
 							</td>
@@ -107,4 +52,11 @@
 	<!-- /.row -->
 
 	<!-- /.row -->
+	<div class="row centered m-10">
+        <p>
+            <button type="button" class="btn btn-success button-md" ng-click="projectsCtrl.upload()">Cargar Proyectos</button>
+            <button type="button" class="btn btn-success button-md" ng-click="projectsCtrl.downloadFormat()">Descargar Formato
+            </button>
+        </p>
+    </div>
 </div>

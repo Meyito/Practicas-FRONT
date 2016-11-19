@@ -107,6 +107,21 @@
                     templateUrl: "templates/projects.list.html",
                     controller: "ProjectsCtrl as projectsCtrl"
                 }
+            },
+            resolve: {
+                Dimentions: ['ProjectsService', function (ProjectsService) {
+                    var params = {
+                        relationships: "axes.programs.subprograms"
+                    }
+                    return ProjectsService.getDimentions(params);
+                }],
+
+                Projects: ['ProjectsService', function(ProjectsService){
+                    var params = {
+                        relationships: "subprogram"
+                    }
+                    return ProjectsService.getProjects(params);
+                }]
             }
         });
 

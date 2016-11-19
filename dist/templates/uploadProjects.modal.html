@@ -1,0 +1,21 @@
+<div class="modal-header">
+	<h3 class="modal-title" id="modal-title">Cargar Proyectos</h3>
+</div>
+<div class="modal-body" id="modal-body">
+	<form name="plan_form">
+		<div class="input-group">
+			<label class="input-group-btn">
+                <span class="btn btn-primary">
+                    Buscar <input type="file" style="display: none;" ngf-select ng-model="new_data.file" name="file" accept=".xlsx,,xls"
+                    ngf-max-size="2MB" required>
+                </span>
+            </label>
+			<input type="text" class="form-control" readonly="" ng-model="new_data.file.name">
+		</div>
+	</form>
+
+</div>
+<div class="modal-footer">
+	<button class="btn btn-danger button-sm" type="button" ng-click="modalCtrl.cancel()">Cancelar</button>
+	<button class="btn btn-success button-sm" type="button" ng-click="modalCtrl.save()" ng-disabled="plan_form.$invalid || new_data.end_year < new_data.init_year">Cargar</button>
+</div>

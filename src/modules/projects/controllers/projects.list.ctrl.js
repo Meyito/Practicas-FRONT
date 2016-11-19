@@ -10,17 +10,19 @@
         "$uibModal",
         "$filter",
         "inform",
-        "ProjectsService"
+        "ProjectsService",
+        "Dimentions",
+        "Projects"
     ];
 
-    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ProjectsService) {
+    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ProjectsService, Dimentions, Projects) {
 
         var self = this;
 
         self.edit = function(proyect, status){
             var modalInstance = $uibModal.open({
                 animation: true,
-                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaLabelledBy: 'Actualizar Proyecto',
                 ariaDescribedBy: 'crear-proyecto',
                 templateUrl: 'templates/updateProject.modal.html',
                 controller: 'ModalController',
@@ -42,6 +44,8 @@
             });
 
             modalInstance.result.then(function (data) {
+                
+
                 inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
 
                 /*ProjectsService.updateProject(data, id).then(
@@ -55,45 +59,81 @@
             });
         }
 
+        self.refresh = function(){
+            var params = {
+                relationships: "subprogram"
+            }
+
+            ProjectsService.getProjects(params).then(
+                function(response){
+                    $scope.projects = response.data;
+                }
+            );
+        }
+
         self.add = function () {
             var modalInstance = $uibModal.open({
                 animation: true,
                 ariaLabelledBy: 'Crear Nuevo Proyecto',
                 ariaDescribedBy: 'crear-proyecto',
                 templateUrl: 'templates/createProject.modad.html',
-                controller: 'ModalController',
+                controller: 'ModalProjectCtrl',
                 controllerAs: 'modalCtrl',
                 resolve: {
                     data: {
-                        subprograms: [
-                            {
-                                id: 1,
-                                name: "Subprograma 1"
-                            },
-                            {
-                                id: 2,
-                                name: "Subprograma 2"
-                            }
-                        ]
+                        dimentions: $scope.dimentions
                     }
                 }
             });
 
             modalInstance.result.then(function (data) {
-                inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
+                data.status = "Activo";
 
-                /*ProjectsService.addProject(data).then(
+                ProjectsService.addProject(data).then(
                     function (response) {
                         inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
-                        //Refrescar los proyectos
+                        self.refresh();
                     }, function (err) {
                         inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
                     }
-                );*/
+                );
+            });
+        }
+
+        self.downloadFormat = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Proyectos.xlsx');
+        }
+
+        self.upload = function(){
+            
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Proyectos',
+                ariaDescribedBy: 'cargar-proyecto',
+                templateUrl : 'templates/uploadProjects.modal.html',
+                controller : 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve:{
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function(data) {
+                ProjectsService.uploadProjects(data.file).then(
+                    function(response){
+                        inform.add("Se han cargado los proyectos correctamente", {type: "info"});
+                        //Refrescar todos los proyectos
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar los proyectos", {type: "warning"});
+                        //Descargar reporte de errores 
+                    }
+                );
             });
         }
 
         self.init = function () {
+            $scope.dimentions = Dimentions.data;
+            $scope.projects = Projects.data;
         }
 
         self.init();
