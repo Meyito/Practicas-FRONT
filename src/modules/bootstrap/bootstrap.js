@@ -83,6 +83,12 @@
                     templateUrl: "templates/secretaries.list.html",
                     controller: "SecretariesCtrl as secretariesCtrl"
                 }
+            },
+            resolve: {
+                Secretaries: ['SecretariesService', function (SecretariesService) {
+                    var params = {}
+                    return SecretariesService.getSecretaries(params);
+                }],
             }
         });
 

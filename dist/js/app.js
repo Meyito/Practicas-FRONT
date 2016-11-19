@@ -83,6 +83,12 @@
                     templateUrl: "templates/secretaries.list.html",
                     controller: "SecretariesCtrl as secretariesCtrl"
                 }
+            },
+            resolve: {
+                Secretaries: ['SecretariesService', function (SecretariesService) {
+                    var params = {}
+                    return SecretariesService.getSecretaries(params);
+                }],
             }
         });
 
@@ -568,6 +574,62 @@
 (function (module) {
     'use strict';
 
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function NavigationCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+        }
+
+        self.logOut = function(){
+            $state.go("login");
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("ContractsCtrl", ContractsCtrl);
+
+    ContractsCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService"
+    ];
+
+    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+
+        var self = this;
+
+        self.init = function () {
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
     module.controller("LoginCtrl", LoginCtrl);
 
     LoginCtrl.$inject = [
@@ -737,34 +799,36 @@
     }
 })(angular.module("app"));
 
+
 (function (module) {
-    'use strict';
+    module.service("PlanService", PlanService);
 
-    module.controller("NavigationCtrl", NavigationCtrl);
-
-    NavigationCtrl.$inject = [
-        "$scope",
-        "$state"
+    PlanService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
     ];
 
-    function NavigationCtrl($scope, $state) {
-
+    function PlanService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        $scope.active = "";
-
-        self.init = function() {
-            $scope.active = $state.current.data.state;
+        self.uploadPlan = function(file, data){
+            return Upload.upload({
+                data: {file: file, data: data},
+                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
+            });
         }
 
-        self.logOut = function(){
-            $state.go("login");
+        self.getPlans = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/development-plans"
+            });
         }
-
-        self.init();
     }
 })(angular.module("app"));
-
 (function (module) {
     'use strict';
 
@@ -871,30 +935,126 @@
 
 
 (function (module) {
-    module.service("PlanService", PlanService);
+    module.service("ProjectsService", ProjectsService);
 
-    PlanService.$inject = [
+    ProjectsService.$inject = [
         "$http",
         "$q",
         "APP_DEFAULTS",
         "Upload"
     ];
 
-    function PlanService($http, $q, APP_DEFAULTS, Upload) {
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        self.uploadPlan = function(file, data){
-            return Upload.upload({
-                data: {file: file, data: data},
-                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + ""
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $hhtp({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + ""
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("SecretariesCtrl", SecretariesCtrl);
+
+    SecretariesCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "Secretaries",
+        "SecretariesService"
+    ];
+
+    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, Secretaries, SecretariesService) {
+
+        var self = this;
+
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nueva Secretaría',
+                ariaDescribedBy: 'nueva-secretaría',
+                templateUrl: 'templates/new-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.saveSecretary(data).then(
+                    function(response){
+                        inform.add("Se ha creado la nueva dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar la dependencia", {type: "warning"});
+                    }
+                );
             });
         }
 
-        self.getPlans = function(params){
+        self.refresh = function(){
+            SecretariesService.getSecretaries({}).then(
+                function(response){
+                    $scope.secretaries = response.data;
+                }
+            );
+        }
+
+        self.init = function () {
+            $scope.secretaries = Secretaries.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("SecretariesService", SecretariesService);
+
+    SecretariesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.getSecretaries = function(params){
             return $http({
                 method: 'GET',
                 params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/development-plans"
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+
+        self.saveSecretary = function(data){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
             });
         }
     }
@@ -1029,182 +1189,6 @@
         $scope.data = [300, 500, 100];
 
         
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("SecretariesCtrl", SecretariesCtrl);
-
-    SecretariesCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
-        "$filter",
-        "inform",
-        "PlanService"
-    ];
-
-    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
-
-        var self = this;
-
-        $scope.secretaries = [
-            {
-                name: "Secretaría de Atención Integral a Victimas"
-            },
-            {
-                name: "Secretaría de Planeación y Desarrollo Territorial"
-            },
-            {
-                name: "Secretaría de Tecnologías de la Información y Comunicaciones "
-            },
-            {
-                name: "Secretaría General"
-            },
-            {
-                name: "Secretaría Privada "
-            },
-            {
-                name: "Secretaría de Agua Potable y Saneamiento Básico"
-            },
-            {
-                name: "Secretaría de Cultura"
-            },
-            {
-                name: "Secretaría de Desarollo Económico"
-            },
-            {
-                name: "Secretaría de Desarrollo Social"
-            },
-            {
-                name: "Secretaría de Educación"
-            },
-            {
-                name: "Secretaría de Fronteras y Cooperación Internacional"
-            },
-            {
-                name: "Secretaría de Gobierno"
-            },
-            {
-                name: "Secretaría de Hacienda"
-            },
-            {
-                name: "Secretaría de Infraestructura"
-            },
-            {
-                name: "Secretaría de la Mujer"
-            },
-            {
-                name: "Secretaría de Minas y Energía"
-            },
-            {
-                name: "Secretaría de Tránsito"
-            },
-            {
-                name: "Secretaría de Vivienda y Medio Ambiente"
-            },
-            {
-                name: "Secretaría Jurídica"
-            }
-        ];
-
-        self.add = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nueva Secretaría',
-                ariaDescribedBy: 'nueva-secretaría',
-                templateUrl: 'templates/new-secretary.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                inform.add("Se han creado la nueva secretaría.", { type: "success" });
-
-                /*PlanService.uploadPlan(data.file, d).then(
-                    function (response) {
-                        inform.add("Se ha cargado el plan de desarrollo correctamente", { type: "info" });
-                        //Refrescar todos los planes de desarrollo
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el plan de desarrollo", { type: "warning" });
-                        //Descargar reporte de errores 
-                    }
-                );*/
-            });
-        }
-
-        self.init = function () {
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-
-(function (module) {
-    module.service("ProjectsService", ProjectsService);
-
-    ProjectsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.addProject = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + ""
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $hhtp({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + ""
-            })
-        }
-
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("ContractsCtrl", ContractsCtrl);
-
-    ContractsCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
-        "inform",
-        "PlanService"
-    ];
-
-    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
-
-        var self = this;
-
-        self.init = function () {
-        }
-
-        self.init();
-
 
     }
 })(angular.module("app"));
