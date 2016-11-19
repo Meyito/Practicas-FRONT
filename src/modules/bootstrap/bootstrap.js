@@ -56,6 +56,15 @@
                     templateUrl: "templates/plan.detail.html",
                     controller: "PlanDetailCtrl as planCtrl"
                 }
+            },
+            resolve: {
+                DevelopmentPlans: ['PlanService', '$stateParams', function (PlanService, $stateParams) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms.goals",
+                        //order_by: "id_"
+                    }
+                    return PlanService.getPlans(params);
+                }],
             }
         });
 

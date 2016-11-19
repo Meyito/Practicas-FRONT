@@ -18,5 +18,13 @@
                 url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
             });
         }
+
+        self.getPlans = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/development-plans"
+            });
+        }
     }
 })(angular.module("app"));

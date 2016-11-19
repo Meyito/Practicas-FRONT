@@ -56,6 +56,15 @@
                     templateUrl: "templates/plan.detail.html",
                     controller: "PlanDetailCtrl as planCtrl"
                 }
+            },
+            resolve: {
+                DevelopmentPlans: ['PlanService', '$stateParams', function (PlanService, $stateParams) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms.goals",
+                        //order_by: "id_"
+                    }
+                    return PlanService.getPlans(params);
+                }],
             }
         });
 
@@ -269,303 +278,6 @@
 (function (module) {
     'use strict';
 
-    module.controller("AnalyticsCtrl", AnalyticsCtrl);
-
-    AnalyticsCtrl.$inject = [
-        "$scope",
-        "AnalyticsService",
-        '$interval',
-        '$filter'
-    ];
-
-    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
-
-        var self = this;
-
-        self.graphs = {
-            zones: [],
-            time: [],
-            labels: [],
-            speed: [],
-            count: [],
-            avg_speed: [],
-            acum: []
-        }
-
-        self.paint = function () {
-
-        }
-
-        self.randomData = function () {
-            var i, s;
-            for (i = 0; i < self.graphs.zones.length; i++) {
-                if (i == 0) {
-                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
-                    self.graphs.time.push(s);
-                    self.graphs.labels.push($filter('date')(s, "medium"));
-                }
-                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
-                s = Math.random() * 200 + 1;
-                self.graphs.speed[i].push(s);
-                self.graphs.acum[i] += s;
-                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
-            }
-
-            console.log(self.graphs);
-        }
-
-        self.parseData = function (data) {
-            var i;
-            for (i = 0; i < data.length; i++) {
-                if (i == 0) {
-                    self.graphs.time.push(data[i].data.time);
-                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
-                }
-                self.graphs.zones.push(data[i].zoneId);
-                var speed = [];
-                speed[0] = data[i].data.speed;
-                self.graphs.speed.push(speed);
-                self.graphs.avg_speed.push(data[i].data.speed);
-                self.graphs.acum.push(data[i].data.speed);
-                self.graphs.count.push(data[i].data.count);
-            }
-            console.log(self.graphs);
-        }
-
-        self.init = function () {
-            AnalyticsService.getData().then(
-                function (response) {
-                    self.parseData(response.data);
-                    $interval(function () {
-                        self.randomData();
-                    },3000);
-                }
-            );
-        }
-
-        self.init();
-
-
-
-    }
-})(angular.module("app"));
-
-(function(module){
-  module.service("AnalyticsService", AnalyticsService);
-
-  AnalyticsService.$inject = [
-      "$http"
-  ];
-
-  function AnalyticsService($http){
-    var self = this;
-
-    self.getData = function () {
-        return $http.get("/data/activity-data.json");
-    }
-    
-  }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("NavigationCtrl", NavigationCtrl);
-
-    NavigationCtrl.$inject = [
-        "$scope",
-        "$state"
-    ];
-
-    function NavigationCtrl($scope, $state) {
-
-        var self = this;
-
-        $scope.active = "";
-
-        self.init = function() {
-            $scope.active = $state.current.data.state;
-        }
-
-        self.logOut = function(){
-            $state.go("login");
-        }
-
-        self.init();
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("LoginCtrl", LoginCtrl);
-
-    LoginCtrl.$inject = [
-        "$scope",
-        "$state"
-    ];
-
-    function LoginCtrl($scope, $state) {
-
-        var self = this;
-
-        $scope.data;
-
-        self.login = function(){
-            $state.go("development-plan");
-        }
-
-        self.init = function () {
-
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("PlanDetailCtrl", PlanDetailCtrl);
-
-    PlanDetailCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
-        "inform",
-        "PlanService"
-    ];
-
-    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
-
-        var self = this;
-
-        $scope.active = true;
-
-        $scope.plan = {
-            slogan: "Un norte productivo para todos",
-            init_year: 2016,
-            end_year: 2019,
-            dimensions: [{
-                name: "Social",
-                axes: [
-                    {
-                        name: "Eje 1",
-                        programs: [
-                            {
-                                total: 4, //cantidad total de metas de ese programa
-                                name: "Programa 1",
-                                subprograms:[
-                                    {
-                                        name: "subprograma 1",
-                                        goals: [
-                                            {
-                                                name: "meta 1"
-                                            },
-                                            {
-                                                name: "meta 2"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        name: "subprograma 2",
-                                        goals: [
-                                            {
-                                                name: "meta 3"
-                                            },
-                                            {
-                                                name: "meta 4"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }]
-        }
-
-        $scope.plans = [
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2016,
-                end_year: 2019
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2012,
-                end_year: 2015
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            }
-        ]
-        
-        self.selectPlan = function () {
-            
-        }
-        
-        self.uploadPlan = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Cargar Plan de Desarrollo',
-                ariaDescribedBy: 'cargar-plan',
-                templateUrl : 'templates/uploadPlan.modal.html',
-                controller : 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve:{
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function(data) {
-                var d = {
-                    name: "x",
-                    slogan: data.slogan,
-                    init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
-                    end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
-                }
-
-                PlanService.uploadPlan(data.file, d).then(
-                    function(response){
-                        inform.add("Se ha cargado el plan de desarrollo correctamente", {type: "info"});
-                        //Refrescar todos los planes de desarrollo
-                    }, function(err){
-                        inform.add("Ocurrió un error al guardar el plan de desarrollo", {type: "warning"});
-                        //Descargar reporte de errores 
-                    }
-                );
-            });
-        }
-        
-        self.downloadFormat = function () {
-            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Plan_Desarrollo.xlsx');
-        }
-
-        self.init = function () {
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
     module.controller("ActivitiesCtrl", ActivitiesCtrl);
 
     ActivitiesCtrl.$inject = [
@@ -752,141 +464,304 @@
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("PlanService", PlanService);
-
-    PlanService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function PlanService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadPlan = function(file, data){
-            return Upload.upload({
-                data: {file: file, data: data},
-                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
-            });
-        }
-    }
-})(angular.module("app"));
 (function (module) {
     'use strict';
 
-    module.controller("SecretariesCtrl", SecretariesCtrl);
+    module.controller("AnalyticsCtrl", AnalyticsCtrl);
 
-    SecretariesCtrl.$inject = [
+    AnalyticsCtrl.$inject = [
         "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
-        "$filter",
-        "inform",
-        "PlanService"
+        "AnalyticsService",
+        '$interval',
+        '$filter'
     ];
 
-    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
 
         var self = this;
 
-        $scope.secretaries = [
-            {
-                name: "Secretaría de Atención Integral a Victimas"
-            },
-            {
-                name: "Secretaría de Planeación y Desarrollo Territorial"
-            },
-            {
-                name: "Secretaría de Tecnologías de la Información y Comunicaciones "
-            },
-            {
-                name: "Secretaría General"
-            },
-            {
-                name: "Secretaría Privada "
-            },
-            {
-                name: "Secretaría de Agua Potable y Saneamiento Básico"
-            },
-            {
-                name: "Secretaría de Cultura"
-            },
-            {
-                name: "Secretaría de Desarollo Económico"
-            },
-            {
-                name: "Secretaría de Desarrollo Social"
-            },
-            {
-                name: "Secretaría de Educación"
-            },
-            {
-                name: "Secretaría de Fronteras y Cooperación Internacional"
-            },
-            {
-                name: "Secretaría de Gobierno"
-            },
-            {
-                name: "Secretaría de Hacienda"
-            },
-            {
-                name: "Secretaría de Infraestructura"
-            },
-            {
-                name: "Secretaría de la Mujer"
-            },
-            {
-                name: "Secretaría de Minas y Energía"
-            },
-            {
-                name: "Secretaría de Tránsito"
-            },
-            {
-                name: "Secretaría de Vivienda y Medio Ambiente"
-            },
-            {
-                name: "Secretaría Jurídica"
-            }
-        ];
+        self.graphs = {
+            zones: [],
+            time: [],
+            labels: [],
+            speed: [],
+            count: [],
+            avg_speed: [],
+            acum: []
+        }
 
-        self.add = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nueva Secretaría',
-                ariaDescribedBy: 'nueva-secretaría',
-                templateUrl: 'templates/new-secretary.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
+        self.paint = function () {
+
+        }
+
+        self.randomData = function () {
+            var i, s;
+            for (i = 0; i < self.graphs.zones.length; i++) {
+                if (i == 0) {
+                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
+                    self.graphs.time.push(s);
+                    self.graphs.labels.push($filter('date')(s, "medium"));
                 }
-            });
+                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
+                s = Math.random() * 200 + 1;
+                self.graphs.speed[i].push(s);
+                self.graphs.acum[i] += s;
+                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
+            }
 
-            modalInstance.result.then(function (data) {
-                inform.add("Se han creado la nueva secretaría.", { type: "success" });
+            console.log(self.graphs);
+        }
 
-                /*PlanService.uploadPlan(data.file, d).then(
-                    function (response) {
-                        inform.add("Se ha cargado el plan de desarrollo correctamente", { type: "info" });
-                        //Refrescar todos los planes de desarrollo
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el plan de desarrollo", { type: "warning" });
-                        //Descargar reporte de errores 
-                    }
-                );*/
-            });
+        self.parseData = function (data) {
+            var i;
+            for (i = 0; i < data.length; i++) {
+                if (i == 0) {
+                    self.graphs.time.push(data[i].data.time);
+                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
+                }
+                self.graphs.zones.push(data[i].zoneId);
+                var speed = [];
+                speed[0] = data[i].data.speed;
+                self.graphs.speed.push(speed);
+                self.graphs.avg_speed.push(data[i].data.speed);
+                self.graphs.acum.push(data[i].data.speed);
+                self.graphs.count.push(data[i].data.count);
+            }
+            console.log(self.graphs);
         }
 
         self.init = function () {
+            AnalyticsService.getData().then(
+                function (response) {
+                    self.parseData(response.data);
+                    $interval(function () {
+                        self.randomData();
+                    },3000);
+                }
+            );
         }
 
         self.init();
 
 
+
+    }
+})(angular.module("app"));
+
+(function(module){
+  module.service("AnalyticsService", AnalyticsService);
+
+  AnalyticsService.$inject = [
+      "$http"
+  ];
+
+  function AnalyticsService($http){
+    var self = this;
+
+    self.getData = function () {
+        return $http.get("/data/activity-data.json");
+    }
+    
+  }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("LoginCtrl", LoginCtrl);
+
+    LoginCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function LoginCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.data;
+
+        self.login = function(){
+            $state.go("development-plan");
+        }
+
+        self.init = function () {
+
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("PlanDetailCtrl", PlanDetailCtrl);
+
+    PlanDetailCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService",
+        "DevelopmentPlans"
+    ];
+
+    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, DevelopmentPlans) {
+
+        var self = this;
+
+        $scope.active = true;
+
+        /*$scope.plan = {
+            slogan: "Un norte productivo para todos",
+            init_year: 2016,
+            end_year: 2019,
+            dimensions: [{
+                name: "Social",
+                axes: [
+                    {
+                        name: "Eje 1",
+                        programs: [
+                            {
+                                total: 4, //cantidad total de metas de ese programa
+                                name: "Programa 1",
+                                subprograms:[
+                                    {
+                                        name: "subprograma 1",
+                                        goals: [
+                                            {
+                                                name: "meta 1"
+                                            },
+                                            {
+                                                name: "meta 2"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        name: "subprograma 2",
+                                        goals: [
+                                            {
+                                                name: "meta 3"
+                                            },
+                                            {
+                                                name: "meta 4"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }]
+        }
+
+        $scope.plans = [
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2016,
+                end_year: 2019
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2012,
+                end_year: 2015
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2008,
+                end_year: 2011
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2008,
+                end_year: 2011
+            }
+        ]*/
+
+
+        
+        self.selectPlan = function () {
+            
+        }
+        
+        self.uploadPlan = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Plan de Desarrollo',
+                ariaDescribedBy: 'cargar-plan',
+                templateUrl : 'templates/uploadPlan.modal.html',
+                controller : 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve:{
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function(data) {
+                var d = {                    
+                    name: data.name,
+                    init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
+                    end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
+                }
+
+                PlanService.uploadPlan(data.file, d).then(
+                    function(response){
+                        inform.add("Se ha cargado el plan de desarrollo correctamente", {type: "info"});
+                        //Refrescar todos los planes de desarrollo
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar el plan de desarrollo", {type: "warning"});
+                        //Descargar reporte de errores 
+                    }
+                );
+            });
+        }
+        
+        self.downloadFormat = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Plan_Desarrollo.xlsx');
+        }
+
+        self.init = function () {
+            $scope.plans = DevelopmentPlans.data;
+            $scope.plan = $scope.plans[ $scope.plans.length - 1 ];
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function NavigationCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+        }
+
+        self.logOut = function(){
+            $state.go("login");
+        }
+
+        self.init();
     }
 })(angular.module("app"));
 
@@ -994,6 +869,36 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("PlanService", PlanService);
+
+    PlanService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function PlanService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadPlan = function(file, data){
+            return Upload.upload({
+                data: {file: file, data: data},
+                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
+            });
+        }
+
+        self.getPlans = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/development-plans"
+            });
+        }
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1124,6 +1029,122 @@
         $scope.data = [300, 500, 100];
 
         
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("SecretariesCtrl", SecretariesCtrl);
+
+    SecretariesCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "PlanService"
+    ];
+
+    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+
+        var self = this;
+
+        $scope.secretaries = [
+            {
+                name: "Secretaría de Atención Integral a Victimas"
+            },
+            {
+                name: "Secretaría de Planeación y Desarrollo Territorial"
+            },
+            {
+                name: "Secretaría de Tecnologías de la Información y Comunicaciones "
+            },
+            {
+                name: "Secretaría General"
+            },
+            {
+                name: "Secretaría Privada "
+            },
+            {
+                name: "Secretaría de Agua Potable y Saneamiento Básico"
+            },
+            {
+                name: "Secretaría de Cultura"
+            },
+            {
+                name: "Secretaría de Desarollo Económico"
+            },
+            {
+                name: "Secretaría de Desarrollo Social"
+            },
+            {
+                name: "Secretaría de Educación"
+            },
+            {
+                name: "Secretaría de Fronteras y Cooperación Internacional"
+            },
+            {
+                name: "Secretaría de Gobierno"
+            },
+            {
+                name: "Secretaría de Hacienda"
+            },
+            {
+                name: "Secretaría de Infraestructura"
+            },
+            {
+                name: "Secretaría de la Mujer"
+            },
+            {
+                name: "Secretaría de Minas y Energía"
+            },
+            {
+                name: "Secretaría de Tránsito"
+            },
+            {
+                name: "Secretaría de Vivienda y Medio Ambiente"
+            },
+            {
+                name: "Secretaría Jurídica"
+            }
+        ];
+
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nueva Secretaría',
+                ariaDescribedBy: 'nueva-secretaría',
+                templateUrl: 'templates/new-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                inform.add("Se han creado la nueva secretaría.", { type: "success" });
+
+                /*PlanService.uploadPlan(data.file, d).then(
+                    function (response) {
+                        inform.add("Se ha cargado el plan de desarrollo correctamente", { type: "info" });
+                        //Refrescar todos los planes de desarrollo
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el plan de desarrollo", { type: "warning" });
+                        //Descargar reporte de errores 
+                    }
+                );*/
+            });
+        }
+
+        self.init = function () {
+        }
+
+        self.init();
+
 
     }
 })(angular.module("app"));

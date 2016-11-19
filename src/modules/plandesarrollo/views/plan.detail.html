@@ -8,18 +8,18 @@
             </h1>
         </div>
         <div class="col-lg-12 centered">
-            <h4>"{{ plan.slogan }}" {{ plan.init_year }} - {{ plan.end_year }}</h4>
+            <h4>"{{ plan.name }}" {{ plan.init_year }} - {{ plan.end_year }}</h4>
         </div>
     </div>
     <!-- /.row -->
 
     <div class="row">
         <uib-tabset active="active">
-            <uib-tab index="$index" ng-repeat="dimension in plan.dimensions" heading="{{ dimension.name }}">
+            <uib-tab index="$index" ng-repeat="dimention in plan.dimentions" heading="{{ dimention.name }}">
                 <div class="col-lg-12 plan-container">
                     <v-accordion class="vAccordion--default">
 
-                        <v-pane ng-repeat="axe in dimension.axes" expanded="axe.isExpanded">
+                        <v-pane ng-repeat="axe in dimention.axes" expanded="axe.isExpanded">
                             <v-pane-header>
                                 {{ axe.name }}
                             </v-pane-header>
@@ -70,7 +70,7 @@
                     <h3 class="panel-title">{{ plan.init_year }} - {{ plan.end_year}}</h3>
                 </div>
                 <div class="panel-body">
-                    {{ plan.slogan }}
+                    {{ plan.name }}
                 </div>
             </div>
         </div>

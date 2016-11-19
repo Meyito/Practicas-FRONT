@@ -10,16 +10,17 @@
         "$uibModal", 
         "$filter", 
         "inform",
-        "PlanService"
+        "PlanService",
+        "DevelopmentPlans"
     ];
 
-    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, DevelopmentPlans) {
 
         var self = this;
 
         $scope.active = true;
 
-        $scope.plan = {
+        /*$scope.plan = {
             slogan: "Un norte productivo para todos",
             init_year: 2016,
             end_year: 2019,
@@ -84,7 +85,9 @@
                 init_year: 2008,
                 end_year: 2011
             }
-        ]
+        ]*/
+
+
         
         self.selectPlan = function () {
             
@@ -104,9 +107,8 @@
             });
 
             modalInstance.result.then(function(data) {
-                var d = {
-                    name: "x",
-                    slogan: data.slogan,
+                var d = {                    
+                    name: data.name,
                     init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
                     end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
                 }
@@ -128,6 +130,8 @@
         }
 
         self.init = function () {
+            $scope.plans = DevelopmentPlans.data;
+            $scope.plan = $scope.plans[ $scope.plans.length - 1 ];
         }
 
         self.init();
