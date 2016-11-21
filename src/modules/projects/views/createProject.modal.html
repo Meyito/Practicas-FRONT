@@ -1,0 +1,53 @@
+<div class="modal-header">
+	<h3 class="modal-title" id="modal-title">Crear Nuevo Proyecto</h3>
+</div>
+<div class="modal-body" id="modal-body">
+	<form name="new_project">
+		<div class="row form-group">
+			<div class="col-sm-6">
+				<label>Dimensión</label>
+				<select class="form-control" ng-options="dim.name for dim in data.dimentions" ng-model="dimention" required>
+				</select>
+			</div>
+			<div class="col-sm-6">
+				<label>Eje</label>
+				<select class="form-control" ng-options="axe.name for axe in dimention.axes" ng-model="axe" required>
+				</select>
+			</div>
+		</div>
+
+		<div class="row form-group">
+			<div class="col-sm-6">
+				<label>Programa</label>
+				<select class="form-control" ng-options="program.name for program in axe.programs" ng-model="program" required>
+				</select>
+			</div>
+			<div class="col-sm-6">
+				<label>Subprograma</label>
+				<select class="form-control" ng-model="new_data.subprogram_id" required>
+                    <option ng-repeat="subprogram in program.subprograms" ng-value="subprogram.id">{{ subprogram.name }}</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="row form-group">
+			<div class="col-sm-4">
+				<label>Codigo SEPPI</label>
+				<input type="text" ng-model="new_data.code" class="form-control" required>
+			</div>
+			<div class="col-sm-8">
+				<label>Nombre Proyecto</label>
+				<input type="text" ng-model="new_data.name" class="form-control" required>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label>Descripción:</label>
+			<textarea class="form-control" rows="3" ng-model="new_data.description" required></textarea>
+		</div>
+	</form>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-danger button-sm" type="button" ng-click="modalCtrl.cancel()">Cancelar</button>
+	<button class="btn btn-success button-sm" type="button" ng-click="modalCtrl.save()" ng-disabled="new_project.$invalid">Guardar</button>
+</div>

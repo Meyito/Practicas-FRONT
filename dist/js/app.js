@@ -922,7 +922,7 @@
                 animation: true,
                 ariaLabelledBy: 'Crear Nuevo Proyecto',
                 ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/createProject.modad.html',
+                templateUrl: 'templates/createProject.modal.html',
                 controller: 'ModalProjectCtrl',
                 controllerAs: 'modalCtrl',
                 resolve: {
