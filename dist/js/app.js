@@ -30,6 +30,7 @@
                 resolve: {
                 }
             });*/
+
         stateHelperProvider.state({
             name: 'login',
             url: '/',
@@ -191,8 +192,8 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@territorial-entities': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "StatisticsCtrl as statisticsCtrl"
+                    templateUrl: "templates/territorial-entities.view.html",
+                    controller: "TerritorialCtrl as territorialCtrl"
                 }
             }
         });
@@ -569,23 +570,6 @@
     }
 })(angular.module("app"));
 
-(function(module){
-  module.service("AnalyticsService", AnalyticsService);
-
-  AnalyticsService.$inject = [
-      "$http"
-  ];
-
-  function AnalyticsService($http){
-    var self = this;
-
-    self.getData = function () {
-        return $http.get("/data/activity-data.json");
-    }
-    
-  }
-})(angular.module("app"));
-
 (function (module) {
     'use strict';
 
@@ -612,6 +596,23 @@
 
         self.init();
     }
+})(angular.module("app"));
+
+(function(module){
+  module.service("AnalyticsService", AnalyticsService);
+
+  AnalyticsService.$inject = [
+      "$http"
+  ];
+
+  function AnalyticsService($http){
+    var self = this;
+
+    self.getData = function () {
+        return $http.get("/data/activity-data.json");
+    }
+    
+  }
 })(angular.module("app"));
 
 (function (module) {
@@ -844,6 +845,61 @@
         }
     }
 })(angular.module("app"));
+
+(function (module) {
+    module.service("ProjectsService", ProjectsService);
+
+    ProjectsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $hhtp({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.uploadProjects = function(file){
+            return Upload.upload({
+                data: {file: file},
+                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
+            });
+        }
+
+        self.getProjects = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.getDimentions = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
+            })
+        }
+
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1030,61 +1086,6 @@
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("ProjectsService", ProjectsService);
-
-    ProjectsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.addProject = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $hhtp({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.uploadProjects = function(file){
-            return Upload.upload({
-                data: {file: file},
-                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
-            });
-        }
-
-        self.getProjects = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.getDimentions = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
-            })
-        }
-
-    }
-})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1309,6 +1310,85 @@
         $scope.data = [300, 500, 100];
 
         
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("TerritorialCtrl", TerritorialCtrl);
+
+    TerritorialCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "inform",
+        "TerritorialService"
+    ];
+
+    function TerritorialCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, TerritorialService) {
+
+        var self = this;
+
+        self.uploadMunicipalities = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Ordenamiento',
+                ariaDescribedBy: 'cargar-ordenamiento',
+                templateUrl: 'templates/upload-territories.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                TerritorialService.uploadMunicipalities(data).then(
+                    function(response){
+                        inform.add("Se ha cargado el ordenamiento.", { type: "success" });
+                        //self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar el ordenamiento territorial.", {type: "warning"});
+                    }
+                );
+            });
+        }
+
+
+        self.init = function () {
+            
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("TerritorialService", TerritorialService);
+
+    TerritorialService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function TerritorialService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadMunicipalities = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/municipalities/upload"
+            });
+        }
+
 
     }
 })(angular.module("app"));

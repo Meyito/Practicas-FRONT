@@ -30,6 +30,7 @@
                 resolve: {
                 }
             });*/
+
         stateHelperProvider.state({
             name: 'login',
             url: '/',
@@ -191,8 +192,8 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@territorial-entities': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "StatisticsCtrl as statisticsCtrl"
+                    templateUrl: "templates/territorial-entities.view.html",
+                    controller: "TerritorialCtrl as territorialCtrl"
                 }
             }
         });
