@@ -570,6 +570,23 @@
     }
 })(angular.module("app"));
 
+(function(module){
+  module.service("AnalyticsService", AnalyticsService);
+
+  AnalyticsService.$inject = [
+      "$http"
+  ];
+
+  function AnalyticsService($http){
+    var self = this;
+
+    self.getData = function () {
+        return $http.get("/data/activity-data.json");
+    }
+    
+  }
+})(angular.module("app"));
+
 (function (module) {
     'use strict';
 
@@ -596,23 +613,6 @@
 
         self.init();
     }
-})(angular.module("app"));
-
-(function(module){
-  module.service("AnalyticsService", AnalyticsService);
-
-  AnalyticsService.$inject = [
-      "$http"
-  ];
-
-  function AnalyticsService($http){
-    var self = this;
-
-    self.getData = function () {
-        return $http.get("/data/activity-data.json");
-    }
-    
-  }
 })(angular.module("app"));
 
 (function (module) {
@@ -845,61 +845,6 @@
         }
     }
 })(angular.module("app"));
-
-(function (module) {
-    module.service("ProjectsService", ProjectsService);
-
-    ProjectsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.addProject = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $hhtp({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.uploadProjects = function(file){
-            return Upload.upload({
-                data: {file: file},
-                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
-            });
-        }
-
-        self.getProjects = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.getDimentions = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
-            })
-        }
-
-    }
-})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1086,6 +1031,61 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ProjectsService", ProjectsService);
+
+    ProjectsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $hhtp({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.uploadProjects = function(file){
+            return Upload.upload({
+                data: {file: file},
+                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
+            });
+        }
+
+        self.getProjects = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.getDimentions = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
+            })
+        }
+
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1332,7 +1332,7 @@
 
         var self = this;
 
-        self.uploadMunicipalities = function () {
+        self.uploadData = function (id, string) {
             var modalInstance = $uibModal.open({
                 animation: true,
                 ariaLabelledBy: 'Cargar Ordenamiento',
@@ -1341,19 +1341,33 @@
                 controller: 'ModalController',
                 controllerAs: 'modalCtrl',
                 resolve: {
-                    data: {}
+                    data: {
+                        type: string
+                    }
                 }
             });
 
             modalInstance.result.then(function (data) {
-                TerritorialService.uploadMunicipalities(data).then(
-                    function(response){
-                        inform.add("Se ha cargado el ordenamiento.", { type: "success" });
-                        //self.refresh();
-                    }, function(err){
-                        inform.add("Ocurrió un error al guardar el ordenamiento territorial.", {type: "warning"});
-                    }
-                );
+                if( id == 1){
+                    TerritorialService.uploadMunicipalities(data).then(
+                        function(response){
+                            inform.add("Se han cargado los municipios.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar los municipios.", {type: "warning"});
+                        }
+                    );
+                }else if(id == 2){
+                    TerritorialService.uploadAreas(data).then(
+                        function(response){
+                            inform.add("Se han cargado las areas.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
+                        }
+                    );
+                }
+                
             });
         }
 
@@ -1386,6 +1400,13 @@
             return Upload.upload({
                 data: file,
                 url: APP_DEFAULTS.ENDPOINT + "/municipalities/upload"
+            });
+        }
+
+        self.uploadAreas = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/areas/upload"
             });
         }
 

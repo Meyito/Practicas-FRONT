@@ -19,6 +19,13 @@
             });
         }
 
+        self.uploadAreas = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/areas/upload"
+            });
+        }
+
 
     }
 })(angular.module("app"));
