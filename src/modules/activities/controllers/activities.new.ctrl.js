@@ -10,11 +10,11 @@
         "$uibModal",
         "$filter",
         "inform",
-        "PlanService",
+        "ActivitiesService",
         "$state"
     ];
 
-    function NewActivityCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, $state) {
+    function NewActivityCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state) {
 
         var self = this;
 
@@ -68,18 +68,15 @@
                 }
             });
 
-            modalInstance.result.then(function (data) {
-                inform.add("Se han cargado los asistentes correctamente.", { type: "success" });
-                
-                /*PlanService.uploadPlan(data.file, d).then(
+            modalInstance.result.then(function (data) {                
+                ActivitiesService.uploadActivity(data).then(
                     function (response) {
-                        inform.add("Se ha cargado el plan de desarrollo correctamente", { type: "info" });
-                        //Refrescar todos los planes de desarrollo
+                        inform.add("Se ha cargado la actividad correctamente", { type: "info" });
                     }, function (err) {
-                        inform.add("Ocurrió un error al guardar el plan de desarrollo", { type: "warning" });
+                        inform.add("Ocurrió un error al guardar la actividad", { type: "warning" });
                         //Descargar reporte de errores 
                     }
-                );*/
+                );
             });
         }
 

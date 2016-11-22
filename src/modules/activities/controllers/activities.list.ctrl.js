@@ -10,11 +10,11 @@
         "$uibModal", 
         "$filter", 
         "inform",
-        "PlanService",
+        "ActivitiesService",
         "$state"
     ];
 
-    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, $state) {
+    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state) {
 
         var self = this;
 
