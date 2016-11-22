@@ -26,6 +26,13 @@
             });
         }
 
+        self.uploadAdministrativeUnits = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/upload"
+            });
+        }
+
 
     }
 })(angular.module("app"));

@@ -50,8 +50,16 @@
                             inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
                         }
                     );
+                }else if(id == 3){
+                    TerritorialService.uploadAdministrativeUnits(data).then(
+                        function(response){
+                            inform.add("Se han cargado las areas.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
+                        }
+                    );
                 }
-                
             });
         }
 
