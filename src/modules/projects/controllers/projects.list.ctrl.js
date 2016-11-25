@@ -27,6 +27,7 @@
         }
         /* */
 
+        /* Obtiene todos los proyectos del Plan de Desarrollo Actual */
         self.getProjects = function () {
             var params = {
                 page: $scope.configDT.page,
@@ -44,60 +45,39 @@
             )
         }
 
+        /* Descarga el formato para el cargue de Proyectos */
+        self.downloadFormat = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Proyectos.xlsx');
+        }
 
-
-        self.edit = function (proyect, status) {
+        /* Modal para cargar Proyectos de Manera Másiva a traves de un documento de Excel. */
+        self.upload = function () {
             var modalInstance = $uibModal.open({
                 animation: true,
-                ariaLabelledBy: 'Actualizar Proyecto',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/updateProject.modal.html',
+                ariaLabelledBy: 'Cargar Proyectos',
+                ariaDescribedBy: 'cargar-proyecto',
+                templateUrl: 'templates/uploadProjects.modal.html',
                 controller: 'ModalController',
                 controllerAs: 'modalCtrl',
                 resolve: {
-                    data: {
-                        project: {
-                            name: proyect,
-                            description: "Descripción del proyecto",
-                            id: 1,
-                            status: status,
-                            seppi: 123123,
-                            subprogram: {
-                                name: "Educación"
-                            }
-                        }
-                    }
+                    data: {}
                 }
             });
 
             modalInstance.result.then(function (data) {
-
-
-                inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
-
-                /*ProjectsService.updateProject(data, id).then(
+                ProjectsService.uploadProjects(data.file).then(
                     function (response) {
-                        inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
-                        //Refrescar los proyectos
+                        inform.add("Se han cargado los proyectos correctamente", { type: "info" });
+                        self.getProjects();
                     }, function (err) {
-                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                        inform.add("Ocurrió un error al guardar los proyectos", { type: "warning" });
+                        //Descargar reporte de errores 
                     }
-                );*/
+                );
             });
         }
 
-        self.refresh = function () {
-            var params = {
-                relationships: "subprogram"
-            }
-
-            ProjectsService.getProjects(params).then(
-                function (response) {
-                    $scope.projects = response.data;
-                }
-            );
-        }
-
+        /* Modal que permite la creación de 1 nuevo proyecto */
         self.add = function () {
             var modalInstance = $uibModal.open({
                 animation: true,
@@ -119,7 +99,7 @@
                 ProjectsService.addProject(data).then(
                     function (response) {
                         inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
-                        self.refresh();
+                        self.getProjects();
                     }, function (err) {
                         inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
                     }
@@ -127,44 +107,41 @@
             });
         }
 
-        self.downloadFormat = function () {
-            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Proyectos.xlsx');
-        }
-
-        self.upload = function () {
-
+        /* Modal para la actualización de proyectos */
+        self.edit = function (project) {
             var modalInstance = $uibModal.open({
                 animation: true,
-                ariaLabelledBy: 'Cargar Proyectos',
-                ariaDescribedBy: 'cargar-proyecto',
-                templateUrl: 'templates/uploadProjects.modal.html',
-                controller: 'ModalController',
+                ariaLabelledBy: 'Actualizar Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/updateProject.modal.html',
+                controller: 'ModalUpdateProjectCtrl',
                 controllerAs: 'modalCtrl',
                 resolve: {
-                    data: {}
+                    data: {
+                        project: project
+                    }
                 }
             });
 
             modalInstance.result.then(function (data) {
-                ProjectsService.uploadProjects(data.file).then(
+                ProjectsService.updateProject(data, data.project.id).then(
                     function (response) {
-                        inform.add("Se han cargado los proyectos correctamente", { type: "info" });
-                        //Refrescar todos los proyectos
+                        inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
+                        self.getProjects();
                     }, function (err) {
-                        inform.add("Ocurrió un error al guardar los proyectos", { type: "warning" });
-                        //Descargar reporte de errores 
+                        inform.add("Ocurrió un error al actualizar el proyecto", { type: "warning" });
                     }
                 );
             });
         }
 
+        /* Configuración inicial de la vista */
         self.init = function () {
             $scope.dimentions = Dimentions.data;
             $scope.projects = Projects.data;
         }
 
         self.init();
-
 
     }
 })(angular.module("app"));

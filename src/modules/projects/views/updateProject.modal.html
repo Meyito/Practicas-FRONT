@@ -6,7 +6,7 @@
 		<div class="row form-group">
 			<div class="col-sm-4">
 				<label>Codigo SEPPI:</label>
-				<input type="text" ng-model="data.project.seppi" class="form-control" readonly>
+				<input type="text" ng-model="data.project.code" class="form-control" readonly>
 			</div>
 			<div class="col-sm-8">
                 <label> Subprograma</label>
@@ -19,9 +19,9 @@
                 <label>Nombre Proyecto:</label>
                 <input type="text" ng-model="data.project.name" class="form-control" required>
             </div>
-            <div class="col-sm-2" ng-click="data.project.status = !data.project.status">
+            <div class="col-sm-2" ng-click="data.project.s = !data.project.s">
                 <label>Activo:</label>
-                <i class="fa fa-2x text-success" ng-class="data.project.status ? 'fa-toggle-on' : 'fa-toggle-off' "></i>
+                <i class="fa fa-2x text-success" ng-class="data.project.s ? 'fa-toggle-on' : 'fa-toggle-off' "></i>
             </div>
         </div>
 

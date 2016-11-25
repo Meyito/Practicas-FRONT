@@ -21,10 +21,10 @@
         }
 
         self.updateProject = function(data, id){
-            return $hhtp({
+            return $http({
                 method: 'PUT',
                 data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
+                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
             })
         }
 
