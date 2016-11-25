@@ -362,3 +362,9 @@ body{
 #activity-table tr :nth-child(13){
     width: 5%;
 }
+
+.page-select > .label, .limit-select > .label, .buttons > .label{
+    font-size: 12px !important;
+    color: rgba(0,0,0,.54) !important;
+    padding: 0px !important;
+}

@@ -21,24 +21,24 @@
 
 	<div class="row container-bordered-white">
 		<div class="col-lg-12">
-			<div class="table-responsive">
-				<table class="table table-hover" id="projects-table">
-					<thead>
-						<tr>
-							<th>SEPPI</th>
-							<th>Nombre</th>
-							<th>Subprograma</th>
-							<th>Estado</th>
-							<th></th>
+			<md-table-container>
+				<table md-table id="projects-table">
+					<thead md-head md-order="configDT.order">
+						<tr md-row>
+							<th md-column><span>SEPPI</span></th>
+							<th md-column><span>Nombre</span></th>
+							<th md-column>Subprograma</th>
+							<th md-column>Estado</th>
+							<th md-column></th>
 						</tr>
 					</thead>
-					<tbody>
-						<tr ng-repeat="project in projects">
-							<td>{{project.code}}</td>
-							<td>{{project.name}}</td>
-							<td>{{project.subprogram.name}}</td>
-							<td>{{project.status}}</td>
-							<td>
+					<tbody md-body>
+						<tr md-row ng-repeat="project in projects.items">
+							<td md-cell>{{project.code}}</td>
+							<td md-cell>{{project.name}}</td>
+							<td md-cell>{{project.subprogram.name}}</td>
+							<td md-cell>{{project.status}}</td>
+							<td md-cell>
 								<div ng-click="projectsCtrl.edit(project.id , true)">
 									<i class="fa fa-fw fa-pencil-square-o"></i>
 								</div>
@@ -46,17 +46,20 @@
 						</tr>
 					</tbody>
 				</table>
-			</div>
+			</md-table-container>
+
+			<md-table-pagination md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="configDT.limit" md-limit-options="[5, 10, 15]" md-page="configDT.page" md-total="{{projects.count}}"
+				md-on-paginate="projectsCtrl.getProjects" md-page-select="true" ></md-table-pagination>
 		</div>
 	</div>
 	<!-- /.row -->
 
 	<!-- /.row -->
 	<div class="row centered m-10">
-        <p>
-            <button type="button" class="btn btn-success button-md" ng-click="projectsCtrl.upload()">Cargar Proyectos</button>
-            <button type="button" class="btn btn-success button-md" ng-click="projectsCtrl.downloadFormat()">Descargar Formato
+		<p>
+			<button type="button" class="btn btn-success button-md" ng-click="projectsCtrl.upload()">Cargar Proyectos</button>
+			<button type="button" class="btn btn-success button-md" ng-click="projectsCtrl.downloadFormat()">Descargar Formato
             </button>
-        </p>
-    </div>
+		</p>
+	</div>
 </div>

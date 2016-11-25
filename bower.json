@@ -15,7 +15,8 @@
     "ng-file-upload": "^12.2.12",
     "angular-inform": "^0.0.18",
     "angular-daterangepicker": "^0.2.2",
-    "angular-chart.js": "^1.0.3"
+    "angular-chart.js": "^1.0.3",
+    "angular-material-data-table": "^0.10.9"
   },
   "overrides": {
     "font-awesome": {
@@ -32,6 +33,6 @@
     }
   },
   "resolutions": {
-    "angular": "1.5.8"
+    "angular": "^1.5.5"
   }
 }

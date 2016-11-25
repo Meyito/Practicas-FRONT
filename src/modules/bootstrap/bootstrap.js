@@ -12,7 +12,9 @@
         'ngFileUpload',
         'inform',
         'daterangepicker',
-        'chart.js'
+        'chart.js',
+        'ngMaterial',
+        'md.data.table'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
@@ -119,7 +121,10 @@
 
                 Projects: ['ProjectsService', function(ProjectsService){
                     var params = {
-                        relationships: "subprogram"
+                        relationships: "subprogram",
+                        'page': 1,
+                        'items': 12,
+                        'count': true
                     }
                     return ProjectsService.getProjects(params);
                 }]

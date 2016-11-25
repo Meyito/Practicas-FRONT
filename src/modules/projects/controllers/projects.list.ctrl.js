@@ -19,7 +19,34 @@
 
         var self = this;
 
-        self.edit = function(proyect, status){
+        /* Table Config */
+        $scope.configDT = {
+            order: 'SEPPI',
+            limit: 10,
+            page: 1
+        }
+        /* */
+
+        self.getProjects = function () {
+            var params = {
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true,
+                relationships: 'subprogram'
+            }
+
+            ProjectsService.getProjects(params).then(
+                function (response) {
+                    $scope.projects = response.data
+                }, function (err) {
+                    inform.add("Ocurrio un error al cargar los proyectos", { type: 'warning' })
+                }
+            )
+        }
+
+
+
+        self.edit = function (proyect, status) {
             var modalInstance = $uibModal.open({
                 animation: true,
                 ariaLabelledBy: 'Actualizar Proyecto',
@@ -44,7 +71,7 @@
             });
 
             modalInstance.result.then(function (data) {
-                
+
 
                 inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
 
@@ -59,13 +86,13 @@
             });
         }
 
-        self.refresh = function(){
+        self.refresh = function () {
             var params = {
                 relationships: "subprogram"
             }
 
             ProjectsService.getProjects(params).then(
-                function(response){
+                function (response) {
                     $scope.projects = response.data;
                 }
             );
@@ -104,27 +131,27 @@
             $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Proyectos.xlsx');
         }
 
-        self.upload = function(){
-            
+        self.upload = function () {
+
             var modalInstance = $uibModal.open({
                 animation: true,
                 ariaLabelledBy: 'Cargar Proyectos',
                 ariaDescribedBy: 'cargar-proyecto',
-                templateUrl : 'templates/uploadProjects.modal.html',
-                controller : 'ModalController',
+                templateUrl: 'templates/uploadProjects.modal.html',
+                controller: 'ModalController',
                 controllerAs: 'modalCtrl',
-                resolve:{
+                resolve: {
                     data: {}
                 }
             });
 
-            modalInstance.result.then(function(data) {
+            modalInstance.result.then(function (data) {
                 ProjectsService.uploadProjects(data.file).then(
-                    function(response){
-                        inform.add("Se han cargado los proyectos correctamente", {type: "info"});
+                    function (response) {
+                        inform.add("Se han cargado los proyectos correctamente", { type: "info" });
                         //Refrescar todos los proyectos
-                    }, function(err){
-                        inform.add("Ocurrió un error al guardar los proyectos", {type: "warning"});
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar los proyectos", { type: "warning" });
                         //Descargar reporte de errores 
                     }
                 );
