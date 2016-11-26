@@ -24,17 +24,7 @@
             page: 1
         }
 
-        $scope.selectedContractor = {
-            id: 5,
-            first_name: "Angie",
-            contracts: [
-                {
-                    code: 1231,
-                    init_date: "2016-11-12",
-                    end_date: "2016-11-12"
-                }
-            ]
-        };
+        $scope.selectedContractor = {};
 
         self.getContractors = function(){
             var params = {
@@ -54,13 +44,34 @@
         }
 
         self.addContract = function(){
-            
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nuevo Contrato',
+                ariaDescribedBy: 'crear-contrato',
+                templateUrl: 'templates/addContract.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.addContract(data, $scope.selectedContractor.id ).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el contrato", { type: "info" });
+                        $scope.selectedContractor.contracts.push(data);
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el contrato", { type: "warning" });
+                    }
+                );
+            });
         }
 
         self.add = function(){
             var modalInstance = $uibModal.open({
                 animation: true,
-                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaLabelledBy: 'Nuevo Contratista',
                 ariaDescribedBy: 'crear-proyecto',
                 templateUrl: 'templates/addContractor.modal.html',
                 controller: 'ModalController',

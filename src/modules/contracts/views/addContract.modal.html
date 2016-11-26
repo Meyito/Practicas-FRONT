@@ -1,0 +1,41 @@
+<div class="modal-header">
+	<h3 class="modal-title" id="modal-title">Agregar Contrato</h3>
+</div>
+<div class="modal-body" id="modal-body">
+	<form name="contract_form">
+		<div class="form-group">
+			<label>Código del Contrato:</label>
+			<input type="text" ng-model="new_data.code" class="form-control" required>
+		</div>
+
+		<div class="row form-group">
+			<div class="col-sm-6">
+                <label>Fecha de Inicio:</label>
+				<p class="input-group">
+					<input type="text" ng-model="new_data.init_date" class="form-control" show-button-bar="false" uib-datepicker-popup="{{dateComplete}}" 
+                         is-open="status[0]" 
+						date-disabled="disabled(date, mode)" ng-required="true" close-text="Close" required />
+					<span class="input-group-btn">
+                <button type="button" class="btn btn-default" ng-click="open($event, 0)"><i class="glyphicon glyphicon-calendar"></i></button>
+              </span>
+				</p>
+			</div>
+            <div class="col-sm-6">
+                <label>Fecha de Fin:</label>
+				<p class="input-group">
+					<input type="text" ng-model="new_data.end_date" class="form-control" show-button-bar="false" uib-datepicker-popup="{{dateComplete}}" 
+                        is-open="status[1]"
+						date-disabled="disabled(date, mode)" ng-required="true" close-text="Close"  required/>
+					<span class="input-group-btn">
+                <button type="button" class="btn btn-default" ng-click="open($event, 1)"><i class="glyphicon glyphicon-calendar"></i></button>
+              </span>
+				</p>
+			</div>
+		</div>
+	</form>
+
+</div>
+<div class="modal-footer">
+	<button class="btn btn-danger button-sm" type="button" ng-click="modalCtrl.cancel()">Cancelar</button>
+	<button class="btn btn-success button-sm" type="button" ng-click="modalCtrl.save()" ng-disabled="contract_form.$invalid || new_data.end_date < new_data.init_date">Cargar</button>
+</div>

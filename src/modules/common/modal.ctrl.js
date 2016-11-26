@@ -29,8 +29,9 @@
         };
 
         /* Date Pickers */
-        $scope.formats = ['yyyy'];
+        $scope.formats = ['yyyy','dd-MM-yyyy'];
         $scope.yearOnly = $scope.formats[0];
+        $scope.dateComplete = $scope.formats[1];
         $scope.status = [false, false];
 
         $scope.open = function ($event, i) {

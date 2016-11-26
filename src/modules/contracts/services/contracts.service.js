@@ -35,6 +35,14 @@
             })
         }
 
+        self.addContract = function(data, id){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
+            })
+        }
+
         self.getIdentificationTypes = function(params){
             return $http({
                 method: 'GET',
