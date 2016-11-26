@@ -3,211 +3,84 @@
 	<!-- Page Heading -->
 	<div class="row">
 		<div class="col-lg-12">
-			<h2 class="page-header">
+			<h1 class="page-header">
 				Contratistas
-			</h2>
+			</h1>
 		</div>
 	</div>
 	<!-- /.row -->
 
 	<div class="row">
-		<div class="col-lg-12">
+		<div ng-class="!selectedContractor.id ? 'col-lg-12' : 'col-lg-9'">
 			<div class="panel panel-default">
 				<div class="panel-body">
 					<div class="row">
 						<div class="col-lg-12">
 							<div class="m-b-20 m-t-20 pull-right">
-								<button type="button" class="btn btn-success" ng-click="projectsCtrl.add()"><i class="fa fa-fw fa-plus"></i>Nuevo Contratista</button>
+								<button type="button" class="btn btn-success" ng-click="contractsCtrl.add()"><i class="fa fa-fw fa-plus"></i>Nuevo Contratista</button>
 							</div>
 						</div>
 					</div>
 					<div class="col-lg-12">
-						<div class="table-responsive">
-							<table class="table table-hover" id="activity-table">
-								<thead>
-									<tr>
-                                        <th># Identificación</th>
-										<th>Nombre</th>
-										<th>Apellidos</th>
-										<th># Contrato</th>
-										<th>Fecha Inicio</th>
-										<th>Fecha Fin</th>
-										<th></th>
+						<md-table-container>
+							<table md-table>
+								<thead md-head>
+									<tr md-row>
+										<th md-column><span>Tipo de Identificación</span></th>
+										<th md-column><span>Número de Documento</span></th>
+										<th md-column>Nombre</th>
+										<th md-column>Apellido</th>
+										<th md-column></th>
 									</tr>
 								</thead>
-								<tbody>
-									<tr ng-repeat="assistant in assistants">
-										<td>{{ assistant.first_name}} {{ assistant.middle_name }}</td>
-										<td>{{ assistant.last_name }} {{ assistant.second_last_name }}</td>
-										<td>{{ assistant.age }}</td>
-										<td>{{ assistant.td }}</td>
-										<td>{{ assistant.document }}</td>
-										<td>{{ assistant.gender }}</td>
-										<td>
-											<div ng-click="newActCtrl.deleteAssistant($index)">
-												<i class="fa fa-fw fa-close"></i>
+								<tbody md-body>
+									<tr md-row ng-repeat="contractor in contractors.items" ng-click="contractsCtrl.selectContractor(contractor)">
+										<td md-cell>{{contractor.identification_type.name}}</td>
+										<td md-cell>{{contractor.identification_number}}</td>
+										<td md-cell>{{contractor.first_name}}</td>
+										<td md-cell>{{contractor.last_name}}</td>
+										<td md-cell>
+											<div ng-click="contractsCtrl.edit(contractor)">
+												<i class="fa fa-fw fa-pencil-square-o"></i>
 											</div>
 										</td>
 									</tr>
 								</tbody>
 							</table>
-						</div>
+						</md-table-container>
+
+						<md-table-pagination md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="configDT.limit" md-limit-options="[10]"
+							md-page="configDT.page" md-total="{{contractors.count}}" md-on-paginate="projectsCtrl.getProjects" md-page-select="false"></md-table-pagination>
 					</div>
 
 				</div>
 			</div>
 
 		</div>
-	</div>
 
-	<div class="row" ng-show="saved">
-		<div class="col-lg-12">
+		<div class="col-lg-3" ng-show="selectedContractor.id">
 			<div class="panel panel-default">
-				<div class="panel-heading">
-					<h3 class="panel-title"><i class="fa fa-user fa-fw"></i> Registro Asistente </h3>
-				</div>
 				<div class="panel-body">
-					<form name="assistant_form">
-						<div class="row">
-							<div class="form-group col-lg-6">
-								<label>Primer Nombre</label>
-								<input type="text" ng-model="new_activity.first_name" class="form-control" required>
-							</div>
-
-							<div class="form-group col-lg-6">
-								<label>Segundo Nombre</label>
-								<input type="text" ng-model="new_activity.middle_name" class="form-control" required>
-							</div>
-
-							<div class="form-group col-lg-6">
-								<label>Primer Apellido</label>
-								<input type="text" ng-model="new_activity.last_name" class="form-control" required>
-							</div>
-
-							<div class="form-group col-lg-6">
-								<label>Segundo Apellido</label>
-								<input type="text" ng-model="new_activity.second_last_name" class="form-control" required>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Edad</label>
-								<input type="number" ng-model="new_activity.age" min="0" max="150" class="form-control" required>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Tipo Documento</label>
-								<select class="form-control" ng-model="new_activity.td" required>
-                                <option value="NUI">NUI</option>
-                                <option value="RC">RC</option>
-                                <option value="TI">TI</option>
-                                <option value="CC">CC</option>
-                                <option value="CE">CE</option>
-                                <option value="PA">PA</option>
-                                <option value="SD">SD</option>
-							</select>
-							</div>
-
-							<div class="form-group col-lg-6">
-								<label> Número Documento</label>
-								<input type="text" ng-model="new_activity.document" class="form-control" required>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Género</label>
-								<select class="form-control" ng-model="new_activity.gender" required>
-                                <option value="M">Masculino</option>
-                                <option value="F">Femenino</option>
-                                <option value="LGBTI">LGBTI</option>
-							</select>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Condición Especial</label>
-								<select class="form-control" ng-model="new_activity.ce" required>
-                                <option value="NA">No Aplica</option>
-                                <option value="I">I</option>
-                                <option value="R">R</option>
-                                <option value="O">O</option>
-							</select>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Grupo Étnico</label>
-								<select class="form-control" ng-model="new_activity.eg" required>
-                                <option value="NA">No Aplica</option>
-                                <option value="I">Indígena</option>
-                                <option value="A">Afrodescendiente</option>
-                                <option value="R">Raizal</option>
-							</select>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Tipo Víctima</label>
-								<select class="form-control" ng-model="new_activity.tv" required>
-                                <option value="NA">No Aplica</option>
-                                <option value="O">Otra</option>
-							</select>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Discpacidad Mental</label>
-								<select class="form-control" ng-model="new_activity.dm" required>
-                                <option value="NA">No Aplica</option>
-                                <option value="0">0</option>
-                                <option value="1">1</option>
-							</select>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Discpacidad Motriz</label>
-								<select class="form-control" ng-model="new_activity.dmm" required>
-                                <option value="00">00</option>
-                                <option value="01">01</option>
-                                <option value="02">02</option>
-                                <option value="10">10</option>
-                                <option value="11">11</option>
-                                <option value="12">12</option>
-                                <option value="20">20</option>
-                                <option value="21">21</option>
-                                <option value="22">22</option>
-							</select>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Discpacidad Visual</label>
-								<select class="form-control" ng-model="new_activity.dv" required>
-                                <option value="NA">No Aplica</option>
-                                <option value="0">0</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-							</select>
-							</div>
-
-							<div class="form-group col-lg-3">
-								<label>Discpacidad Auditiva</label>
-								<select class="form-control" ng-model="new_activity.da" required>
-                                <option value="NA">No Aplica</option>
-                                <option value="0">0</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-							</select>
-							</div>
+					<div class="row m-0">
+						<h4>Contratos de {{selectedContractor.first_name}} {{selectedContractor.last_name}}</h4>
+					</div>
+					<div class="row m-b-10 m-r-0">
+						<div class="pull-right">
+							<button type="button" class="btn btn-link" ng-click="contractsCtrl.addContract()">Nuevo Contrato</button>
 						</div>
-						<div class="row centered">
-							<p>
-								<button type="button" class="btn btn-success btn-md" ng-click="newActCtrl.upload()">Cargar Asistentes</button>
-								<button type="button" class="btn btn-success btn-md" ng-click="newActCtrl.addAssistant()" ng-disabled="assistant_form.$invalid">Agregar Asistente</button>
-							</p>
-
+					</div>
+					<div>
+						<div class="list-group">
+							<a class="list-group-item" ng-repeat="contract in selectedContractor.contracts">
+								<h5 class="list-group-item-heading">Contrato #{{contract.code}}</h5>
+								<p class="list-group-item-text"><i class="fa fa-calendar fa-fw"></i> Inicio: {{contract.init_date | date:'dd-MM-yyyy'}}</p>
+								<p class="list-group-item-text"><i class="fa fa-calendar fa-fw"></i> Fin: {{contract.end_date | date:'dd-MM-yyyy'}}</p>
+							</a>
 						</div>
-					</form>
-
+					</div>
 				</div>
+
 			</div>
-
 		</div>
+		<!-- /.row -->
 	</div>
-
-
-	<!-- /.row -->
-</div>

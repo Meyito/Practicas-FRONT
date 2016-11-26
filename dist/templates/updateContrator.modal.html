@@ -1,0 +1,34 @@
+<div class="modal-header">
+	<h3 class="modal-title" id="modal-title">Agregar Contratista</h3>
+</div>
+<div class="modal-body" id="modal-body">
+	<form name="new_contractor">
+		<div class="row form-group">
+			<div class="col-sm-6">
+				<label>Tipo de Identificación</label>
+				<select class="form-control" ng-model="data.contractor.identification_type_id" required>
+					<option ng-repeat="document in data.identificationTypes" ng-value="document.id">{{document.name}}</option>
+				</select>
+			</div>
+			<div class="col-sm-6">
+				<label>Número de Identificación</label>
+				<input type="text" ng-model="data.contractor.identification_number" class="form-control" required>
+			</div>
+		</div>
+
+		<div class="row form-group">
+			<div class="col-sm-6">
+				<label>Nombre</label>
+				<input type="text" ng-model="data.contractor.first_name" class="form-control" required>
+			</div>
+			<div class="col-sm-6">
+				<label>Apellido</label>
+				<input type="text" ng-model="data.contractor.last_name" class="form-control" required>
+			</div>
+		</div>
+	</form>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-danger button-sm" type="button" ng-click="modalCtrl.cancel()">Cancelar</button>
+	<button class="btn btn-success button-sm" type="button" ng-click="modalCtrl.update()" ng-disabled="new_contractor.$invalid">Guardar</button>
+</div>

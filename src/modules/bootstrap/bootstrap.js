@@ -123,7 +123,7 @@
                     var params = {
                         relationships: "subprogram",
                         'page': 1,
-                        'items': 12,
+                        'items': 10,
                         'count': true
                     }
                     return ProjectsService.getProjects(params);
@@ -182,6 +182,21 @@
                     templateUrl: "templates/contracts.list.html",
                     controller: "ContractsCtrl as contractsCtrl"
                 }
+            },
+            resolve: {
+                IdentificationTypes: ['ContractsService', function (ContractsService) {
+                    var params = {}
+                    return ContractsService.getIdentificationTypes(params);
+                }],
+                Contractors: ['ContractsService', function (ContractsService) {
+                    var params = {
+                        relationships: 'contracts,identification_type',
+                        'page': 1,
+                        'items': 15,
+                        'count': true
+                    }
+                    return ContractsService.getContractors(params);
+                }]     
             }
         });
 

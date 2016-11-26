@@ -123,7 +123,7 @@
                     var params = {
                         relationships: "subprogram",
                         'page': 1,
-                        'items': 12,
+                        'items': 10,
                         'count': true
                     }
                     return ProjectsService.getProjects(params);
@@ -182,6 +182,21 @@
                     templateUrl: "templates/contracts.list.html",
                     controller: "ContractsCtrl as contractsCtrl"
                 }
+            },
+            resolve: {
+                IdentificationTypes: ['ContractsService', function (ContractsService) {
+                    var params = {}
+                    return ContractsService.getIdentificationTypes(params);
+                }],
+                Contractors: ['ContractsService', function (ContractsService) {
+                    var params = {
+                        relationships: 'contracts,identification_type',
+                        'page': 1,
+                        'items': 15,
+                        'count': true
+                    }
+                    return ContractsService.getContractors(params);
+                }]     
             }
         });
 
@@ -514,6 +529,34 @@
 (function (module) {
     'use strict';
 
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function NavigationCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+        }
+
+        self.logOut = function(){
+            $state.go("login");
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
     module.controller("AnalyticsCtrl", AnalyticsCtrl);
 
     AnalyticsCtrl.$inject = [
@@ -615,34 +658,6 @@
 (function (module) {
     'use strict';
 
-    module.controller("NavigationCtrl", NavigationCtrl);
-
-    NavigationCtrl.$inject = [
-        "$scope",
-        "$state"
-    ];
-
-    function NavigationCtrl($scope, $state) {
-
-        var self = this;
-
-        $scope.active = "";
-
-        self.init = function() {
-            $scope.active = $state.current.data.state;
-        }
-
-        self.logOut = function(){
-            $state.go("login");
-        }
-
-        self.init();
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
     module.controller("ContractsCtrl", ContractsCtrl);
 
     ContractsCtrl.$inject = [
@@ -652,14 +667,115 @@
         "$uibModal", 
         "$filter", 
         "inform",
-        "PlanService"
+        "IdentificationTypes",
+        "ContractsService",
+        "Contractors"
     ];
 
-    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, IdentificationTypes, ContractsService, Contractors) {
 
         var self = this;
 
+        $scope.configDT = {
+            limit: 15,
+            page: 1
+        }
+
+        $scope.selectedContractor = {
+            id: 5,
+            first_name: "Angie",
+            contracts: [
+                {
+                    code: 1231,
+                    init_date: "2016-11-12",
+                    end_date: "2016-11-12"
+                }
+            ]
+        };
+
+        self.getContractors = function(){
+            var params = {
+                relationships: 'contracts,identification_type',
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true
+            };
+
+            ContractsService.getContractors(params).then(
+                function(response){
+                    $scope.contractors = response.data;
+                }, function (err){
+                    inform.add("Ocurrió un error al consultar los contratistas", {type: "warning"});
+                }
+            );
+        }
+
+        self.addContract = function(){
+            
+        }
+
+        self.add = function(){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/addContractor.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        identificationTypes: $scope.identificationTypes
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.addContractor(data).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el contratista", { type: "info" });
+                        self.getContractors();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.edit = function(contractor){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/updateContrator.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        identificationTypes: $scope.identificationTypes,
+                        contractor: contractor
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.updateContractor(data, data.contractor.id).then(
+                    function (response) {
+                        inform.add("Se ha actualizado correctamente el contratista", { type: "info" });
+                        self.getContractors();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al actualizar el contratista", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.selectContractor = function(contractor){
+            $scope.selectedContractor = contractor;
+        }
+
         self.init = function () {
+            $scope.identificationTypes = IdentificationTypes.data;
+            $scope.contractors = Contractors.data;
         }
 
         self.init();
@@ -668,6 +784,53 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ContractsService", ContractsService);
+
+    ContractsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function ContractsService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.addContractor = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.getContractors = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.updateContractor = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
+            })
+        }
+
+        self.getIdentificationTypes = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
+            })
+        }
+
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
