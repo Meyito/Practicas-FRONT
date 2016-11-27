@@ -321,6 +321,215 @@
 (function (module) {
     'use strict';
 
+    module.controller("ActivitiesCtrl", ActivitiesCtrl);
+
+    ActivitiesCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "ActivitiesService",
+        "$state"
+    ];
+
+    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state) {
+
+        var self = this;
+
+        $scope.expanded = false;
+
+        $scope.datePicker = {
+            date: { startDate: null, endDate: null }
+        } 
+
+        $scope.development_plans = [
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2016,
+                end_year: 2019
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2012,
+                end_year: 2015
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2008,
+                end_year: 2011
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2008,
+                end_year: 2011
+            }
+        ]
+
+        $scope.activities = [
+            {
+                date: "09-12-2015",
+                count: 50,
+                place: "San Calixto",
+                contratista: "Javier Plazas",
+                subprogram: "El nombre de un suprograma algo largo solo para probar",
+                goal: "100% cumplido, meta larga para probar, ajustes de CSS"
+            },
+            {
+                date: "09-12-2015",
+                count: 80,
+                place: "Bochalema",
+                contratista: "Andres Rodriguez",
+                subprogram: "Subprograma 2",
+                goal: "Apoyar el desarrollo de "
+            },
+        ];
+
+        self.statistics = function(){
+            $state.go("statistics");
+        }
+
+        self.newActivity = function(){
+            $state.go("new-activity");
+        }
+
+        self.search = function(){
+
+        }
+
+        self.init = function() {
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("NewActivityCtrl", NewActivityCtrl);
+
+    NewActivityCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "ActivitiesService",
+        "$state"
+    ];
+
+    function NewActivityCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state) {
+
+        var self = this;
+
+        $scope.dateOptions = {
+            formatYear: 'yy',
+            maxDate: new Date(2020, 5, 22),
+            minDate: new Date(2000, 1, 1),
+            startingDay: 1
+        };
+
+        $scope.popup1 = {
+            opened: false
+        };
+
+        $scope.open1 = function () {
+            $scope.popup1.opened = true;
+        };
+
+        $scope.assistants = [];
+        $scope.new_activity = {};
+
+
+        self.saveActivity = function () {
+            $scope.saved = true;
+            inform.add("Se ha creado la nueva actividad", { type: "success" });
+        }
+
+        self.addAssistant = function () {
+            $scope.assistants.push($scope.new_activity);
+            $scope.new_activity = {};
+        }
+
+        self.saveAssistants = function () {
+            inform.add("Se han guardado los asistentes a la actividad", { type: "success" });
+        }
+
+        self.deleteAssistant = function (id) {
+            $scope.assistants.splice(id, 1);
+        }
+
+        self.upload = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Asistentes',
+                ariaDescribedBy: 'cargar-asistentes',
+                templateUrl: 'templates/assistants.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {                
+                ActivitiesService.uploadActivity(data).then(
+                    function (response) {
+                        inform.add("Se ha cargado la actividad correctamente", { type: "info" });
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar la actividad", { type: "warning" });
+                        //Descargar reporte de errores 
+                    }
+                );
+            });
+        }
+
+
+        self.init = function () {
+            $scope.saved = false;
+            //$scope.saved = true;
+        }
+
+        self.init();
+
+
+
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ActivitiesService", ActivitiesService);
+
+    ActivitiesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadActivity = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+            });
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
     module.controller("AnalyticsCtrl", AnalyticsCtrl);
 
     AnalyticsCtrl.$inject = [
@@ -450,6 +659,201 @@
 (function (module) {
     'use strict';
 
+    module.controller("ContractsCtrl", ContractsCtrl);
+
+    ContractsCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "IdentificationTypes",
+        "ContractsService",
+        "Contractors"
+    ];
+
+    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, IdentificationTypes, ContractsService, Contractors) {
+
+        var self = this;
+
+        $scope.configDT = {
+            limit: 15,
+            page: 1
+        }
+
+        $scope.selectedContractor = {};
+
+        self.getContractors = function(){
+            var params = {
+                relationships: 'contracts,identification_type',
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true
+            };
+
+            ContractsService.getContractors(params).then(
+                function(response){
+                    $scope.contractors = response.data;
+                }, function (err){
+                    inform.add("Ocurrió un error al consultar los contratistas", {type: "warning"});
+                }
+            );
+        }
+
+        self.addContract = function(){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nuevo Contrato',
+                ariaDescribedBy: 'crear-contrato',
+                templateUrl: 'templates/addContract.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.addContract(data, $scope.selectedContractor.id ).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el contrato", { type: "info" });
+                        $scope.selectedContractor.contracts.push(data);
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el contrato", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.add = function(){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nuevo Contratista',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/addContractor.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        identificationTypes: $scope.identificationTypes
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.addContractor(data).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el contratista", { type: "info" });
+                        self.getContractors();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.edit = function(contractor){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/updateContrator.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        identificationTypes: $scope.identificationTypes,
+                        contractor: contractor
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.updateContractor(data, data.contractor.id).then(
+                    function (response) {
+                        inform.add("Se ha actualizado correctamente el contratista", { type: "info" });
+                        self.getContractors();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al actualizar el contratista", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.selectContractor = function(contractor){
+            $scope.selectedContractor = contractor;
+        }
+
+        self.init = function () {
+            $scope.identificationTypes = IdentificationTypes.data;
+            $scope.contractors = Contractors.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ContractsService", ContractsService);
+
+    ContractsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function ContractsService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.addContractor = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.getContractors = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.updateContractor = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
+            })
+        }
+
+        self.addContract = function(data, id){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
+            })
+        }
+
+        self.getIdentificationTypes = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
     module.controller("LoginCtrl", LoginCtrl);
 
     LoginCtrl.$inject = [
@@ -477,6 +881,178 @@
     }
 })(angular.module("app"));
 
+(function (module) {
+    'use strict';
+
+    module.controller("PlanDetailCtrl", PlanDetailCtrl);
+
+    PlanDetailCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "PlanService",
+        "DevelopmentPlans"
+    ];
+
+    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, DevelopmentPlans) {
+
+        var self = this;
+
+        $scope.active = true;
+
+        /*$scope.plan = {
+            slogan: "Un norte productivo para todos",
+            init_year: 2016,
+            end_year: 2019,
+            dimensions: [{
+                name: "Social",
+                axes: [
+                    {
+                        name: "Eje 1",
+                        programs: [
+                            {
+                                total: 4, //cantidad total de metas de ese programa
+                                name: "Programa 1",
+                                subprograms:[
+                                    {
+                                        name: "subprograma 1",
+                                        goals: [
+                                            {
+                                                name: "meta 1"
+                                            },
+                                            {
+                                                name: "meta 2"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        name: "subprograma 2",
+                                        goals: [
+                                            {
+                                                name: "meta 3"
+                                            },
+                                            {
+                                                name: "meta 4"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }]
+        }
+
+        $scope.plans = [
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2016,
+                end_year: 2019
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2012,
+                end_year: 2015
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2008,
+                end_year: 2011
+            },
+            {
+                slogan: "un norte productivo para todos",
+                init_year: 2008,
+                end_year: 2011
+            }
+        ]*/
+
+
+        
+        self.selectPlan = function () {
+            
+        }
+        
+        self.uploadPlan = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Plan de Desarrollo',
+                ariaDescribedBy: 'cargar-plan',
+                templateUrl : 'templates/uploadPlan.modal.html',
+                controller : 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve:{
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function(data) {
+                var d = {                    
+                    name: data.name,
+                    init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
+                    end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
+                }
+
+                PlanService.uploadPlan(data.file, d).then(
+                    function(response){
+                        inform.add("Se ha cargado el plan de desarrollo correctamente", {type: "info"});
+                        //Refrescar todos los planes de desarrollo
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar el plan de desarrollo", {type: "warning"});
+                        //Descargar reporte de errores 
+                    }
+                );
+            });
+        }
+        
+        self.downloadFormat = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Plan_Desarrollo.xlsx');
+        }
+
+        self.init = function () {
+            $scope.plans = DevelopmentPlans.data;
+            $scope.plan = $scope.plans[ $scope.plans.length - 1 ];
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("PlanService", PlanService);
+
+    PlanService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function PlanService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadPlan = function(file, data){
+            return Upload.upload({
+                data: {file: file, data: data},
+                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
+            });
+        }
+
+        self.getPlans = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/development-plans"
+            });
+        }
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -707,385 +1283,59 @@
     }
 })(angular.module("app"));
 
-(function (module) {
-    'use strict';
-
-    module.controller("ActivitiesCtrl", ActivitiesCtrl);
-
-    ActivitiesCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
-        "inform",
-        "ActivitiesService",
-        "$state"
-    ];
-
-    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state) {
-
-        var self = this;
-
-        $scope.expanded = false;
-
-        $scope.datePicker = {
-            date: { startDate: null, endDate: null }
-        } 
-
-        $scope.development_plans = [
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2016,
-                end_year: 2019
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2012,
-                end_year: 2015
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            }
-        ]
-
-        $scope.activities = [
-            {
-                date: "09-12-2015",
-                count: 50,
-                place: "San Calixto",
-                contratista: "Javier Plazas",
-                subprogram: "El nombre de un suprograma algo largo solo para probar",
-                goal: "100% cumplido, meta larga para probar, ajustes de CSS"
-            },
-            {
-                date: "09-12-2015",
-                count: 80,
-                place: "Bochalema",
-                contratista: "Andres Rodriguez",
-                subprogram: "Subprograma 2",
-                goal: "Apoyar el desarrollo de "
-            },
-        ];
-
-        self.statistics = function(){
-            $state.go("statistics");
-        }
-
-        self.newActivity = function(){
-            $state.go("new-activity");
-        }
-
-        self.search = function(){
-
-        }
-
-        self.init = function() {
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
 
 (function (module) {
-    'use strict';
+    module.service("ProjectsService", ProjectsService);
 
-    module.controller("NewActivityCtrl", NewActivityCtrl);
-
-    NewActivityCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
-        "$filter",
-        "inform",
-        "ActivitiesService",
-        "$state"
-    ];
-
-    function NewActivityCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state) {
-
-        var self = this;
-
-        $scope.dateOptions = {
-            formatYear: 'yy',
-            maxDate: new Date(2020, 5, 22),
-            minDate: new Date(2000, 1, 1),
-            startingDay: 1
-        };
-
-        $scope.popup1 = {
-            opened: false
-        };
-
-        $scope.open1 = function () {
-            $scope.popup1.opened = true;
-        };
-
-        $scope.assistants = [];
-        $scope.new_activity = {};
-
-
-        self.saveActivity = function () {
-            $scope.saved = true;
-            inform.add("Se ha creado la nueva actividad", { type: "success" });
-        }
-
-        self.addAssistant = function () {
-            $scope.assistants.push($scope.new_activity);
-            $scope.new_activity = {};
-        }
-
-        self.saveAssistants = function () {
-            inform.add("Se han guardado los asistentes a la actividad", { type: "success" });
-        }
-
-        self.deleteAssistant = function (id) {
-            $scope.assistants.splice(id, 1);
-        }
-
-        self.upload = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Cargar Asistentes',
-                ariaDescribedBy: 'cargar-asistentes',
-                templateUrl: 'templates/assistants.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function (data) {                
-                ActivitiesService.uploadActivity(data).then(
-                    function (response) {
-                        inform.add("Se ha cargado la actividad correctamente", { type: "info" });
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar la actividad", { type: "warning" });
-                        //Descargar reporte de errores 
-                    }
-                );
-            });
-        }
-
-
-        self.init = function () {
-            $scope.saved = false;
-            //$scope.saved = true;
-        }
-
-        self.init();
-
-
-
-
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("PlanDetailCtrl", PlanDetailCtrl);
-
-    PlanDetailCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
-        "inform",
-        "PlanService",
-        "DevelopmentPlans"
-    ];
-
-    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, DevelopmentPlans) {
-
-        var self = this;
-
-        $scope.active = true;
-
-        /*$scope.plan = {
-            slogan: "Un norte productivo para todos",
-            init_year: 2016,
-            end_year: 2019,
-            dimensions: [{
-                name: "Social",
-                axes: [
-                    {
-                        name: "Eje 1",
-                        programs: [
-                            {
-                                total: 4, //cantidad total de metas de ese programa
-                                name: "Programa 1",
-                                subprograms:[
-                                    {
-                                        name: "subprograma 1",
-                                        goals: [
-                                            {
-                                                name: "meta 1"
-                                            },
-                                            {
-                                                name: "meta 2"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        name: "subprograma 2",
-                                        goals: [
-                                            {
-                                                name: "meta 3"
-                                            },
-                                            {
-                                                name: "meta 4"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }]
-        }
-
-        $scope.plans = [
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2016,
-                end_year: 2019
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2012,
-                end_year: 2015
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            }
-        ]*/
-
-
-        
-        self.selectPlan = function () {
-            
-        }
-        
-        self.uploadPlan = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Cargar Plan de Desarrollo',
-                ariaDescribedBy: 'cargar-plan',
-                templateUrl : 'templates/uploadPlan.modal.html',
-                controller : 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve:{
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function(data) {
-                var d = {                    
-                    name: data.name,
-                    init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
-                    end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
-                }
-
-                PlanService.uploadPlan(data.file, d).then(
-                    function(response){
-                        inform.add("Se ha cargado el plan de desarrollo correctamente", {type: "info"});
-                        //Refrescar todos los planes de desarrollo
-                    }, function(err){
-                        inform.add("Ocurrió un error al guardar el plan de desarrollo", {type: "warning"});
-                        //Descargar reporte de errores 
-                    }
-                );
-            });
-        }
-        
-        self.downloadFormat = function () {
-            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Plan_Desarrollo.xlsx');
-        }
-
-        self.init = function () {
-            $scope.plans = DevelopmentPlans.data;
-            $scope.plan = $scope.plans[ $scope.plans.length - 1 ];
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-
-(function (module) {
-    module.service("ActivitiesService", ActivitiesService);
-
-    ActivitiesService.$inject = [
+    ProjectsService.$inject = [
         "$http",
         "$q",
         "APP_DEFAULTS",
         "Upload"
     ];
 
-    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        self.uploadActivity = function(file){
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
+            })
+        }
+
+        self.uploadProjects = function(file){
             return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+                data: {file: file},
+                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
             });
         }
 
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("PlanService", PlanService);
-
-    PlanService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function PlanService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadPlan = function(file, data){
-            return Upload.upload({
-                data: {file: file, data: data},
-                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
-            });
-        }
-
-        self.getPlans = function(params){
+        self.getProjects = function(params){
             return $http({
                 method: 'GET',
                 params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/development-plans"
-            });
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
         }
+
+        self.getDimentions = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
+            })
+        }
+
     }
 })(angular.module("app"));
 (function (module) {
@@ -1151,6 +1401,37 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("SecretariesService", SecretariesService);
+
+    SecretariesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.getSecretaries = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+
+        self.saveSecretary = function(data){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1288,146 +1569,6 @@
 (function (module) {
     'use strict';
 
-    module.controller("ContractsCtrl", ContractsCtrl);
-
-    ContractsCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
-        "inform",
-        "IdentificationTypes",
-        "ContractsService",
-        "Contractors"
-    ];
-
-    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, IdentificationTypes, ContractsService, Contractors) {
-
-        var self = this;
-
-        $scope.configDT = {
-            limit: 15,
-            page: 1
-        }
-
-        $scope.selectedContractor = {};
-
-        self.getContractors = function(){
-            var params = {
-                relationships: 'contracts,identification_type',
-                page: $scope.configDT.page,
-                items: $scope.configDT.limit,
-                count: true
-            };
-
-            ContractsService.getContractors(params).then(
-                function(response){
-                    $scope.contractors = response.data;
-                }, function (err){
-                    inform.add("Ocurrió un error al consultar los contratistas", {type: "warning"});
-                }
-            );
-        }
-
-        self.addContract = function(){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nuevo Contrato',
-                ariaDescribedBy: 'crear-contrato',
-                templateUrl: 'templates/addContract.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ContractsService.addContract(data, $scope.selectedContractor.id ).then(
-                    function (response) {
-                        inform.add("Se ha guardado correctamente el contrato", { type: "info" });
-                        $scope.selectedContractor.contracts.push(data);
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el contrato", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        self.add = function(){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nuevo Contratista',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/addContractor.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        identificationTypes: $scope.identificationTypes
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ContractsService.addContractor(data).then(
-                    function (response) {
-                        inform.add("Se ha guardado correctamente el contratista", { type: "info" });
-                        self.getContractors();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        self.edit = function(contractor){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Crear Nuevo Proyecto',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/updateContrator.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        identificationTypes: $scope.identificationTypes,
-                        contractor: contractor
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ContractsService.updateContractor(data, data.contractor.id).then(
-                    function (response) {
-                        inform.add("Se ha actualizado correctamente el contratista", { type: "info" });
-                        self.getContractors();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al actualizar el contratista", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        self.selectContractor = function(contractor){
-            $scope.selectedContractor = contractor;
-        }
-
-        self.init = function () {
-            $scope.identificationTypes = IdentificationTypes.data;
-            $scope.contractors = Contractors.data;
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
     module.controller("TerritorialCtrl", TerritorialCtrl);
 
     TerritorialCtrl.$inject = [
@@ -1537,146 +1678,5 @@
         }
 
 
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("ProjectsService", ProjectsService);
-
-    ProjectsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.addProject = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
-            })
-        }
-
-        self.uploadProjects = function(file){
-            return Upload.upload({
-                data: {file: file},
-                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
-            });
-        }
-
-        self.getProjects = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.getDimentions = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
-            })
-        }
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("ContractsService", ContractsService);
-
-    ContractsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS"
-    ];
-
-    function ContractsService($http, $q, APP_DEFAULTS) {
-        var self = this;
-
-        self.addContractor = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.getContractors = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.updateContractor = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
-            })
-        }
-
-        self.addContract = function(data, id){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
-            })
-        }
-
-        self.getIdentificationTypes = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
-            })
-        }
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("SecretariesService", SecretariesService);
-
-    SecretariesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.getSecretaries = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.saveSecretary = function(data){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
     }
 })(angular.module("app"));
