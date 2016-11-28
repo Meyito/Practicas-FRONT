@@ -19,5 +19,13 @@
             });
         }
 
+        self.getActivities = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
+            })
+        }
+
     }
 })(angular.module("app"));

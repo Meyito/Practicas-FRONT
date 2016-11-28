@@ -268,6 +268,51 @@
                     templateUrl: "templates/activities.list.html",
                     controller: "ActivitiesCtrl as actCtrl"
                 }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
+            }
+        });
+
+        //Estadística de una Actividad
+        stateHelperProvider.state({
+            name: 'activity-statistics',
+            url: '/actividades/{id}/estadistica',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@activity-statistics': {
+                    templateUrl: "templates/empty.html",
+                    //controller: "ActivitiesCtrl as actCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
             }
         });
 
@@ -354,113 +399,6 @@
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("ActivitiesService", ActivitiesService);
-
-    ActivitiesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadActivity = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
-            });
-        }
-
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("AnalyticsCtrl", AnalyticsCtrl);
-
-    AnalyticsCtrl.$inject = [
-        "$scope",
-        "AnalyticsService",
-        '$interval',
-        '$filter'
-    ];
-
-    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
-
-        var self = this;
-
-        self.graphs = {
-            zones: [],
-            time: [],
-            labels: [],
-            speed: [],
-            count: [],
-            avg_speed: [],
-            acum: []
-        }
-
-        self.paint = function () {
-
-        }
-
-        self.randomData = function () {
-            var i, s;
-            for (i = 0; i < self.graphs.zones.length; i++) {
-                if (i == 0) {
-                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
-                    self.graphs.time.push(s);
-                    self.graphs.labels.push($filter('date')(s, "medium"));
-                }
-                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
-                s = Math.random() * 200 + 1;
-                self.graphs.speed[i].push(s);
-                self.graphs.acum[i] += s;
-                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
-            }
-
-            console.log(self.graphs);
-        }
-
-        self.parseData = function (data) {
-            var i;
-            for (i = 0; i < data.length; i++) {
-                if (i == 0) {
-                    self.graphs.time.push(data[i].data.time);
-                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
-                }
-                self.graphs.zones.push(data[i].zoneId);
-                var speed = [];
-                speed[0] = data[i].data.speed;
-                self.graphs.speed.push(speed);
-                self.graphs.avg_speed.push(data[i].data.speed);
-                self.graphs.acum.push(data[i].data.speed);
-                self.graphs.count.push(data[i].data.count);
-            }
-            console.log(self.graphs);
-        }
-
-        self.init = function () {
-            AnalyticsService.getData().then(
-                function (response) {
-                    self.parseData(response.data);
-                    $interval(function () {
-                        self.randomData();
-                    },3000);
-                }
-            );
-        }
-
-        self.init();
-
-
-
-    }
-})(angular.module("app"));
-
 (function (module) {
     'use strict';
 
@@ -474,74 +412,112 @@
         "$filter", 
         "inform",
         "ActivitiesService",
-        "$state"
+        "$state",
+        "DevelopmentPlans",
+        "GenericFilters"
     ];
 
-    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state) {
+    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state, DevelopmentPlans, GenericFilters) {
 
         var self = this;
 
         $scope.expanded = false;
+        $scope.dimention = {};
+        $scope.axe = {};
+        $scope.secretary = -1;
+        $scope.subprogram = -1;
+        $scope.program = {};
 
-        $scope.datePicker = {
-            date: { startDate: null, endDate: null }
-        } 
-
-        $scope.development_plans = [
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2016,
-                end_year: 2019
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2012,
-                end_year: 2015
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            }
-        ]
-
-        $scope.activities = [
-            {
-                date: "09-12-2015",
-                count: 50,
-                place: "San Calixto",
-                contratista: "Javier Plazas",
-                subprogram: "El nombre de un suprograma algo largo solo para probar",
-                goal: "100% cumplido, meta larga para probar, ajustes de CSS"
-            },
-            {
-                date: "09-12-2015",
-                count: 80,
-                place: "Bochalema",
-                contratista: "Andres Rodriguez",
-                subprogram: "Subprograma 2",
-                goal: "Apoyar el desarrollo de "
-            },
-        ];
-
-        self.statistics = function(){
-            $state.go("statistics");
+        self.statistics = function(id){
+            $state.go("activity-statistics", {id: id});
         }
 
         self.newActivity = function(){
             $state.go("new-activity");
         }
 
-        self.search = function(){
+        self.parse = function(){
+            $scope.subprogram = -1;
+            $scope.program = {};
+            var i;
+            for (i = 0; i < $scope.axe.programs.length; i++) {
+                if ($scope.axe.programs[i].id == $scope.program_id) {
+                    $scope.program = $scope.axe.programs[i];
+                    break;
+                }
+            }
+        }
 
+        self.belongsToSecretary = function (program) {
+            if ($scope.secretary == -1) {
+                return true;
+            }
+            var i;
+            for (i = 0; i < program.secretaries.length; i++) {
+                if (program.secretaries[i].secretary_id == $scope.secretary) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        self.genericFilters = function(){
+            var x;
+            x = $scope.genericFilters[5];
+            x.value = $scope.development_plan.id;
+            $scope.req.filters.push(x);
+
+            if($scope.dimention.id){
+                x = $scope.genericFilters[4];
+                x.value = $scope.dimention.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.axe.id){
+                x = $scope.genericFilters[3];
+                x.value = $scope.axe.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.secretary != -1){
+                x = $scope.genericFilters[2];
+                x.value = $scope.secretary;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.program.id){
+                x = $scope.genericFilters[1];
+                x.value = $scope.program.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.subprogram != -1){
+                x = $scope.genericFilters[0];
+                x.value = $scope.subprogram;
+                $scope.req.filters.push(x);
+            }
+        }
+
+        self.getActivities = function(){
+            $scope.req = {
+                filters: []
+            };
+
+            self.genericFilters();
+
+            ActivitiesService.getActivities($scope.req).then(
+                function(response){
+                    $scope.activities = response.data;
+                }, function(err){
+                    inform.add("Ocurrió un error al cargar las actividades", {type: "warning"});
+                }
+            )
         }
 
         self.init = function() {
+            $scope.development_plans = DevelopmentPlans.data;
+            $scope.genericFilters = GenericFilters.data;
         }
 
         self.init();
@@ -641,6 +617,121 @@
         self.init();
 
 
+
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ActivitiesService", ActivitiesService);
+
+    ActivitiesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadActivity = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+            });
+        }
+
+        self.getActivities = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("AnalyticsCtrl", AnalyticsCtrl);
+
+    AnalyticsCtrl.$inject = [
+        "$scope",
+        "AnalyticsService",
+        '$interval',
+        '$filter'
+    ];
+
+    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
+
+        var self = this;
+
+        self.graphs = {
+            zones: [],
+            time: [],
+            labels: [],
+            speed: [],
+            count: [],
+            avg_speed: [],
+            acum: []
+        }
+
+        self.paint = function () {
+
+        }
+
+        self.randomData = function () {
+            var i, s;
+            for (i = 0; i < self.graphs.zones.length; i++) {
+                if (i == 0) {
+                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
+                    self.graphs.time.push(s);
+                    self.graphs.labels.push($filter('date')(s, "medium"));
+                }
+                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
+                s = Math.random() * 200 + 1;
+                self.graphs.speed[i].push(s);
+                self.graphs.acum[i] += s;
+                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
+            }
+
+            console.log(self.graphs);
+        }
+
+        self.parseData = function (data) {
+            var i;
+            for (i = 0; i < data.length; i++) {
+                if (i == 0) {
+                    self.graphs.time.push(data[i].data.time);
+                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
+                }
+                self.graphs.zones.push(data[i].zoneId);
+                var speed = [];
+                speed[0] = data[i].data.speed;
+                self.graphs.speed.push(speed);
+                self.graphs.avg_speed.push(data[i].data.speed);
+                self.graphs.acum.push(data[i].data.speed);
+                self.graphs.count.push(data[i].data.count);
+            }
+            console.log(self.graphs);
+        }
+
+        self.init = function () {
+            AnalyticsService.getData().then(
+                function (response) {
+                    self.parseData(response.data);
+                    $interval(function () {
+                        self.randomData();
+                    },3000);
+                }
+            );
+        }
+
+        self.init();
 
 
 

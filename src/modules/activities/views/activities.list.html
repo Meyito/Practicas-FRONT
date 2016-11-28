@@ -12,63 +12,58 @@
 
 	<div class="row ">
 		<div class="col-lg-12">
-			<div class=" panel panel-default p-25 m-b-0">
+			<div class=" panel panel-default p-25">
 				<div class="row">
 					<div class="form-group col-lg-6">
 						<label>Plan de Desarrollo</label>
-						<select class="form-control">
-                        <option ng-repeat="dp in development_plans">{{ dp.slogan }} - {{ dp.init_year }} - {{ dp.end_year }}</option>
-                    </select>
+						<select class="form-control" ng-options="dp.name for dp in development_plans" ng-model="development_plan" required>
+						</select>
 					</div>
-					<div class="form-group col-lg-4">
-						<label>Fechas:</label>
-						<input date-range-picker class="form-control date-picker" type="text" ng-model="datePicker.date" />
+					<div class="form-group col-lg-5">
+						<label>Dimensión</label>
+						<select class="form-control" ng-disabled="!development_plan.id" ng-options="dim.name for dim in development_plan.dimentions"
+							ng-model="dimention">
+						</select>
 					</div>
 					<div class="form-group col-lg-1 centered chevron-filter" ng-click="expanded = !expanded">
 						<i class="fa m-t-27" ng-class="expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
 					</div>
-                    <div class="form-group col-lg-1 centered chevron-filter" ng-click="actCtrl.search()">
-						<i class="fa m-t-27 fa-search"></i>
-					</div>
 				</div>
 				<div class="row" ng-show="expanded">
 					<div class="form-group col-lg-6">
+						<label>Eje</label>
+						<select class="form-control" ng-disabled="!dimention.id" ng-options="axe.name for axe in dimention.axes" ng-model="axe">
+						</select>
+					</div>
+					<div class="form-group col-lg-6">
+						<label>Dependencia</label>
+						<select class="form-control" ng-model="secretary">
+							<option value="-1"></option>
+							<option ng-repeat="secretary in secretaries" ng-value="secretary.id">{{ secretary.name }}</option>
+						</select>
+					</div>
+					<div class="form-group col-lg-6">
 						<label>Programa</label>
-						<select class="form-control">
-                        <option ng-repeat="program in programs">{{ program.name }}</option>
-                    </select>
+						<select class="form-control" ng-disabled="!axe.id" ng-model="program_id" ng-change="actCtrl.parse()">
+							<option ng-repeat="program in axe.programs" ng-if="actCtrl.belongsToSecretary(program)" ng-value="program.id">{{ program.name }}</option>
+						</select>
 					</div>
 					<div class="form-group col-lg-6">
 						<label>Subprograma</label>
-						<select class="form-control">
-                        <option ng-repeat="subprogram in subprograms">{{ subprogram.name }}</option>
-                    </select>
-					</div>
-					<div class="form-group col-lg-6">
-						<label>Proyecto</label>
-						<select class="form-control">
-                        <option ng-repeat="project in projects">{{ project.name }}</option>
-                    </select>
-					</div>
-                    <div class="form-group col-lg-6">
-						<label>Meta</label>
-						<select class="form-control">
-                        <option ng-repeat="goal in goals">{{ goal.name }}</option>
-                    </select>
-					</div>
-					<div class="form-group col-lg-6">
-						<label>Municipio</label>
-						<select class="form-control">
-                        <option ng-repeat="program in programs">{{ program.name }}</option>
-                    </select>
+						<select class="form-control" ng-disabled="!program.id" ng-model="subprogram">
+							<option ng-repeat="subprogram in program.subprograms" ng-value="subprogram.id">{{ subprogram.name }}</option>
+						</select>
 					</div>
 				</div>
-			</div>
 
+				<div class="row centered m-10">
+					<button type="button" ng-disabled="!development_plan.id" class="btn btn-success button-md" ng-click="actCtrl.getActivities()">Buscar Actividades</button>
+				</div>
+			</div>
 		</div>
 	</div>
 
-    <div class="row">
+	<div class="row">
 		<div class="col-lg-12">
 			<div class="m-b-20 m-t-20 pull-right">
 				<button type="button" class="btn btn-success" ng-click="actCtrl.newActivity()"><i class="fa fa-fw fa-plus"></i>Nueva Actividad</button>
@@ -77,33 +72,32 @@
 	</div>
 
 	<div class="row">
-        <div ng-repeat="activity in activities" class="col-lg-4 col-md-4 col-sm-6 col-xs-6">
+		<div ng-repeat="activity in activities" class="col-lg-4 col-md-4 col-sm-6 col-xs-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-calendar-o fa-fw"></i> {{ activity.date | date: 'dd-MM-yyyy'}} </h3>
 				</div>
 				<div class="panel-body">
 					<div class="row m-r-0 m-l-0">
-                        <i class="fa fa-user-secret fa-fw" uib-tooltip="Contratista" tooltip-placement="top"></i>
-                        {{ activity.contratista }}
-                    </div>
-                    <div class="row m-r-0 m-l-0">
-                        <i class="fa fa-map-marker fa-fw" uib-tooltip="Lugar" tooltip-placement="top"></i>
-                        {{ activity.place }}
-                    </div>
-                    <div class="row m-r-0 m-l-0">
-                        <i class="fa fa-users fa-fw" uib-tooltip="Atendidos" tooltip-placement="top"></i>
-                        {{ activity.count }}
-                    </div>
-                    <div class="row m-r-0 m-l-0">
-                        <i class="fa fa-list-alt fa-fw" uib-tooltip="Subprograma" tooltip-placement="top"></i>
-                        {{ activity.subprogram }}
-                    </div>
-                    <div class="row m-r-0 m-l-0 text-right">
-                        <span class="pull-right m-l-10" uib-tooltip="Estadisticas" tooltip-placement="top" ng-click="actCtrl.statistics()"><i class="fa fa-bar-chart"></i></span>
+						<i class="fa fa-cube fa-fw" uib-tooltip="Código Actividad" tooltip-placement="top"></i> {{ activity.code }}
+					</div>
+					<div class="row m-r-0 m-l-0">
+						<i class="fa fa-user-secret fa-fw" uib-tooltip="Contratista" tooltip-placement="top"></i> {{ activity.first_name }} {{ activity.last_name }}
+					</div>
+					<!--div class="row m-r-0 m-l-0">
+						<i class="fa fa-map-marker fa-fw" uib-tooltip="Lugar" tooltip-placement="top"></i> {{ activity.place }}
+					</div-->
+					<div class="row m-r-0 m-l-0">
+						<i class="fa fa-users fa-fw" uib-tooltip="Atendidos" tooltip-placement="top"></i> {{ activity.total }}
+					</div>
+					<div class="row m-r-0 m-l-0">
+						<i class="fa fa-list-alt fa-fw" uib-tooltip="Subprograma" tooltip-placement="top"></i> {{ activity.name }}
+					</div>
+					<div class="row m-r-0 m-l-0 text-right">
+						<span class="pull-right m-l-10" uib-tooltip="Estadisticas" tooltip-placement="top" ng-click="actCtrl.statistics(activity.id)"><i class="fa fa-bar-chart"></i></span>
 						<span class="pull-right m-l-10" uib-tooltip="Editar" tooltip-placement="top"><i class="fa fa-pencil-square-o"></i></span>
 						<div class="clearfix"></div>
-                    </div>
+					</div>
 				</div>
 			</div>
 		</div>
