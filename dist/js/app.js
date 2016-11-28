@@ -171,6 +171,11 @@
                         relationships: "filters"
                     }
                     return StatisticService.getCounters(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
                 }]
             }
         });
@@ -346,6 +351,113 @@
             startingDay: 1,
             minMode: 'year'
         };
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ActivitiesService", ActivitiesService);
+
+    ActivitiesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadActivity = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+            });
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("AnalyticsCtrl", AnalyticsCtrl);
+
+    AnalyticsCtrl.$inject = [
+        "$scope",
+        "AnalyticsService",
+        '$interval',
+        '$filter'
+    ];
+
+    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
+
+        var self = this;
+
+        self.graphs = {
+            zones: [],
+            time: [],
+            labels: [],
+            speed: [],
+            count: [],
+            avg_speed: [],
+            acum: []
+        }
+
+        self.paint = function () {
+
+        }
+
+        self.randomData = function () {
+            var i, s;
+            for (i = 0; i < self.graphs.zones.length; i++) {
+                if (i == 0) {
+                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
+                    self.graphs.time.push(s);
+                    self.graphs.labels.push($filter('date')(s, "medium"));
+                }
+                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
+                s = Math.random() * 200 + 1;
+                self.graphs.speed[i].push(s);
+                self.graphs.acum[i] += s;
+                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
+            }
+
+            console.log(self.graphs);
+        }
+
+        self.parseData = function (data) {
+            var i;
+            for (i = 0; i < data.length; i++) {
+                if (i == 0) {
+                    self.graphs.time.push(data[i].data.time);
+                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
+                }
+                self.graphs.zones.push(data[i].zoneId);
+                var speed = [];
+                speed[0] = data[i].data.speed;
+                self.graphs.speed.push(speed);
+                self.graphs.avg_speed.push(data[i].data.speed);
+                self.graphs.acum.push(data[i].data.speed);
+                self.graphs.count.push(data[i].data.count);
+            }
+            console.log(self.graphs);
+        }
+
+        self.init = function () {
+            AnalyticsService.getData().then(
+                function (response) {
+                    self.parseData(response.data);
+                    $interval(function () {
+                        self.randomData();
+                    },3000);
+                }
+            );
+        }
+
+        self.init();
+
+
+
     }
 })(angular.module("app"));
 
@@ -529,113 +641,6 @@
         self.init();
 
 
-
-
-
-    }
-})(angular.module("app"));
-
-
-(function (module) {
-    module.service("ActivitiesService", ActivitiesService);
-
-    ActivitiesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadActivity = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
-            });
-        }
-
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("AnalyticsCtrl", AnalyticsCtrl);
-
-    AnalyticsCtrl.$inject = [
-        "$scope",
-        "AnalyticsService",
-        '$interval',
-        '$filter'
-    ];
-
-    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
-
-        var self = this;
-
-        self.graphs = {
-            zones: [],
-            time: [],
-            labels: [],
-            speed: [],
-            count: [],
-            avg_speed: [],
-            acum: []
-        }
-
-        self.paint = function () {
-
-        }
-
-        self.randomData = function () {
-            var i, s;
-            for (i = 0; i < self.graphs.zones.length; i++) {
-                if (i == 0) {
-                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
-                    self.graphs.time.push(s);
-                    self.graphs.labels.push($filter('date')(s, "medium"));
-                }
-                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
-                s = Math.random() * 200 + 1;
-                self.graphs.speed[i].push(s);
-                self.graphs.acum[i] += s;
-                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
-            }
-
-            console.log(self.graphs);
-        }
-
-        self.parseData = function (data) {
-            var i;
-            for (i = 0; i < data.length; i++) {
-                if (i == 0) {
-                    self.graphs.time.push(data[i].data.time);
-                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
-                }
-                self.graphs.zones.push(data[i].zoneId);
-                var speed = [];
-                speed[0] = data[i].data.speed;
-                self.graphs.speed.push(speed);
-                self.graphs.avg_speed.push(data[i].data.speed);
-                self.graphs.acum.push(data[i].data.speed);
-                self.graphs.count.push(data[i].data.count);
-            }
-            console.log(self.graphs);
-        }
-
-        self.init = function () {
-            AnalyticsService.getData().then(
-                function (response) {
-                    self.parseData(response.data);
-                    $interval(function () {
-                        self.randomData();
-                    },3000);
-                }
-            );
-        }
-
-        self.init();
 
 
 
@@ -1475,10 +1480,11 @@
         "DevelopmentPlans",
         "Secretaries",
         "Counters",
-        "StatisticService"
+        "StatisticService",
+        "GenericFilters"
     ];
 
-    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService) {
+    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService,GenericFilters) {
 
         var self = this;
 
@@ -1487,6 +1493,7 @@
         $scope.dimention = {};
         $scope.axe = {};
         $scope.secretary = -1;
+        $scope.subprogram = -1;
         $scope.program = {};
         $scope.program_id;
         $scope.report = false;
@@ -1500,8 +1507,10 @@
         $scope.motor_disabilities = [];
         $scope.victim_types = [];
         $scope.ethnic_groups = [];
+        $scope.reports = [];
 
         self.parse = function(){
+            $scope.subprogram = -1;
             $scope.program = {};
             var i;
             for (i = 0; i < $scope.axe.programs.length; i++) {
@@ -1526,8 +1535,99 @@
             return false;
         }
 
+        self.genericFilters = function(){
+            var x;
+            x = $scope.genericFilters[5];
+            x.value = $scope.development_plan.id;
+            $scope.req.filters.push(x);
+
+            if($scope.dimention.id){
+                x = $scope.genericFilters[4];
+                x.value = $scope.dimention.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.axe.id){
+                x = $scope.genericFilters[3];
+                x.value = $scope.axe.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.secretary != -1){
+                x = $scope.genericFilters[2];
+                x.value = $scope.secretary;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.program.id){
+                x = $scope.genericFilters[1];
+                x.value = $scope.program.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.subprogram != -1){
+                x = $scope.genericFilters[0];
+                x.value = $scope.subprogram;
+                $scope.req.filters.push(x);
+            }
+        }
+
         self.getReport = function(){
+            $scope.res = $scope.counter.response + " ";
             $scope.report = true;
+            $scope.req = {
+                total: $scope.counter.column,
+            }
+            var i = 0;
+
+            $scope.req.filters = _.filter($scope.filters, function(f){
+                if(f.data){
+                    var x;
+                    if(f.data.id){
+                        f.value = f.data.id;
+                        x = f.data.name
+                    }else{
+                        f.value = f.data;
+                        x = f.value ? "si" : "no";
+                    }
+                    
+                    if( i == 0 ){
+                        $scope.res += "con las siguientes caracteristicas: "
+                        i++;
+                    }
+                    $scope.res += f.label + " - " + x + ", ";
+                    return true;
+                }
+
+                return false;
+            });
+
+            if($scope.counter.label == "Total Personas" || $scope.counter.label == "Total Municipios"){
+                $scope.res += " es: ";
+            }else{
+                $scope.res += " son: ";
+            }
+
+            self.genericFilters();
+
+            StatisticService.getReport($scope.req).then(
+                function(response){
+                    var i;
+                    for(i = 0; i < response.data.length; i++){
+                        for(var key in response.data[i]){
+                            if(i > 0){
+                                $scope.res+= ", "
+                            }
+                            $scope.res += response.data[i][key];
+                        }
+                    }
+                    $scope.reports.push($scope.res);
+                    self.getFilters();
+                },
+                function(err){
+                    inform.add("Ocurrió un error al consultar las estadisticas solicitadas", {type: "warning"});
+                }
+            );
         }
 
         self.getData = function(filter){
@@ -1558,30 +1658,23 @@
 
         self.getFilters = function(){
             var i;
+
             for(i = 0; i < $scope.counter.filters.length; i++){
+                delete $scope.counter.filters[i].data;
                 self.getData($scope.counter.filters[i]);
             }
+            $scope.filters = $scope.counter.filters;
         }
 
         self.init = function () {
             $scope.development_plans = DevelopmentPlans.data;
             $scope.secretaries = Secretaries.data;
             $scope.counters = Counters.data;
+            $scope.genericFilters = GenericFilters.data;
         }
 
         self.init();
 
-
-
-
-
-        self.updateGraph = function () {
-            console.log($scope.selectedFilters);
-        }
-
-        self.add = function () {
-
-        }
 
         //EXAMPLE CHART
         $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
@@ -1633,6 +1726,22 @@
             return $http({
                 method: "GET",
                 url: APP_DEFAULTS.ENDPOINT + '/' + endpoint
+            })
+        }
+
+        self.getGenericFilters = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/generic-filters'
+            })
+        }
+
+        self.getReport = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + '/reports'
             })
         }
 

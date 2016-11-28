@@ -42,5 +42,21 @@
             })
         }
 
+        self.getGenericFilters = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/generic-filters'
+            })
+        }
+
+        self.getReport = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + '/reports'
+            })
+        }
+
     }
 })(angular.module("app"));

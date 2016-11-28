@@ -10,10 +10,11 @@
         "DevelopmentPlans",
         "Secretaries",
         "Counters",
-        "StatisticService"
+        "StatisticService",
+        "GenericFilters"
     ];
 
-    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService) {
+    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService,GenericFilters) {
 
         var self = this;
 
@@ -22,6 +23,7 @@
         $scope.dimention = {};
         $scope.axe = {};
         $scope.secretary = -1;
+        $scope.subprogram = -1;
         $scope.program = {};
         $scope.program_id;
         $scope.report = false;
@@ -35,8 +37,10 @@
         $scope.motor_disabilities = [];
         $scope.victim_types = [];
         $scope.ethnic_groups = [];
+        $scope.reports = [];
 
         self.parse = function(){
+            $scope.subprogram = -1;
             $scope.program = {};
             var i;
             for (i = 0; i < $scope.axe.programs.length; i++) {
@@ -61,8 +65,99 @@
             return false;
         }
 
+        self.genericFilters = function(){
+            var x;
+            x = $scope.genericFilters[5];
+            x.value = $scope.development_plan.id;
+            $scope.req.filters.push(x);
+
+            if($scope.dimention.id){
+                x = $scope.genericFilters[4];
+                x.value = $scope.dimention.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.axe.id){
+                x = $scope.genericFilters[3];
+                x.value = $scope.axe.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.secretary != -1){
+                x = $scope.genericFilters[2];
+                x.value = $scope.secretary;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.program.id){
+                x = $scope.genericFilters[1];
+                x.value = $scope.program.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.subprogram != -1){
+                x = $scope.genericFilters[0];
+                x.value = $scope.subprogram;
+                $scope.req.filters.push(x);
+            }
+        }
+
         self.getReport = function(){
+            $scope.res = $scope.counter.response + " ";
             $scope.report = true;
+            $scope.req = {
+                total: $scope.counter.column,
+            }
+            var i = 0;
+
+            $scope.req.filters = _.filter($scope.filters, function(f){
+                if(f.data){
+                    var x;
+                    if(f.data.id){
+                        f.value = f.data.id;
+                        x = f.data.name
+                    }else{
+                        f.value = f.data;
+                        x = f.value ? "si" : "no";
+                    }
+                    
+                    if( i == 0 ){
+                        $scope.res += "con las siguientes caracteristicas: "
+                        i++;
+                    }
+                    $scope.res += f.label + " - " + x + ", ";
+                    return true;
+                }
+
+                return false;
+            });
+
+            if($scope.counter.label == "Total Personas" || $scope.counter.label == "Total Municipios"){
+                $scope.res += " es: ";
+            }else{
+                $scope.res += " son: ";
+            }
+
+            self.genericFilters();
+
+            StatisticService.getReport($scope.req).then(
+                function(response){
+                    var i;
+                    for(i = 0; i < response.data.length; i++){
+                        for(var key in response.data[i]){
+                            if(i > 0){
+                                $scope.res+= ", "
+                            }
+                            $scope.res += response.data[i][key];
+                        }
+                    }
+                    $scope.reports.push($scope.res);
+                    self.getFilters();
+                },
+                function(err){
+                    inform.add("Ocurrió un error al consultar las estadisticas solicitadas", {type: "warning"});
+                }
+            );
         }
 
         self.getData = function(filter){
@@ -93,30 +188,23 @@
 
         self.getFilters = function(){
             var i;
+
             for(i = 0; i < $scope.counter.filters.length; i++){
+                delete $scope.counter.filters[i].data;
                 self.getData($scope.counter.filters[i]);
             }
+            $scope.filters = $scope.counter.filters;
         }
 
         self.init = function () {
             $scope.development_plans = DevelopmentPlans.data;
             $scope.secretaries = Secretaries.data;
             $scope.counters = Counters.data;
+            $scope.genericFilters = GenericFilters.data;
         }
 
         self.init();
 
-
-
-
-
-        self.updateGraph = function () {
-            console.log($scope.selectedFilters);
-        }
-
-        self.add = function () {
-
-        }
 
         //EXAMPLE CHART
         $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];

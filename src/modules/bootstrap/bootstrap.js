@@ -171,6 +171,11 @@
                         relationships: "filters"
                     }
                     return StatisticService.getCounters(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
                 }]
             }
         });
