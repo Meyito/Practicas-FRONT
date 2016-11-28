@@ -16,7 +16,8 @@
     "angular-inform": "^0.0.18",
     "angular-daterangepicker": "^0.2.2",
     "angular-chart.js": "^1.0.3",
-    "angular-material-data-table": "^0.10.9"
+    "angular-material-data-table": "^0.10.9",
+    "angular-bootstrap-multiselect": "^0.4.0"
   },
   "overrides": {
     "font-awesome": {

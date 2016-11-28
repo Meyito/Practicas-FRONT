@@ -14,7 +14,8 @@
         'daterangepicker',
         'chart.js',
         'ngMaterial',
-        'md.data.table'
+        'md.data.table',
+        'ui.multiselect'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
@@ -33,6 +34,7 @@
                 }
             });*/
 
+        //Login
         stateHelperProvider.state({
             name: 'login',
             url: '/',
@@ -44,6 +46,7 @@
             }
         });
 
+        //Plan de desarrollo
         stateHelperProvider.state({
             name: 'development-plan',
             url: '/plan-desarrollo',
@@ -71,6 +74,7 @@
             }
         });
 
+        //Secretarias
         stateHelperProvider.state({
             name: 'secretaries',
             url: '/secretarias',
@@ -95,6 +99,7 @@
             }
         });
 
+        //Proyectos
         stateHelperProvider.state({
             name: 'projects',
             url: '/proyectos',
@@ -131,6 +136,7 @@
             }
         });
 
+        //Estadisticas
         stateHelperProvider.state({
             name: 'statistics',
             url: '/estadisticas',
@@ -146,9 +152,30 @@
                     templateUrl: "templates/statistics.list.html",
                     controller: "StatisticsCtrl as statisticsCtrl"
                 }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+               Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }],
+
+                Counters: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "filters"
+                    }
+                    return StatisticService.getCounters(params);
+                }]
             }
         });
 
+        //Usuarios
         stateHelperProvider.state({
             name: 'users',
             url: '/usuarios',
@@ -167,6 +194,7 @@
             }
         });
 
+        //Contratistas
         stateHelperProvider.state({
             name: 'contracts',
             url: '/contratistas',
@@ -200,6 +228,7 @@
             }
         });
 
+        //Entes Territoriales
         stateHelperProvider.state({
             name: 'territorial-entities',
             url: '/entes-territoriales',
@@ -218,6 +247,7 @@
             }
         });
 
+        //Actividades
         stateHelperProvider.state({
             name: 'activities',
             url: '/actividades',
@@ -236,6 +266,7 @@
             }
         });
 
+        //Nueva Actividad
         stateHelperProvider.state({
             name: 'new-activity',
             url: '/actividades/nueva',

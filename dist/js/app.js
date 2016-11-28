@@ -14,7 +14,8 @@
         'daterangepicker',
         'chart.js',
         'ngMaterial',
-        'md.data.table'
+        'md.data.table',
+        'ui.multiselect'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
@@ -33,6 +34,7 @@
                 }
             });*/
 
+        //Login
         stateHelperProvider.state({
             name: 'login',
             url: '/',
@@ -44,6 +46,7 @@
             }
         });
 
+        //Plan de desarrollo
         stateHelperProvider.state({
             name: 'development-plan',
             url: '/plan-desarrollo',
@@ -71,6 +74,7 @@
             }
         });
 
+        //Secretarias
         stateHelperProvider.state({
             name: 'secretaries',
             url: '/secretarias',
@@ -95,6 +99,7 @@
             }
         });
 
+        //Proyectos
         stateHelperProvider.state({
             name: 'projects',
             url: '/proyectos',
@@ -131,6 +136,7 @@
             }
         });
 
+        //Estadisticas
         stateHelperProvider.state({
             name: 'statistics',
             url: '/estadisticas',
@@ -146,9 +152,30 @@
                     templateUrl: "templates/statistics.list.html",
                     controller: "StatisticsCtrl as statisticsCtrl"
                 }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+               Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }],
+
+                Counters: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "filters"
+                    }
+                    return StatisticService.getCounters(params);
+                }]
             }
         });
 
+        //Usuarios
         stateHelperProvider.state({
             name: 'users',
             url: '/usuarios',
@@ -167,6 +194,7 @@
             }
         });
 
+        //Contratistas
         stateHelperProvider.state({
             name: 'contracts',
             url: '/contratistas',
@@ -200,6 +228,7 @@
             }
         });
 
+        //Entes Territoriales
         stateHelperProvider.state({
             name: 'territorial-entities',
             url: '/entes-territoriales',
@@ -218,6 +247,7 @@
             }
         });
 
+        //Actividades
         stateHelperProvider.state({
             name: 'activities',
             url: '/actividades',
@@ -236,6 +266,7 @@
             }
         });
 
+        //Nueva Actividad
         stateHelperProvider.state({
             name: 'new-activity',
             url: '/actividades/nueva',
@@ -1439,133 +1470,174 @@
 
     StatisticsCtrl.$inject = [
         "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
         "$filter",
         "inform",
-        "PlanService"
+        "DevelopmentPlans",
+        "Secretaries",
+        "Counters",
+        "StatisticService"
     ];
 
-    function StatisticsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService) {
+    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService) {
 
         var self = this;
 
-    
         $scope.expanded = false;
+        $scope.development_plan = {};
+        $scope.dimention = {};
+        $scope.axe = {};
+        $scope.secretary = -1;
+        $scope.program = {};
+        $scope.program_id;
+        $scope.report = false;
+        $scope.counter = {};
+        $scope.selectedFilters = [];
+        $scope.genders = [];
+        $scope.age_range = [];
+        $scope.special_conditions = [];
+        $scope.hearing_impairments = [];
+        $scope.visual_impairments = [];
+        $scope.motor_disabilities = [];
+        $scope.victim_types = [];
+        $scope.ethnic_groups = [];
 
-        $scope.secretaries = [
-            {
-                name: "Consolidado"
-            },
-            {
-                name: "Secretaría de Atención Integral a Victimas"
-            },
-            {
-                name: "Secretaría de Planeación y Desarrollo Territorial"
-            },
-            {
-                name: "Secretaría de Tecnologías de la Información y Comunicaciones "
-            },
-            {
-                name: "Secretaría General"
-            },
-            {
-                name: "Secretaría Privada "
-            },
-            {
-                name: "Secretaría de Agua Potable y Saneamiento Básico"
-            },
-            {
-                name: "Secretaría de Cultura"
-            },
-            {
-                name: "Secretaría de Desarollo Económico"
-            },
-            {
-                name: "Secretaría de Desarrollo Social"
-            },
-            {
-                name: "Secretaría de Educación"
-            },
-            {
-                name: "Secretaría de Fronteras y Cooperación Internacional"
-            },
-            {
-                name: "Secretaría de Gobierno"
-            },
-            {
-                name: "Secretaría de Hacienda"
-            },
-            {
-                name: "Secretaría de Infraestructura"
-            },
-            {
-                name: "Secretaría de la Mujer"
-            },
-            {
-                name: "Secretaría de Minas y Energía"
-            },
-            {
-                name: "Secretaría de Tránsito"
-            },
-            {
-                name: "Secretaría de Vivienda y Medio Ambiente"
-            },
-            {
-                name: "Secretaría Jurídica"
+        self.parse = function(){
+            $scope.program = {};
+            var i;
+            for (i = 0; i < $scope.axe.programs.length; i++) {
+                if ($scope.axe.programs[i].id == $scope.program_id) {
+                    $scope.program = $scope.axe.programs[i];
+                    break;
+                }
             }
-        ];
+        }
 
-        $scope.development_plans = [
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2016,
-                end_year: 2019
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2012,
-                end_year: 2015
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
+        self.belongsToSecretary = function (program) {
+            if ($scope.secretary == -1) {
+                return true;
             }
-        ]
+            var i;
+            for (i = 0; i < program.secretaries.length; i++) {
+                if (program.secretaries[i].secretary_id == $scope.secretary) {
+                    return true;
+                }
+            }
 
-        $scope.datePicker = {};
+            return false;
+        }
 
-        $scope.datePicker.date = { startDate: null, endDate: null };
+        self.getReport = function(){
+            $scope.report = true;
+        }
 
-        self.updateGraph = function(){
-            
+        self.getData = function(filter){
+            if(filter.endpoint == "NA"){
+                return;
+            }
+
+            var ep = filter.endpoint.replace("-", "_");
+
+            if( $scope[ep] == 0 ){
+                StatisticService.genericGetter(filter.endpoint).then(
+                    function(response){
+                        $scope[ep] = response.data;
+                    }
+                );
+            }
+        }
+
+        self.applyFilter = function(filter){
+            var i;
+            for(i = 0; i < $scope.selectedFilters.length; i++){
+                if($scope.selectedFilters[i].column == filter){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        self.getFilters = function(){
+            var i;
+            for(i = 0; i < $scope.counter.filters.length; i++){
+                self.getData($scope.counter.filters[i]);
+            }
+        }
+
+        self.init = function () {
+            $scope.development_plans = DevelopmentPlans.data;
+            $scope.secretaries = Secretaries.data;
+            $scope.counters = Counters.data;
+        }
+
+        self.init();
+
+
+
+
+
+        self.updateGraph = function () {
+            console.log($scope.selectedFilters);
         }
 
         self.add = function () {
 
         }
 
-        self.init = function () {
-        }
-
-        self.init();
-
         //EXAMPLE CHART
         $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
         $scope.data = [300, 500, 100];
 
-        
+
 
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("StatisticService", StatisticService);
+
+    StatisticService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function StatisticService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.getDevelopmentPlans = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/development-plans'
+            })
+        }
+
+        self.getSecretaries = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/secretaries'
+            })
+        }
+
+        self.getCounters = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/counters'
+            })
+        }
+
+        self.genericGetter = function(endpoint){
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + '/' + endpoint
+            })
+        }
+
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
