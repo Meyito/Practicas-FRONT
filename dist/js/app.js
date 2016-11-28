@@ -1,3 +1,62 @@
+(function (module) {
+    "use strict";
+
+    var ROOT_PATH = "http://whispering-garden-20822.herokuapp.com/";
+
+    module.constant("APP_DEFAULTS", {
+        ENDPOINT: ROOT_PATH + "api/v1",
+        ROOT_PATH: ROOT_PATH
+    });
+
+})(angular.module('app'));
+(function (module) {
+    'use strict';
+
+    module.controller("ModalController", ModalController);
+
+    ModalController.$inject = [
+        "$scope",
+        "$uibModalInstance",
+        "data"
+    ];
+
+    function ModalController($scope, $uibModalInstance, data) {
+
+        var self = this;
+
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
+
+        self.update = function () {
+            $uibModalInstance.close($scope.data);
+        };
+
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
+
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        /* Date Pickers */
+        $scope.formats = ['yyyy','dd-MM-yyyy'];
+        $scope.yearOnly = $scope.formats[0];
+        $scope.dateComplete = $scope.formats[1];
+        $scope.status = [false, false];
+
+        $scope.open = function ($event, i) {
+            $scope.status[i] = true;
+        };
+
+        $scope.yearOptions = {
+            formatYear: 'yyyy',
+            startingDay: 1,
+            minMode: 'year'
+        };
+    }
+})(angular.module("app"));
+
 (function () {
     'use strict';
 
@@ -341,62 +400,104 @@
     });
 })();
 (function (module) {
-    "use strict";
-
-    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
-
-    module.constant("APP_DEFAULTS", {
-        ENDPOINT: ROOT_PATH + "api/v1",
-        ROOT_PATH: ROOT_PATH
-    });
-
-})(angular.module('app'));
-(function (module) {
     'use strict';
 
-    module.controller("ModalController", ModalController);
+    module.controller("AnalyticsCtrl", AnalyticsCtrl);
 
-    ModalController.$inject = [
+    AnalyticsCtrl.$inject = [
         "$scope",
-        "$uibModalInstance",
-        "data"
+        "AnalyticsService",
+        '$interval',
+        '$filter'
     ];
 
-    function ModalController($scope, $uibModalInstance, data) {
+    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
 
         var self = this;
 
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
+        self.graphs = {
+            zones: [],
+            time: [],
+            labels: [],
+            speed: [],
+            count: [],
+            avg_speed: [],
+            acum: []
+        }
 
-        self.update = function () {
-            $uibModalInstance.close($scope.data);
-        };
+        self.paint = function () {
 
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
+        }
 
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
+        self.randomData = function () {
+            var i, s;
+            for (i = 0; i < self.graphs.zones.length; i++) {
+                if (i == 0) {
+                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
+                    self.graphs.time.push(s);
+                    self.graphs.labels.push($filter('date')(s, "medium"));
+                }
+                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
+                s = Math.random() * 200 + 1;
+                self.graphs.speed[i].push(s);
+                self.graphs.acum[i] += s;
+                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
+            }
 
-        /* Date Pickers */
-        $scope.formats = ['yyyy','dd-MM-yyyy'];
-        $scope.yearOnly = $scope.formats[0];
-        $scope.dateComplete = $scope.formats[1];
-        $scope.status = [false, false];
+            console.log(self.graphs);
+        }
 
-        $scope.open = function ($event, i) {
-            $scope.status[i] = true;
-        };
+        self.parseData = function (data) {
+            var i;
+            for (i = 0; i < data.length; i++) {
+                if (i == 0) {
+                    self.graphs.time.push(data[i].data.time);
+                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
+                }
+                self.graphs.zones.push(data[i].zoneId);
+                var speed = [];
+                speed[0] = data[i].data.speed;
+                self.graphs.speed.push(speed);
+                self.graphs.avg_speed.push(data[i].data.speed);
+                self.graphs.acum.push(data[i].data.speed);
+                self.graphs.count.push(data[i].data.count);
+            }
+            console.log(self.graphs);
+        }
 
-        $scope.yearOptions = {
-            formatYear: 'yyyy',
-            startingDay: 1,
-            minMode: 'year'
-        };
+        self.init = function () {
+            AnalyticsService.getData().then(
+                function (response) {
+                    self.parseData(response.data);
+                    $interval(function () {
+                        self.randomData();
+                    },3000);
+                }
+            );
+        }
+
+        self.init();
+
+
+
     }
+})(angular.module("app"));
+
+(function(module){
+  module.service("AnalyticsService", AnalyticsService);
+
+  AnalyticsService.$inject = [
+      "$http"
+  ];
+
+  function AnalyticsService($http){
+    var self = this;
+
+    self.getData = function () {
+        return $http.get("/data/activity-data.json");
+    }
+    
+  }
 })(angular.module("app"));
 
 (function (module) {
@@ -657,135 +758,6 @@
 (function (module) {
     'use strict';
 
-    module.controller("AnalyticsCtrl", AnalyticsCtrl);
-
-    AnalyticsCtrl.$inject = [
-        "$scope",
-        "AnalyticsService",
-        '$interval',
-        '$filter'
-    ];
-
-    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
-
-        var self = this;
-
-        self.graphs = {
-            zones: [],
-            time: [],
-            labels: [],
-            speed: [],
-            count: [],
-            avg_speed: [],
-            acum: []
-        }
-
-        self.paint = function () {
-
-        }
-
-        self.randomData = function () {
-            var i, s;
-            for (i = 0; i < self.graphs.zones.length; i++) {
-                if (i == 0) {
-                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
-                    self.graphs.time.push(s);
-                    self.graphs.labels.push($filter('date')(s, "medium"));
-                }
-                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
-                s = Math.random() * 200 + 1;
-                self.graphs.speed[i].push(s);
-                self.graphs.acum[i] += s;
-                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
-            }
-
-            console.log(self.graphs);
-        }
-
-        self.parseData = function (data) {
-            var i;
-            for (i = 0; i < data.length; i++) {
-                if (i == 0) {
-                    self.graphs.time.push(data[i].data.time);
-                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
-                }
-                self.graphs.zones.push(data[i].zoneId);
-                var speed = [];
-                speed[0] = data[i].data.speed;
-                self.graphs.speed.push(speed);
-                self.graphs.avg_speed.push(data[i].data.speed);
-                self.graphs.acum.push(data[i].data.speed);
-                self.graphs.count.push(data[i].data.count);
-            }
-            console.log(self.graphs);
-        }
-
-        self.init = function () {
-            AnalyticsService.getData().then(
-                function (response) {
-                    self.parseData(response.data);
-                    $interval(function () {
-                        self.randomData();
-                    },3000);
-                }
-            );
-        }
-
-        self.init();
-
-
-
-    }
-})(angular.module("app"));
-
-(function(module){
-  module.service("AnalyticsService", AnalyticsService);
-
-  AnalyticsService.$inject = [
-      "$http"
-  ];
-
-  function AnalyticsService($http){
-    var self = this;
-
-    self.getData = function () {
-        return $http.get("/data/activity-data.json");
-    }
-    
-  }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("NavigationCtrl", NavigationCtrl);
-
-    NavigationCtrl.$inject = [
-        "$scope",
-        "$state"
-    ];
-
-    function NavigationCtrl($scope, $state) {
-
-        var self = this;
-
-        $scope.active = "";
-
-        self.init = function() {
-            $scope.active = $state.current.data.state;
-        }
-
-        self.logOut = function(){
-            $state.go("login");
-        }
-
-        self.init();
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
     module.controller("ContractsCtrl", ContractsCtrl);
 
     ContractsCtrl.$inject = [
@@ -915,91 +887,6 @@
         self.init = function () {
             $scope.identificationTypes = IdentificationTypes.data;
             $scope.contractors = Contractors.data;
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-
-(function (module) {
-    module.service("ContractsService", ContractsService);
-
-    ContractsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS"
-    ];
-
-    function ContractsService($http, $q, APP_DEFAULTS) {
-        var self = this;
-
-        self.addContractor = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.getContractors = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.updateContractor = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
-            })
-        }
-
-        self.addContract = function(data, id){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
-            })
-        }
-
-        self.getIdentificationTypes = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
-            })
-        }
-
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("LoginCtrl", LoginCtrl);
-
-    LoginCtrl.$inject = [
-        "$scope",
-        "$state"
-    ];
-
-    function LoginCtrl($scope, $state) {
-
-        var self = this;
-
-        $scope.data;
-
-        self.login = function(){
-            $state.go("development-plan");
-        }
-
-        self.init = function () {
-
         }
 
         self.init();
@@ -1150,6 +1037,370 @@
     }
 })(angular.module("app"));
 
+(function (module) {
+    'use strict';
+
+    module.controller("LoginCtrl", LoginCtrl);
+
+    LoginCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function LoginCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.data;
+
+        self.login = function(){
+            $state.go("development-plan");
+        }
+
+        self.init = function () {
+
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("StatisticsCtrl", StatisticsCtrl);
+
+    StatisticsCtrl.$inject = [
+        "$scope",
+        "$filter",
+        "inform",
+        "DevelopmentPlans",
+        "Secretaries",
+        "Counters",
+        "StatisticService",
+        "GenericFilters"
+    ];
+
+    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService,GenericFilters) {
+
+        var self = this;
+
+        $scope.expanded = false;
+        $scope.development_plan = {};
+        $scope.dimention = {};
+        $scope.axe = {};
+        $scope.secretary = -1;
+        $scope.subprogram = -1;
+        $scope.program = {};
+        $scope.program_id;
+        $scope.report = false;
+        $scope.counter = {};
+        $scope.selectedFilters = [];
+        $scope.genders = [];
+        $scope.age_range = [];
+        $scope.special_conditions = [];
+        $scope.hearing_impairments = [];
+        $scope.visual_impairments = [];
+        $scope.motor_disabilities = [];
+        $scope.victim_types = [];
+        $scope.ethnic_groups = [];
+        $scope.reports = [];
+
+        self.parse = function(){
+            $scope.subprogram = -1;
+            $scope.program = {};
+            var i;
+            for (i = 0; i < $scope.axe.programs.length; i++) {
+                if ($scope.axe.programs[i].id == $scope.program_id) {
+                    $scope.program = $scope.axe.programs[i];
+                    break;
+                }
+            }
+        }
+
+        self.belongsToSecretary = function (program) {
+            if ($scope.secretary == -1) {
+                return true;
+            }
+            var i;
+            for (i = 0; i < program.secretaries.length; i++) {
+                if (program.secretaries[i].secretary_id == $scope.secretary) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        self.genericFilters = function(){
+            var x;
+            x = $scope.genericFilters[5];
+            x.value = $scope.development_plan.id;
+            $scope.req.filters.push(x);
+
+            if($scope.dimention.id){
+                x = $scope.genericFilters[4];
+                x.value = $scope.dimention.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.axe.id){
+                x = $scope.genericFilters[3];
+                x.value = $scope.axe.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.secretary != -1){
+                x = $scope.genericFilters[2];
+                x.value = $scope.secretary;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.program.id){
+                x = $scope.genericFilters[1];
+                x.value = $scope.program.id;
+                $scope.req.filters.push(x);
+            }
+
+            if($scope.subprogram != -1){
+                x = $scope.genericFilters[0];
+                x.value = $scope.subprogram;
+                $scope.req.filters.push(x);
+            }
+        }
+
+        self.getReport = function(){
+            $scope.res = $scope.counter.response + " ";
+            $scope.report = true;
+            $scope.req = {
+                total: $scope.counter.column,
+            }
+            var i = 0;
+
+            $scope.req.filters = _.filter($scope.filters, function(f){
+                if(f.data){
+                    var x;
+                    if(f.data.id){
+                        f.value = f.data.id;
+                        x = f.data.name
+                    }else{
+                        f.value = f.data;
+                        x = f.value ? "si" : "no";
+                    }
+                    
+                    if( i == 0 ){
+                        $scope.res += "con las siguientes caracteristicas: "
+                        i++;
+                    }
+                    $scope.res += f.label + " - " + x + ", ";
+                    return true;
+                }
+
+                return false;
+            });
+
+            if($scope.counter.label == "Total Personas" || $scope.counter.label == "Total Municipios"){
+                $scope.res += " es: ";
+            }else{
+                $scope.res += " son: ";
+            }
+
+            self.genericFilters();
+
+            StatisticService.getReport($scope.req).then(
+                function(response){
+                    var i;
+                    for(i = 0; i < response.data.length; i++){
+                        for(var key in response.data[i]){
+                            if(i > 0){
+                                $scope.res+= ", "
+                            }
+                            $scope.res += response.data[i][key];
+                        }
+                    }
+                    $scope.reports.push($scope.res);
+                    self.getFilters();
+                },
+                function(err){
+                    inform.add("Ocurrió un error al consultar las estadisticas solicitadas", {type: "warning"});
+                }
+            );
+        }
+
+        self.getData = function(filter){
+            if(filter.endpoint == "NA"){
+                return;
+            }
+
+            var ep = filter.endpoint.replace("-", "_");
+
+            if( $scope[ep] == 0 ){
+                StatisticService.genericGetter(filter.endpoint).then(
+                    function(response){
+                        $scope[ep] = response.data;
+                    }
+                );
+            }
+        }
+
+        self.applyFilter = function(filter){
+            var i;
+            for(i = 0; i < $scope.selectedFilters.length; i++){
+                if($scope.selectedFilters[i].column == filter){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        self.getFilters = function(){
+            var i;
+
+            for(i = 0; i < $scope.counter.filters.length; i++){
+                delete $scope.counter.filters[i].data;
+                self.getData($scope.counter.filters[i]);
+            }
+            $scope.filters = $scope.counter.filters;
+        }
+
+        self.init = function () {
+            $scope.development_plans = DevelopmentPlans.data;
+            $scope.secretaries = Secretaries.data;
+            $scope.counters = Counters.data;
+            $scope.genericFilters = GenericFilters.data;
+        }
+
+        self.init();
+
+
+        //EXAMPLE CHART
+        $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
+        $scope.data = [300, 500, 100];
+
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ContractsService", ContractsService);
+
+    ContractsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function ContractsService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.addContractor = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.getContractors = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.updateContractor = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
+            })
+        }
+
+        self.addContract = function(data, id){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
+            })
+        }
+
+        self.getIdentificationTypes = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
+            })
+        }
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    module.service("StatisticService", StatisticService);
+
+    StatisticService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function StatisticService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.getDevelopmentPlans = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/development-plans'
+            })
+        }
+
+        self.getSecretaries = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/secretaries'
+            })
+        }
+
+        self.getCounters = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/counters'
+            })
+        }
+
+        self.genericGetter = function(endpoint){
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + '/' + endpoint
+            })
+        }
+
+        self.getGenericFilters = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/generic-filters'
+            })
+        }
+
+        self.getReport = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + '/reports'
+            })
+        }
+
+    }
+})(angular.module("app"));
 
 (function (module) {
     module.service("PlanService", PlanService);
@@ -1178,6 +1429,211 @@
                 url: APP_DEFAULTS.ENDPOINT + "/development-plans"
             });
         }
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function NavigationCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+        }
+
+        self.logOut = function(){
+            $state.go("login");
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("SecretariesCtrl", SecretariesCtrl);
+
+    SecretariesCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "Secretaries",
+        "SecretariesService"
+    ];
+
+    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, Secretaries, SecretariesService) {
+
+        var self = this;
+
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nueva Secretaría',
+                ariaDescribedBy: 'nueva-secretaría',
+                templateUrl: 'templates/new-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.saveSecretary(data).then(
+                    function(response){
+                        inform.add("Se ha creado la nueva dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar la dependencia", {type: "warning"});
+                    }
+                );
+            });
+        }
+
+        self.refresh = function(){
+            SecretariesService.getSecretaries({}).then(
+                function(response){
+                    $scope.secretaries = response.data;
+                }
+            );
+        }
+
+        self.init = function () {
+            $scope.secretaries = Secretaries.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("TerritorialCtrl", TerritorialCtrl);
+
+    TerritorialCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "inform",
+        "TerritorialService"
+    ];
+
+    function TerritorialCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, TerritorialService) {
+
+        var self = this;
+
+        self.uploadData = function (id, string) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Ordenamiento',
+                ariaDescribedBy: 'cargar-ordenamiento',
+                templateUrl: 'templates/upload-territories.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        type: string
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                if( id == 1){
+                    TerritorialService.uploadMunicipalities(data).then(
+                        function(response){
+                            inform.add("Se han cargado los municipios.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar los municipios.", {type: "warning"});
+                        }
+                    );
+                }else if(id == 2){
+                    TerritorialService.uploadAreas(data).then(
+                        function(response){
+                            inform.add("Se han cargado las areas.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
+                        }
+                    );
+                }else if(id == 3){
+                    TerritorialService.uploadAdministrativeUnits(data).then(
+                        function(response){
+                            inform.add("Se han cargado las areas.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
+                        }
+                    );
+                }
+            });
+        }
+
+
+        self.init = function () {
+            
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("TerritorialService", TerritorialService);
+
+    TerritorialService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function TerritorialService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadMunicipalities = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/municipalities/upload"
+            });
+        }
+
+        self.uploadAreas = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/areas/upload"
+            });
+        }
+
+        self.uploadAdministrativeUnits = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/upload"
+            });
+        }
+
+
     }
 })(angular.module("app"));
 (function (module) {
@@ -1465,69 +1921,6 @@
 
     }
 })(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("SecretariesCtrl", SecretariesCtrl);
-
-    SecretariesCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
-        "$filter",
-        "inform",
-        "Secretaries",
-        "SecretariesService"
-    ];
-
-    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, Secretaries, SecretariesService) {
-
-        var self = this;
-
-        self.add = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nueva Secretaría',
-                ariaDescribedBy: 'nueva-secretaría',
-                templateUrl: 'templates/new-secretary.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                SecretariesService.saveSecretary(data).then(
-                    function(response){
-                        inform.add("Se ha creado la nueva dependencia.", { type: "success" });
-                        self.refresh();
-                    }, function(err){
-                        inform.add("Ocurrió un error al guardar la dependencia", {type: "warning"});
-                    }
-                );
-            });
-        }
-
-        self.refresh = function(){
-            SecretariesService.getSecretaries({}).then(
-                function(response){
-                    $scope.secretaries = response.data;
-                }
-            );
-        }
-
-        self.init = function () {
-            $scope.secretaries = Secretaries.data;
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
 
 (function (module) {
     module.service("SecretariesService", SecretariesService);
@@ -1557,398 +1950,5 @@
                 url: APP_DEFAULTS.ENDPOINT + "/secretaries"
             });
         }
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("StatisticsCtrl", StatisticsCtrl);
-
-    StatisticsCtrl.$inject = [
-        "$scope",
-        "$filter",
-        "inform",
-        "DevelopmentPlans",
-        "Secretaries",
-        "Counters",
-        "StatisticService",
-        "GenericFilters"
-    ];
-
-    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService,GenericFilters) {
-
-        var self = this;
-
-        $scope.expanded = false;
-        $scope.development_plan = {};
-        $scope.dimention = {};
-        $scope.axe = {};
-        $scope.secretary = -1;
-        $scope.subprogram = -1;
-        $scope.program = {};
-        $scope.program_id;
-        $scope.report = false;
-        $scope.counter = {};
-        $scope.selectedFilters = [];
-        $scope.genders = [];
-        $scope.age_range = [];
-        $scope.special_conditions = [];
-        $scope.hearing_impairments = [];
-        $scope.visual_impairments = [];
-        $scope.motor_disabilities = [];
-        $scope.victim_types = [];
-        $scope.ethnic_groups = [];
-        $scope.reports = [];
-
-        self.parse = function(){
-            $scope.subprogram = -1;
-            $scope.program = {};
-            var i;
-            for (i = 0; i < $scope.axe.programs.length; i++) {
-                if ($scope.axe.programs[i].id == $scope.program_id) {
-                    $scope.program = $scope.axe.programs[i];
-                    break;
-                }
-            }
-        }
-
-        self.belongsToSecretary = function (program) {
-            if ($scope.secretary == -1) {
-                return true;
-            }
-            var i;
-            for (i = 0; i < program.secretaries.length; i++) {
-                if (program.secretaries[i].secretary_id == $scope.secretary) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        self.genericFilters = function(){
-            var x;
-            x = $scope.genericFilters[5];
-            x.value = $scope.development_plan.id;
-            $scope.req.filters.push(x);
-
-            if($scope.dimention.id){
-                x = $scope.genericFilters[4];
-                x.value = $scope.dimention.id;
-                $scope.req.filters.push(x);
-            }
-
-            if($scope.axe.id){
-                x = $scope.genericFilters[3];
-                x.value = $scope.axe.id;
-                $scope.req.filters.push(x);
-            }
-
-            if($scope.secretary != -1){
-                x = $scope.genericFilters[2];
-                x.value = $scope.secretary;
-                $scope.req.filters.push(x);
-            }
-
-            if($scope.program.id){
-                x = $scope.genericFilters[1];
-                x.value = $scope.program.id;
-                $scope.req.filters.push(x);
-            }
-
-            if($scope.subprogram != -1){
-                x = $scope.genericFilters[0];
-                x.value = $scope.subprogram;
-                $scope.req.filters.push(x);
-            }
-        }
-
-        self.getReport = function(){
-            $scope.res = $scope.counter.response + " ";
-            $scope.report = true;
-            $scope.req = {
-                total: $scope.counter.column,
-            }
-            var i = 0;
-
-            $scope.req.filters = _.filter($scope.filters, function(f){
-                if(f.data){
-                    var x;
-                    if(f.data.id){
-                        f.value = f.data.id;
-                        x = f.data.name
-                    }else{
-                        f.value = f.data;
-                        x = f.value ? "si" : "no";
-                    }
-                    
-                    if( i == 0 ){
-                        $scope.res += "con las siguientes caracteristicas: "
-                        i++;
-                    }
-                    $scope.res += f.label + " - " + x + ", ";
-                    return true;
-                }
-
-                return false;
-            });
-
-            if($scope.counter.label == "Total Personas" || $scope.counter.label == "Total Municipios"){
-                $scope.res += " es: ";
-            }else{
-                $scope.res += " son: ";
-            }
-
-            self.genericFilters();
-
-            StatisticService.getReport($scope.req).then(
-                function(response){
-                    var i;
-                    for(i = 0; i < response.data.length; i++){
-                        for(var key in response.data[i]){
-                            if(i > 0){
-                                $scope.res+= ", "
-                            }
-                            $scope.res += response.data[i][key];
-                        }
-                    }
-                    $scope.reports.push($scope.res);
-                    self.getFilters();
-                },
-                function(err){
-                    inform.add("Ocurrió un error al consultar las estadisticas solicitadas", {type: "warning"});
-                }
-            );
-        }
-
-        self.getData = function(filter){
-            if(filter.endpoint == "NA"){
-                return;
-            }
-
-            var ep = filter.endpoint.replace("-", "_");
-
-            if( $scope[ep] == 0 ){
-                StatisticService.genericGetter(filter.endpoint).then(
-                    function(response){
-                        $scope[ep] = response.data;
-                    }
-                );
-            }
-        }
-
-        self.applyFilter = function(filter){
-            var i;
-            for(i = 0; i < $scope.selectedFilters.length; i++){
-                if($scope.selectedFilters[i].column == filter){
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        self.getFilters = function(){
-            var i;
-
-            for(i = 0; i < $scope.counter.filters.length; i++){
-                delete $scope.counter.filters[i].data;
-                self.getData($scope.counter.filters[i]);
-            }
-            $scope.filters = $scope.counter.filters;
-        }
-
-        self.init = function () {
-            $scope.development_plans = DevelopmentPlans.data;
-            $scope.secretaries = Secretaries.data;
-            $scope.counters = Counters.data;
-            $scope.genericFilters = GenericFilters.data;
-        }
-
-        self.init();
-
-
-        //EXAMPLE CHART
-        $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
-        $scope.data = [300, 500, 100];
-
-
-
-    }
-})(angular.module("app"));
-
-
-(function (module) {
-    module.service("StatisticService", StatisticService);
-
-    StatisticService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS"
-    ];
-
-    function StatisticService($http, $q, APP_DEFAULTS) {
-        var self = this;
-
-        self.getDevelopmentPlans = function(params){
-            return $http({
-                method: "GET",
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + '/development-plans'
-            })
-        }
-
-        self.getSecretaries = function(params){
-            return $http({
-                method: "GET",
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + '/secretaries'
-            })
-        }
-
-        self.getCounters = function(params){
-            return $http({
-                method: "GET",
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + '/counters'
-            })
-        }
-
-        self.genericGetter = function(endpoint){
-            return $http({
-                method: "GET",
-                url: APP_DEFAULTS.ENDPOINT + '/' + endpoint
-            })
-        }
-
-        self.getGenericFilters = function(params){
-            return $http({
-                method: "GET",
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + '/generic-filters'
-            })
-        }
-
-        self.getReport = function(params){
-            return $http({
-                method: "POST",
-                data: params,
-                url: APP_DEFAULTS.ENDPOINT + '/reports'
-            })
-        }
-
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("TerritorialCtrl", TerritorialCtrl);
-
-    TerritorialCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
-        "inform",
-        "TerritorialService"
-    ];
-
-    function TerritorialCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, TerritorialService) {
-
-        var self = this;
-
-        self.uploadData = function (id, string) {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Cargar Ordenamiento',
-                ariaDescribedBy: 'cargar-ordenamiento',
-                templateUrl: 'templates/upload-territories.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        type: string
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                if( id == 1){
-                    TerritorialService.uploadMunicipalities(data).then(
-                        function(response){
-                            inform.add("Se han cargado los municipios.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar los municipios.", {type: "warning"});
-                        }
-                    );
-                }else if(id == 2){
-                    TerritorialService.uploadAreas(data).then(
-                        function(response){
-                            inform.add("Se han cargado las areas.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
-                        }
-                    );
-                }else if(id == 3){
-                    TerritorialService.uploadAdministrativeUnits(data).then(
-                        function(response){
-                            inform.add("Se han cargado las areas.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
-                        }
-                    );
-                }
-            });
-        }
-
-
-        self.init = function () {
-            
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-
-(function (module) {
-    module.service("TerritorialService", TerritorialService);
-
-    TerritorialService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function TerritorialService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadMunicipalities = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/municipalities/upload"
-            });
-        }
-
-        self.uploadAreas = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/areas/upload"
-            });
-        }
-
-        self.uploadAdministrativeUnits = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/upload"
-            });
-        }
-
-
     }
 })(angular.module("app"));
