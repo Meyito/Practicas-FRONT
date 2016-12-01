@@ -53,10 +53,10 @@
                 }else if(id == 3){
                     TerritorialService.uploadAdministrativeUnits(data).then(
                         function(response){
-                            inform.add("Se han cargado las areas.", { type: "success" });
+                            inform.add("Se han cargado las unidades administrativas.", { type: "success" });
                             //self.refresh();
                         }, function(err){
-                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
+                            inform.add("Ocurrió un error al guardar las unidades administrativas.", {type: "warning"});
                         }
                     );
                 }
