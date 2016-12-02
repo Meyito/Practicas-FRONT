@@ -402,107 +402,6 @@
 (function (module) {
     'use strict';
 
-    module.controller("AnalyticsCtrl", AnalyticsCtrl);
-
-    AnalyticsCtrl.$inject = [
-        "$scope",
-        "AnalyticsService",
-        '$interval',
-        '$filter'
-    ];
-
-    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
-
-        var self = this;
-
-        self.graphs = {
-            zones: [],
-            time: [],
-            labels: [],
-            speed: [],
-            count: [],
-            avg_speed: [],
-            acum: []
-        }
-
-        self.paint = function () {
-
-        }
-
-        self.randomData = function () {
-            var i, s;
-            for (i = 0; i < self.graphs.zones.length; i++) {
-                if (i == 0) {
-                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
-                    self.graphs.time.push(s);
-                    self.graphs.labels.push($filter('date')(s, "medium"));
-                }
-                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
-                s = Math.random() * 200 + 1;
-                self.graphs.speed[i].push(s);
-                self.graphs.acum[i] += s;
-                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
-            }
-
-            console.log(self.graphs);
-        }
-
-        self.parseData = function (data) {
-            var i;
-            for (i = 0; i < data.length; i++) {
-                if (i == 0) {
-                    self.graphs.time.push(data[i].data.time);
-                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
-                }
-                self.graphs.zones.push(data[i].zoneId);
-                var speed = [];
-                speed[0] = data[i].data.speed;
-                self.graphs.speed.push(speed);
-                self.graphs.avg_speed.push(data[i].data.speed);
-                self.graphs.acum.push(data[i].data.speed);
-                self.graphs.count.push(data[i].data.count);
-            }
-            console.log(self.graphs);
-        }
-
-        self.init = function () {
-            AnalyticsService.getData().then(
-                function (response) {
-                    self.parseData(response.data);
-                    $interval(function () {
-                        self.randomData();
-                    },3000);
-                }
-            );
-        }
-
-        self.init();
-
-
-
-    }
-})(angular.module("app"));
-
-(function(module){
-  module.service("AnalyticsService", AnalyticsService);
-
-  AnalyticsService.$inject = [
-      "$http"
-  ];
-
-  function AnalyticsService($http){
-    var self = this;
-
-    self.getData = function () {
-        return $http.get("/data/activity-data.json");
-    }
-    
-  }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
     module.controller("ActivitiesCtrl", ActivitiesCtrl);
 
     ActivitiesCtrl.$inject = [
@@ -758,6 +657,107 @@
 (function (module) {
     'use strict';
 
+    module.controller("AnalyticsCtrl", AnalyticsCtrl);
+
+    AnalyticsCtrl.$inject = [
+        "$scope",
+        "AnalyticsService",
+        '$interval',
+        '$filter'
+    ];
+
+    function AnalyticsCtrl($scope, AnalyticsService, $interval, $filter) {
+
+        var self = this;
+
+        self.graphs = {
+            zones: [],
+            time: [],
+            labels: [],
+            speed: [],
+            count: [],
+            avg_speed: [],
+            acum: []
+        }
+
+        self.paint = function () {
+
+        }
+
+        self.randomData = function () {
+            var i, s;
+            for (i = 0; i < self.graphs.zones.length; i++) {
+                if (i == 0) {
+                    s = self.graphs.time[self.graphs.time.length - 1] + 60000;
+                    self.graphs.time.push(s);
+                    self.graphs.labels.push($filter('date')(s, "medium"));
+                }
+                self.graphs.count[i] = Math.floor((Math.random() * 100) + 1);
+                s = Math.random() * 200 + 1;
+                self.graphs.speed[i].push(s);
+                self.graphs.acum[i] += s;
+                self.graphs.avg_speed[i] = self.graphs.acum[i] / self.graphs.speed[i].length;
+            }
+
+            console.log(self.graphs);
+        }
+
+        self.parseData = function (data) {
+            var i;
+            for (i = 0; i < data.length; i++) {
+                if (i == 0) {
+                    self.graphs.time.push(data[i].data.time);
+                    self.graphs.labels.push($filter('date')(data[i].data.time, "medium"));
+                }
+                self.graphs.zones.push(data[i].zoneId);
+                var speed = [];
+                speed[0] = data[i].data.speed;
+                self.graphs.speed.push(speed);
+                self.graphs.avg_speed.push(data[i].data.speed);
+                self.graphs.acum.push(data[i].data.speed);
+                self.graphs.count.push(data[i].data.count);
+            }
+            console.log(self.graphs);
+        }
+
+        self.init = function () {
+            AnalyticsService.getData().then(
+                function (response) {
+                    self.parseData(response.data);
+                    $interval(function () {
+                        self.randomData();
+                    },3000);
+                }
+            );
+        }
+
+        self.init();
+
+
+
+    }
+})(angular.module("app"));
+
+(function(module){
+  module.service("AnalyticsService", AnalyticsService);
+
+  AnalyticsService.$inject = [
+      "$http"
+  ];
+
+  function AnalyticsService($http){
+    var self = this;
+
+    self.getData = function () {
+        return $http.get("/data/activity-data.json");
+    }
+    
+  }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
     module.controller("NavigationCtrl", NavigationCtrl);
 
     NavigationCtrl.$inject = [
@@ -780,6 +780,36 @@
         }
 
         self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("LoginCtrl", LoginCtrl);
+
+    LoginCtrl.$inject = [
+        "$scope",
+        "$state"
+    ];
+
+    function LoginCtrl($scope, $state) {
+
+        var self = this;
+
+        $scope.data;
+
+        self.login = function(){
+            $state.go("development-plan");
+        }
+
+        self.init = function () {
+
+        }
+
+        self.init();
+
+
     }
 })(angular.module("app"));
 
@@ -978,36 +1008,6 @@
 
     }
 })(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("LoginCtrl", LoginCtrl);
-
-    LoginCtrl.$inject = [
-        "$scope",
-        "$state"
-    ];
-
-    function LoginCtrl($scope, $state) {
-
-        var self = this;
-
-        $scope.data;
-
-        self.login = function(){
-            $state.go("development-plan");
-        }
-
-        self.init = function () {
-
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
 (function (module) {
     'use strict';
 
@@ -1510,6 +1510,60 @@
             });
         }
 
+        self.edit = function (secretary) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Editar Secretaría',
+                ariaDescribedBy: 'editar-secretaría',
+                templateUrl: 'templates/update-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        secretary: secretary
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.updateSecretary(data, secretary.id).then(
+                    function(response){
+                        inform.add("Se ha actualizado la dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al actualizar la dependencia", {type: "warning"});
+                    }
+                );
+            });
+        }
+
+        self.delete = function (secretary) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Eliminar Secretaría',
+                ariaDescribedBy: 'eliminar-secretaría',
+                templateUrl: 'templates/delete-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        secretary: secretary
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.deleteSecretary(secretary.id).then(
+                    function(response){
+                        inform.add("Se ha eliminado la dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al eliminar la dependencia", {type: "warning"});
+                    }
+                );
+            });
+        }
+
         self.refresh = function(){
             SecretariesService.getSecretaries({}).then(
                 function(response){
@@ -1556,6 +1610,21 @@
                 data: data,
                 url: APP_DEFAULTS.ENDPOINT + "/secretaries"
             });
+        }
+
+        self.updateSecretary = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+
+        self.deleteSecretary = function(id){
+            return $http({
+                method: 'DELETE',
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
         }
     }
 })(angular.module("app"));

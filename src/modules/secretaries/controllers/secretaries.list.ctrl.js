@@ -43,6 +43,60 @@
             });
         }
 
+        self.edit = function (secretary) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Editar Secretaría',
+                ariaDescribedBy: 'editar-secretaría',
+                templateUrl: 'templates/update-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        secretary: secretary
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.updateSecretary(data, secretary.id).then(
+                    function(response){
+                        inform.add("Se ha actualizado la dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al actualizar la dependencia", {type: "warning"});
+                    }
+                );
+            });
+        }
+
+        self.delete = function (secretary) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Eliminar Secretaría',
+                ariaDescribedBy: 'eliminar-secretaría',
+                templateUrl: 'templates/delete-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        secretary: secretary
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.deleteSecretary(secretary.id).then(
+                    function(response){
+                        inform.add("Se ha eliminado la dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al eliminar la dependencia", {type: "warning"});
+                    }
+                );
+            });
+        }
+
         self.refresh = function(){
             SecretariesService.getSecretaries({}).then(
                 function(response){

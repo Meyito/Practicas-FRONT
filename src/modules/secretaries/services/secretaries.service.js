@@ -27,5 +27,20 @@
                 url: APP_DEFAULTS.ENDPOINT + "/secretaries"
             });
         }
+
+        self.updateSecretary = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+
+        self.deleteSecretary = function(id){
+            return $http({
+                method: 'DELETE',
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
     }
 })(angular.module("app"));
