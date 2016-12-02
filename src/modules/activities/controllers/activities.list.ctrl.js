@@ -14,10 +14,11 @@
         "$state",
         "DevelopmentPlans",
         "GenericFilters",
-        "usSpinnerService"
+        "usSpinnerService",
+        "Secretaries"
     ];
 
-    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state, DevelopmentPlans, GenericFilters, usSpinnerService) {
+    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state, DevelopmentPlans, GenericFilters, usSpinnerService, Secretaries) {
 
         var self = this;
 
@@ -65,8 +66,8 @@
                         for (var j in err.data) {
                             key = j;
                             value = err.data[j];
-                            msg += key +": ";
-                            for(i = 0; i < err.data[j].length; i++){
+                            msg += key + ": ";
+                            for (i = 0; i < err.data[j].length; i++) {
                                 msg += err.data[j][i] + ",";
                             }
                             msg += "\n";
@@ -77,14 +78,38 @@
             });
         }
 
+        self.download = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_actividad.xlsx');
+        }
+
+        self.clearDevPlan = function(){
+            $scope.dimention = {};
+            $scope.axe = {};
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.clearDim = function(){
+            $scope.axe = {};
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.clearAxe = function(){
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
         self.parse = function () {
             $scope.subprogram = -1;
             $scope.program = {};
             var i;
-            for (i = 0; i < $scope.axe.programs.length; i++) {
-                if ($scope.axe.programs[i].id == $scope.program_id) {
-                    $scope.program = $scope.axe.programs[i];
-                    break;
+            if ($scope.program_id) {
+                for (i = 0; i < $scope.axe.programs.length; i++) {
+                    if ($scope.axe.programs[i].id == $scope.program_id) {
+                        $scope.program = $scope.axe.programs[i];
+                        break;
+                    }
                 }
             }
         }
@@ -163,6 +188,7 @@
         self.init = function () {
             $scope.development_plans = DevelopmentPlans.data;
             $scope.genericFilters = GenericFilters.data;
+            $scope.secretaries = Secretaries.data;
         }
 
         self.init();

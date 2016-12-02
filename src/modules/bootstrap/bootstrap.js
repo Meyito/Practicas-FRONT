@@ -281,6 +281,11 @@
                 GenericFilters: ['StatisticService', function (StatisticService) {
                     var params = {}
                     return StatisticService.getGenericFilters(params);
+                }],
+                
+                Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
                 }]
             }
         });
