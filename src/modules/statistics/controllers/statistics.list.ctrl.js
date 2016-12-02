@@ -11,12 +11,15 @@
         "Secretaries",
         "Counters",
         "StatisticService",
-        "GenericFilters"
+        "GenericFilters",
+        "usSpinnerService"
     ];
 
-    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService,GenericFilters) {
+    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService,GenericFilters,usSpinnerService) {
 
         var self = this;
+
+        $scope.spinner = false;
 
         $scope.expanded = false;
         $scope.development_plan = {};
@@ -38,6 +41,19 @@
         $scope.victim_types = [];
         $scope.ethnic_groups = [];
         $scope.reports = [];
+
+        self.startSpin = function(){
+            $scope.spinner = true;
+            usSpinnerService.spin('spinner-1');
+        }
+        self.stopSpin = function(){
+            $scope.spinner = false;
+            usSpinnerService.stop('spinner-1');
+        }
+
+        self.clean = function(){
+            $scope.reports = [];
+        }
 
         self.parse = function(){
             $scope.subprogram = -1;
@@ -103,6 +119,7 @@
         }
 
         self.getReport = function(){
+            self.startSpin();
             $scope.res = $scope.counter.response + " ";
             $scope.report = true;
             $scope.req = {
@@ -153,9 +170,11 @@
                     }
                     $scope.reports.push($scope.res);
                     self.getFilters();
+                    self.stopSpin();
                 },
                 function(err){
                     inform.add("Ocurrió un error al consultar las estadisticas solicitadas", {type: "warning"});
+                    self.stopSpin();
                 }
             );
         }

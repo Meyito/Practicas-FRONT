@@ -17,7 +17,8 @@
     "angular-daterangepicker": "^0.2.2",
     "angular-chart.js": "^1.0.3",
     "angular-material-data-table": "^0.10.9",
-    "angular-bootstrap-multiselect": "^0.4.0"
+    "angular-bootstrap-multiselect": "^0.4.0",
+    "angular-spinner": "^0.8.1"
   },
   "overrides": {
     "font-awesome": {

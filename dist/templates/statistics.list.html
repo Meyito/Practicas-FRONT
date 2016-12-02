@@ -150,20 +150,23 @@
 	</div>
 
 	<div class="row centered m-10">
-		<button type="button" ng-disabled="!development_plan.id || !counter.id" class="btn btn-success button-md" ng-click="statisticsCtrl.getReport()">Estadisticas</button>
+		<button type="button" ng-disabled="!development_plan.id || !counter.id || spinner" class="btn btn-success button-md" ng-click="statisticsCtrl.getReport()">Consultar</button>
 	</div>
 
 	<div class="row" ng-show="report">
 		<div class="col-lg-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title"><i class="fa fa-bar-chart-o fa-fw"></i> Resultados </h3>
+					<h3 class="panel-title pull-left"><i class="fa fa-bar-chart-o fa-fw"></i> Resultados </h3>
+					<button class="btn btn-xs btn-default pull-right" ng-click="statisticsCtrl.clean()">Limpiar</button>
+					<div class="clearfix"></div>
 				</div>
 				<div class="panel-body centered">
 					<div class="col-lg-12">
 						<div class="well" ng-repeat="report in reports track by $index">
 							{{report}}
 						</div>
+						<span us-spinner="{radius:30, width:8, length: 16}" spinner-key="spinner-1"></span>
 					</div>
 				</div>
 			</div>

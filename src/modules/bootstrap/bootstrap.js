@@ -15,7 +15,8 @@
         'chart.js',
         'ngMaterial',
         'md.data.table',
-        'ui.multiselect'
+        'ui.multiselect',
+        'angularSpinner'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
