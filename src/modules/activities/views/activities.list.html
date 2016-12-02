@@ -57,7 +57,7 @@
 				</div>
 
 				<div class="row centered m-10">
-					<button type="button" ng-disabled="!development_plan.id" class="btn btn-success button-md" ng-click="actCtrl.getActivities()">Buscar Actividades</button>
+					<button type="button" ng-disabled="!development_plan.id || spinner" class="btn btn-success button-md" ng-click="actCtrl.getActivities()">Buscar Actividades</button>
 				</div>
 			</div>
 		</div>
@@ -71,7 +71,8 @@
 		</div>
 	</div>
 
-	<div class="row">
+	<div class="row" style="position: relative;">
+		<span us-spinner="{radius:30, width:8, length: 16}" spinner-key="spinner-1"></span>
 		<div ng-repeat="activity in activities" class="col-lg-4 col-md-4 col-sm-6 col-xs-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
