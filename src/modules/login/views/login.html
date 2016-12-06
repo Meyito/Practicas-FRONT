@@ -1,9 +1,0 @@
-<form class="login-form" name="login_form">
-	
-	<label for="name"><i class="fa fa-fw fa-user"></i>Usuario:</label>
-	<input type="text" id="name" ng-model="data.username" required/>
-	<label for="password"><i class="fa fa-fw fa-lock"></i>Contraseña:</label>
-	<input type="password" id="password" ng-model="data.password" required/>
-	<button type="submit" ng-click="loginCtrl.login()" ng-disabled="login_form.$invalid">Login</button>
-</form>
-

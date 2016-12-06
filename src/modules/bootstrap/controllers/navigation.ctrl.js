@@ -5,21 +5,32 @@
 
     NavigationCtrl.$inject = [
         "$scope",
-        "$state"
+        "$state",
+        "AuthenticationService"
     ];
 
-    function NavigationCtrl($scope, $state) {
+    function NavigationCtrl($scope, $state, AuthenticationService) {
 
         var self = this;
 
         $scope.active = "";
 
+
+
         self.init = function() {
             $scope.active = $state.current.data.state;
+            $scope.currentUser = AuthenticationService.getCurrentUser();
+
+            console.log($scope.currentUser);
         }
 
         self.logOut = function(){
-            $state.go("login");
+            AuthenticationService.logout().then(
+                function(response){
+                    AuthenticationService.destroyToken();
+                    $state.go("login");
+                }
+            );
         }
 
         self.init();

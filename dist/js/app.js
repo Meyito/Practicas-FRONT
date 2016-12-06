@@ -1,4 +1,110 @@
 (function () {
+    angular.module('app.authentication', [
+        "angular-jwt"
+    ])
+        .config(routeConfig)
+        .run(run);
+
+    routeConfig.$inject = [
+        'stateHelperProvider',
+        'jwtInterceptorProvider',
+        'jwtOptionsProvider',
+        '$httpProvider'
+    ];
+
+    function routeConfig(stateHelperProvider, jwtInterceptorProvider, jwtOptionsProvider, $httpProvider) {
+
+        jwtOptionsProvider.config({
+            tokenGetter: ['AuthenticationService', function (AuthenticationService) {
+                //Skip sending token for template requests
+                /*if (config.url.substr(config.url.length - 5) == '.html') {
+                    return null;
+                }*/
+
+                var token = AuthenticationService.getToken();
+                if (token) {
+                    if (AuthenticationService.isTokenExpired()) {
+                        //Must try to refresh token if expired => return AuthenticationService.refreshToken();
+                    } else {
+                        return token;
+                    }
+                }
+            }],
+
+            whiteListedDomains: ['192.168.33.10', 'localhost']
+        });
+
+        /*jwtInterceptorProvider.tokenGetter = [
+            'AuthenticationService',
+            //'config',
+            function (AuthenticationService) {
+
+                var token = AuthenticationService.getToken();
+                if (token) {
+                    if (AuthenticationService.isTokenExpired()) {
+                        //Must try to refresh token if expired => return AuthenticationService.refreshToken();
+                    } else {
+                        return token;
+                    }
+                }
+            }];*/
+
+        $httpProvider.interceptors.push('jwtInterceptor');
+
+        stateHelperProvider
+            .state({
+                name: 'login',
+                url: '/login',
+                controller: 'AuthController as auth',
+                templateUrl: 'templates/login.html',
+                data: { loginNotRequired: true }
+            }).state({
+                name: 'restorePassword',
+                url: '/restorePassword?token',
+                controller: 'RestorePasswordController as restorePass',
+                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
+                data: { loginNotRequired: true }
+            });
+    }
+
+    run.$inject = [
+        '$rootScope',
+        '$state',
+        'AuthenticationService',
+        'AUTH_DEFAULTS'
+    ];
+
+    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
+
+        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
+            if ((to.data && !to.data.loginNotRequired) || !to.data) {
+                if (!AuthenticationService.getToken()) {
+                    evt.preventDefault();
+                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
+                        {
+                            message: "Debe iniciar sesión"
+                        },
+                        {
+                            reload: true
+                        });
+                }
+                else if (AuthenticationService.isTokenExpired()) {
+                    AuthenticationService.refreshToken();
+                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
+                    evt.preventDefault();
+                    //$state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
+                    $state.go(AUTH_DEFAULTS.LOGIN_STATE);
+                }
+            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
+                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
+                evt.preventDefault();
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }
+        });
+    }
+
+})();
+(function () {
     'use strict';
 
 
@@ -16,7 +122,10 @@
         'ngMaterial',
         'md.data.table',
         'ui.multiselect',
-        'angularSpinner'
+        'angularSpinner',
+        'angular-jwt',
+        'angular-storage',
+        'app.authentication'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
@@ -34,15 +143,23 @@
                 resolve: {
                 }
             });*/
+            
 
-        //Login
+        //Dashboard
         stateHelperProvider.state({
-            name: 'login',
+            name: 'dashboard',
             url: '/',
+            data: {
+                state: ""
+            },
             views: {
                 '': {
-                    templateUrl: "templates/login.html",
-                    controller: "LoginCtrl as loginCtrl",
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@dashboard': {
+                    templateUrl: "templates/empty.html",
+                    //controller: "ActivitiesCtrl as actCtrl"
                 }
             }
         });
@@ -157,7 +274,8 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                        relationships: "dimentions.axes.programs.subprograms"
+                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
@@ -273,7 +391,8 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                        relationships: "dimentions.axes.programs.subprograms"
+                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
@@ -310,7 +429,8 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                        relationships: "dimentions.axes.programs.subprograms"
+                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
@@ -349,11 +469,19 @@
 (function (module) {
     "use strict";
 
+    //var ROOT_PATH = "https://whispering-garden-20822.herokuapp.com/";
     var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
 
     module.constant("APP_DEFAULTS", {
         ENDPOINT: ROOT_PATH + "api/v1",
         ROOT_PATH: ROOT_PATH
+    });
+
+    module.constant("AUTH_DEFAULTS", {
+        TOKEN_NAME: "token",
+        LOGIN_STATE: "login",
+        LANDING_PAGE: "dashboard",
+        FORBIDDEN_STATE: "forbidden"
     });
 
 })(angular.module('app'));
@@ -701,6 +829,219 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ActivitiesService", ActivitiesService);
+
+    ActivitiesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadActivity = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+            });
+        }
+
+        self.getActivities = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("AuthController", AuthController);
+
+    AuthController.$inject = [
+        "$scope",
+        "AuthenticationService",
+        "$state",
+        "AUTH_DEFAULTS"
+        //"blockUI"
+    ];
+
+    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS) {
+        var auth = this;
+        //var loginSection = blockUI.instances.get('loginSection');
+        auth.credentials = {};
+
+        auth.login = function (formLogin) {
+
+            if (formLogin.$invalid) {
+                return;
+            }
+
+            //loginSection.start();
+            auth.error = undefined;
+
+            AuthenticationService.login(auth.credentials).then(function () {
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }).catch(function (error) {
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                //loginSection.stop();
+            });
+        };
+
+        auth.showForgotPassword = function () {
+            auth.credentials = {};
+            auth.error = undefined;
+            auth.forgotPassword = true;
+            auth.recoveryEmail = undefined;
+        };
+
+        auth.hideForgotPassword = function () {
+            auth.recoveryEmail = undefined;
+            auth.forgotPassword = false;
+        };
+
+        auth.recoverPassword = function () {
+
+            //loginSection.start();
+            auth.error = undefined;
+
+            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
+                auth.recoverSuccess = true;
+            }).catch(function (error) {
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                //loginSection.stop();
+            });
+        };
+    }
+})(angular.module("app.authentication"));
+(function (module) {
+    'use strict';
+
+    module.service("AuthenticationService", AuthenticationService);
+
+    AuthenticationService.$inject = [
+        "$http",
+        "$q",
+        "store",
+        'AUTH_DEFAULTS',
+        "jwtHelper",
+        "APP_DEFAULTS"
+    ];
+
+    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
+        var self = this;
+        var resource = "/authenticate";
+
+        self.getCurrentUser = function () {
+            var payload = jwtHelper.decodeToken(self.getToken());
+            
+            var user = {
+                name: payload.name,
+                username: payload.username,
+                role: 'admin',
+                //role: payload.role,
+                //permissions: payload.views
+            };
+            return user;
+        };
+
+        self.login = function (credentials) {
+            var deferred = $q.defer();
+
+            $http({
+                method: "POST",
+                data: credentials,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + "/login",
+            }).then(function (response) {
+                self.setToken(response.data.token);
+                deferred.resolve(self.getCurrentUser());
+            }).catch(function (error) {
+                deferred.reject(error);
+            });
+
+            return deferred.promise;
+        };
+
+        self.setToken = function (token) {
+            store.set("token", token);
+        };
+
+        self.getToken = function () {
+            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.isTokenExpired = function () {
+            return jwtHelper.isTokenExpired(self.getToken());
+        };
+
+        self.destroyToken = function () {
+            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.recoverPassword = function (email) {
+            return $http({
+                method: "GET",
+                params: { email: email },
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
+            });
+        };
+
+        self.getRestoreToken = function (token) {
+            return $http({
+                method: "GET",
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
+            });
+        };
+
+        self.updatePassword = function (params, token) {
+            return $http({
+                method: "PUT",
+                data: params,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
+            });
+        };
+
+        /**
+         * Checks if the current user has permissions to
+         * enter to the given view
+         * @param view : view name to check if the user has the permission
+         * @returns {boolean}
+         */
+        self.hasPermission = function (view) {
+            var user = self.getCurrentUser();
+            if (user.role.is_admin == true || user.role.is_admin == 'true' || user.permissions[view]) {
+                return true;
+            }
+            return false;
+        };
+
+        self.logout = function () {
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + "/logout"
+            })
+        };
+
+        return self;
+    }
+})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 
@@ -708,54 +1049,35 @@
 
     NavigationCtrl.$inject = [
         "$scope",
-        "$state"
+        "$state",
+        "AuthenticationService"
     ];
 
-    function NavigationCtrl($scope, $state) {
+    function NavigationCtrl($scope, $state, AuthenticationService) {
 
         var self = this;
 
         $scope.active = "";
 
+
+
         self.init = function() {
             $scope.active = $state.current.data.state;
+            $scope.currentUser = AuthenticationService.getCurrentUser();
+
+            console.log($scope.currentUser);
         }
 
         self.logOut = function(){
-            $state.go("login");
+            AuthenticationService.logout().then(
+                function(response){
+                    AuthenticationService.destroyToken();
+                    $state.go("login");
+                }
+            );
         }
 
         self.init();
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("LoginCtrl", LoginCtrl);
-
-    LoginCtrl.$inject = [
-        "$scope",
-        "$state"
-    ];
-
-    function LoginCtrl($scope, $state) {
-
-        var self = this;
-
-        $scope.data;
-
-        self.login = function(){
-            $state.go("development-plan");
-        }
-
-        self.init = function () {
-
-        }
-
-        self.init();
-
-
     }
 })(angular.module("app"));
 
@@ -899,6 +1221,61 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ContractsService", ContractsService);
+
+    ContractsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function ContractsService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.addContractor = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.getContractors = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.updateContractor = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
+            })
+        }
+
+        self.addContract = function(data, id){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
+            })
+        }
+
+        self.getIdentificationTypes = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
+            })
+        }
+
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1043,92 +1420,6 @@
 
 
 (function (module) {
-    module.service("ContractsService", ContractsService);
-
-    ContractsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS"
-    ];
-
-    function ContractsService($http, $q, APP_DEFAULTS) {
-        var self = this;
-
-        self.addContractor = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.getContractors = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.updateContractor = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
-            })
-        }
-
-        self.addContract = function(data, id){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
-            })
-        }
-
-        self.getIdentificationTypes = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
-            })
-        }
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("ActivitiesService", ActivitiesService);
-
-    ActivitiesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadActivity = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
-            });
-        }
-
-        self.getActivities = function(params){
-            return $http({
-                method: "POST",
-                data: params,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
-            })
-        }
-
-    }
-})(angular.module("app"));
-
-(function (module) {
     module.service("PlanService", PlanService);
 
     PlanService.$inject = [
@@ -1155,6 +1446,301 @@
                 url: APP_DEFAULTS.ENDPOINT + "/development-plans"
             });
         }
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("ModalUpdateProjectCtrl", ModalUpdateProjectCtrl);
+
+    ModalUpdateProjectCtrl.$inject = [
+        "$scope",
+        "$uibModalInstance",
+        "data"
+    ];
+
+    function ModalUpdateProjectCtrl($scope, $uibModalInstance, data) {
+
+        var self = this;
+
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
+
+        self.update = function () {
+            $scope.data.project.status = $scope.data.project.s ? 'Activo' : 'Inactivo';
+            $uibModalInstance.close($scope.data);
+        };
+
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
+
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        self.init = function(){
+            $scope.data.project.s = $scope.data.project.status == 'Activo' ? true : false;
+        }
+
+        self.init();
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("ProjectsCtrl", ProjectsCtrl);
+
+    ProjectsCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "ProjectsService",
+        "Dimentions",
+        "Projects"
+    ];
+
+    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ProjectsService, Dimentions, Projects) {
+
+        var self = this;
+
+        /* Table Config */
+        $scope.configDT = {
+            order: 'SEPPI',
+            limit: 10,
+            page: 1
+        }
+        /* */
+
+        /* Obtiene todos los proyectos del Plan de Desarrollo Actual */
+        self.getProjects = function () {
+            var params = {
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true,
+                relationships: 'subprogram'
+            }
+
+            ProjectsService.getProjects(params).then(
+                function (response) {
+                    $scope.projects = response.data
+                }, function (err) {
+                    inform.add("Ocurrio un error al cargar los proyectos", { type: 'warning' })
+                }
+            )
+        }
+
+        /* Descarga el formato para el cargue de Proyectos */
+        self.downloadFormat = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Proyectos.xlsx');
+        }
+
+        /* Modal para cargar Proyectos de Manera Másiva a traves de un documento de Excel. */
+        self.upload = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Proyectos',
+                ariaDescribedBy: 'cargar-proyecto',
+                templateUrl: 'templates/uploadProjects.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ProjectsService.uploadProjects(data.file).then(
+                    function (response) {
+                        inform.add("Se han cargado los proyectos correctamente", { type: "info" });
+                        self.getProjects();
+                    }, function (err) {
+                        var msg = "Ocurrió un error al guardar los Proyectos: \n"
+                        var key, value, i;
+                        for (var j in err.data) {
+                            key = j;
+                            value = err.data[j];
+                            msg += key + ": " + value;
+                            /*for (i = 0; i < err.data[j].length; i++) {
+                                msg += err.data[j][i] + ",";
+                            }*/
+                            msg += "\n";
+                        }
+                        inform.add(msg, { ttl: -1, type: "warning" });
+                    }
+                );
+            });
+        }
+
+        /* Modal que permite la creación de 1 nuevo proyecto */
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/createProject.modal.html',
+                controller: 'ModalProjectCtrl',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        dimentions: $scope.dimentions
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                data.status = "Activo";
+
+                ProjectsService.addProject(data).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
+                        self.getProjects();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        /* Modal para la actualización de proyectos */
+        self.edit = function (project) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Actualizar Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/updateProject.modal.html',
+                controller: 'ModalUpdateProjectCtrl',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        project: project
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ProjectsService.updateProject(data, data.project.id).then(
+                    function (response) {
+                        inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
+                        self.getProjects();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al actualizar el proyecto", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        /* Configuración inicial de la vista */
+        self.init = function () {
+            $scope.dimentions = Dimentions.data;
+            $scope.projects = Projects.data;
+        }
+
+        self.init();
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("ModalProjectCtrl", ModalProjectCtrl);
+
+    ModalProjectCtrl.$inject = [
+        "$scope",
+        "$uibModalInstance",
+        "data"
+    ];
+
+    function ModalProjectCtrl($scope, $uibModalInstance, data) {
+
+        var self = this;
+
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
+        $scope.dimention = "";
+        $scope.axe = "";
+        $scope.program = "";
+
+        self.update = function () {
+            $uibModalInstance.close($scope.data);
+        };
+
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
+
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        self.init = function(){
+            console.log($scope.data);
+        }
+
+        self.init();
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ProjectsService", ProjectsService);
+
+    ProjectsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
+            })
+        }
+
+        self.uploadProjects = function(file){
+            return Upload.upload({
+                data: {file: file},
+                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
+            });
+        }
+
+        self.getProjects = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.getDimentions = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
+            })
+        }
+
     }
 })(angular.module("app"));
 (function (module) {
@@ -1274,236 +1860,6 @@
     }
 })(angular.module("app"));
 
-(function (module) {
-    'use strict';
-
-    module.controller("ModalUpdateProjectCtrl", ModalUpdateProjectCtrl);
-
-    ModalUpdateProjectCtrl.$inject = [
-        "$scope",
-        "$uibModalInstance",
-        "data"
-    ];
-
-    function ModalUpdateProjectCtrl($scope, $uibModalInstance, data) {
-
-        var self = this;
-
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
-
-        self.update = function () {
-            $scope.data.project.status = $scope.data.project.s ? 'Activo' : 'Inactivo';
-            $uibModalInstance.close($scope.data);
-        };
-
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
-
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-        self.init = function(){
-            $scope.data.project.s = $scope.data.project.status == 'Activo' ? true : false;
-        }
-
-        self.init();
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("ProjectsCtrl", ProjectsCtrl);
-
-    ProjectsCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
-        "$filter",
-        "inform",
-        "ProjectsService",
-        "Dimentions",
-        "Projects"
-    ];
-
-    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ProjectsService, Dimentions, Projects) {
-
-        var self = this;
-
-        /* Table Config */
-        $scope.configDT = {
-            order: 'SEPPI',
-            limit: 10,
-            page: 1
-        }
-        /* */
-
-        /* Obtiene todos los proyectos del Plan de Desarrollo Actual */
-        self.getProjects = function () {
-            var params = {
-                page: $scope.configDT.page,
-                items: $scope.configDT.limit,
-                count: true,
-                relationships: 'subprogram'
-            }
-
-            ProjectsService.getProjects(params).then(
-                function (response) {
-                    $scope.projects = response.data
-                }, function (err) {
-                    inform.add("Ocurrio un error al cargar los proyectos", { type: 'warning' })
-                }
-            )
-        }
-
-        /* Descarga el formato para el cargue de Proyectos */
-        self.downloadFormat = function () {
-            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Proyectos.xlsx');
-        }
-
-        /* Modal para cargar Proyectos de Manera Másiva a traves de un documento de Excel. */
-        self.upload = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Cargar Proyectos',
-                ariaDescribedBy: 'cargar-proyecto',
-                templateUrl: 'templates/uploadProjects.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ProjectsService.uploadProjects(data.file).then(
-                    function (response) {
-                        inform.add("Se han cargado los proyectos correctamente", { type: "info" });
-                        self.getProjects();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar los proyectos", { type: "warning" });
-                        //Descargar reporte de errores 
-                    }
-                );
-            });
-        }
-
-        /* Modal que permite la creación de 1 nuevo proyecto */
-        self.add = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Crear Nuevo Proyecto',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/createProject.modal.html',
-                controller: 'ModalProjectCtrl',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        dimentions: $scope.dimentions
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                data.status = "Activo";
-
-                ProjectsService.addProject(data).then(
-                    function (response) {
-                        inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
-                        self.getProjects();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        /* Modal para la actualización de proyectos */
-        self.edit = function (project) {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Actualizar Proyecto',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/updateProject.modal.html',
-                controller: 'ModalUpdateProjectCtrl',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        project: project
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ProjectsService.updateProject(data, data.project.id).then(
-                    function (response) {
-                        inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
-                        self.getProjects();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al actualizar el proyecto", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        /* Configuración inicial de la vista */
-        self.init = function () {
-            $scope.dimentions = Dimentions.data;
-            $scope.projects = Projects.data;
-        }
-
-        self.init();
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("ModalProjectCtrl", ModalProjectCtrl);
-
-    ModalProjectCtrl.$inject = [
-        "$scope",
-        "$uibModalInstance",
-        "data"
-    ];
-
-    function ModalProjectCtrl($scope, $uibModalInstance, data) {
-
-        var self = this;
-
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
-        $scope.dimention = "";
-        $scope.axe = "";
-        $scope.program = "";
-
-        self.update = function () {
-            $uibModalInstance.close($scope.data);
-        };
-
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
-
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-        self.init = function(){
-            console.log($scope.data);
-        }
-
-        self.init();
-
-    }
-})(angular.module("app"));
-
 
 (function (module) {
     module.service("SecretariesService", SecretariesService);
@@ -1548,61 +1904,6 @@
                 url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
             })
         }
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("ProjectsService", ProjectsService);
-
-    ProjectsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.addProject = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
-            })
-        }
-
-        self.uploadProjects = function(file){
-            return Upload.upload({
-                data: {file: file},
-                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
-            });
-        }
-
-        self.getProjects = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.getDimentions = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
-            })
-        }
-
     }
 })(angular.module("app"));
 (function (module) {

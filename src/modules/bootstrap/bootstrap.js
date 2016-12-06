@@ -16,7 +16,10 @@
         'ngMaterial',
         'md.data.table',
         'ui.multiselect',
-        'angularSpinner'
+        'angularSpinner',
+        'angular-jwt',
+        'angular-storage',
+        'app.authentication'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
 
         /*$stateProvider
@@ -34,15 +37,23 @@
                 resolve: {
                 }
             });*/
+            
 
-        //Login
+        //Dashboard
         stateHelperProvider.state({
-            name: 'login',
+            name: 'dashboard',
             url: '/',
+            data: {
+                state: ""
+            },
             views: {
                 '': {
-                    templateUrl: "templates/login.html",
-                    controller: "LoginCtrl as loginCtrl",
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@dashboard': {
+                    templateUrl: "templates/empty.html",
+                    //controller: "ActivitiesCtrl as actCtrl"
                 }
             }
         });
@@ -157,7 +168,8 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                        relationships: "dimentions.axes.programs.subprograms"
+                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
@@ -273,7 +285,8 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                        relationships: "dimentions.axes.programs.subprograms"
+                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
@@ -310,7 +323,8 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                        relationships: "dimentions.axes.programs.subprograms"
+                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],

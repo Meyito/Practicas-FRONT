@@ -70,8 +70,18 @@
                         inform.add("Se han cargado los proyectos correctamente", { type: "info" });
                         self.getProjects();
                     }, function (err) {
-                        inform.add("Ocurrió un error al guardar los proyectos", { type: "warning" });
-                        //Descargar reporte de errores 
+                        var msg = "Ocurrió un error al guardar los Proyectos: \n"
+                        var key, value, i;
+                        for (var j in err.data) {
+                            key = j;
+                            value = err.data[j];
+                            msg += key + ": " + value;
+                            /*for (i = 0; i < err.data[j].length; i++) {
+                                msg += err.data[j][i] + ",";
+                            }*/
+                            msg += "\n";
+                        }
+                        inform.add(msg, { ttl: -1, type: "warning" });
                     }
                 );
             });

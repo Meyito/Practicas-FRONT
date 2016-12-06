@@ -18,7 +18,9 @@
     "angular-chart.js": "^1.0.3",
     "angular-material-data-table": "^0.10.9",
     "angular-bootstrap-multiselect": "^0.4.0",
-    "angular-spinner": "^0.8.1"
+    "angular-spinner": "^0.8.1",
+    "angular-jwt": "^0.1.8",
+    "a0-angular-storage": "^0.0.15"
   },
   "overrides": {
     "font-awesome": {
