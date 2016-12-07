@@ -206,9 +206,30 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@users': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "StatisticsCtrl as statisticsCtrl"
+                    templateUrl: "templates/users.list.html",
+                    controller: "UsersController as usersCtrl"
                 }
+            },
+            resolve: {
+                Roles: ['UsersService', function (UsersService) {
+                    var params = {}
+                    return UsersService.getRoles(params);
+                }],
+
+                Users: ['UsersService', function (UsersService) {
+                    var params = {
+                        relationships: 'role,secretary',
+                        'page': 1,
+                        'items': 15,
+                        'count': true
+                    }
+                    return UsersService.getUsers(params);
+                }],
+                
+                Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }]
             }
         });
 

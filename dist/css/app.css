@@ -373,3 +373,23 @@ body{
     max-height: 630px;
     overflow-y: auto;
 }
+
+#table-users tr :nth-child(1){
+    width: 25%;
+}
+
+#table-users tr :nth-child(2){
+    width: 20%;
+}
+
+#table-users tr :nth-child(3){
+    width: 20%;
+}
+
+#table-users tr :nth-child(4){
+    width: 25%;
+}
+
+#table-users tr :nth-child(5){
+    width: 10%;
+}

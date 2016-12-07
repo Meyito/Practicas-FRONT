@@ -13,7 +13,7 @@
         <!-- Top Menu Items -->
         <ul class="nav navbar-right top-nav hidden-bar">
             <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {{currentUser}}</a>
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {{currentUser.name}}</a>
             </li>
             <li class="dropdown" uib-tooltip="Cerrar Sesión" tooltip-placement="bottom">
                 <a class="dropdown-toggle" data-toggle="dropdown" ng-click="navCtrl.logOut()"><i class="fa fa-sign-out"></i></a>
@@ -23,28 +23,28 @@
 
         <div class="collapse navbar-collapse navbar-ex1-collapse">
             <ul class="nav navbar-nav side-nav menu-right">
-                <li ng-class="active == 'development-plan' ? 'active-tab' : '' ">
+                <li has-permission="development-plan" ng-class="active == 'development-plan' ? 'active-tab' : '' ">
                     <a ui-sref="development-plan"><i class="fa fa-fw fa-file-text-o"></i> Plan de Desarrollo</a>
                 </li>
-                <li ng-class="active == 'territorial-entities' ? 'active-tab' : '' ">
+                <li has-permission="territorial-entities" ng-class="active == 'territorial-entities' ? 'active-tab' : '' ">
                     <a ui-sref="territorial-entities"><i class="fa fa-fw fa-map-o"></i> Entes Territoriales</a>
                 </li>
-                <li ng-class="active == 'secretaries' ? 'active-tab' : '' ">
+                <li has-permission="secretaries" ng-class="active == 'secretaries' ? 'active-tab' : '' ">
                     <a ui-sref="secretaries"><i class="fa fa-fw fa-bank"></i> Dependencias</a>
                 </li>
-                <li ng-class="active == 'projects' ? 'active-tab' : '' ">
+                <li has-permission="projects" ng-class="active == 'projects' ? 'active-tab' : '' ">
                     <a ui-sref="projects"><i class="fa fa-fw fa-cubes"></i> Proyectos</a>
                 </li>
-                <li ng-class="active == 'statistics' ? 'active-tab' : '' ">
+                <li has-permission="statistics" ng-class="active == 'statistics' ? 'active-tab' : '' ">
                     <a ui-sref="statistics"><i class="fa fa-fw fa-bar-chart"></i> Estadisticas</a>
                 </li>
-                <li ng-class="active == 'users' ? 'active-tab' : '' ">
+                <li has-permission="users" ng-class="active == 'users' ? 'active-tab' : '' ">
                     <a ui-sref="users"><i class="fa fa-fw fa-users"></i> Usuarios</a>
                 </li>
-                <li ng-class="active == 'contracts' ? 'active-tab' : '' ">
+                <li has-permission="contracts" ng-class="active == 'contracts' ? 'active-tab' : '' ">
                     <a ui-sref="contracts"><i class="fa fa-fw fa-users"></i> Contratistas</a>
                 </li>
-                <li ng-class="active == 'activities' ? 'active-tab' : '' ">
+                <li has-permission="activities" ng-class="active == 'activities' ? 'active-tab' : '' ">
                     <a ui-sref="activities"><i class="fa fa-fw fa-calendar-check-o"></i> Actividades</a>
                 </li>
             </ul>

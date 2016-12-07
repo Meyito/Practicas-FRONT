@@ -21,10 +21,8 @@
             
             var user = {
                 name: payload.name,
-                username: payload.username,
-                role: 'admin',
-                //role: payload.role,
-                //permissions: payload.views
+                role: payload.role.name,
+                permissions: payload.views
             };
             return user;
         };
@@ -97,7 +95,7 @@
          */
         self.hasPermission = function (view) {
             var user = self.getCurrentUser();
-            if (user.role.is_admin == true || user.role.is_admin == 'true' || user.permissions[view]) {
+            if ( user.permissions[view] ) {
                 return true;
             }
             return false;

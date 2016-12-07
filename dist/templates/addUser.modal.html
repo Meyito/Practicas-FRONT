@@ -1,0 +1,43 @@
+<div class="modal-header">
+	<h3 class="modal-title" id="modal-title">Crear Usuario</h3>
+</div>
+<div class="modal-body" id="modal-body">
+	<form name="new_user">
+		<div class="row form-group">
+			<div class="col-sm-6">
+				<label>Rol</label>
+				<select class="form-control" ng-model="new_data.role_id" required>
+					<option ng-repeat="role in data.roles" ng-value="role.id">{{role.label}}</option>
+				</select>
+			</div>
+			<div class="col-sm-6">
+                <label>Dependencia</label>
+				<select class="form-control" ng-model="new_data.secretary_id" required>
+					<option ng-repeat="secretary in data.secretaries" ng-value="secretary.id">{{secretary.name}}</option>
+				</select>
+			</div>
+		</div>
+        
+        <div class="row form-group">
+			<div class="col-sm-12">
+				<label>Nombre</label>
+				<input type="text" ng-model="new_data.name" class="form-control" required>
+			</div>
+		</div>
+
+		<div class="row form-group">
+			<div class="col-sm-6">
+				<label>Nombre de Usuario</label>
+				<input type="text" ng-model="new_data.username" class="form-control" required>
+			</div>
+			<div class="col-sm-6">
+				<label>Contraseña</label>
+				<input type="password" ng-model="new_data.password" class="form-control" required>
+			</div>
+		</div>
+	</form>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-danger button-sm" type="button" ng-click="modalCtrl.cancel()">Cancelar</button>
+	<button class="btn btn-success button-sm" type="button" ng-click="modalCtrl.save()" ng-disabled="new_user.$invalid">Guardar</button>
+</div>

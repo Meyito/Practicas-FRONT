@@ -1,110 +1,4 @@
 (function () {
-    angular.module('app.authentication', [
-        "angular-jwt"
-    ])
-        .config(routeConfig)
-        .run(run);
-
-    routeConfig.$inject = [
-        'stateHelperProvider',
-        'jwtInterceptorProvider',
-        'jwtOptionsProvider',
-        '$httpProvider'
-    ];
-
-    function routeConfig(stateHelperProvider, jwtInterceptorProvider, jwtOptionsProvider, $httpProvider) {
-
-        jwtOptionsProvider.config({
-            tokenGetter: ['AuthenticationService', function (AuthenticationService) {
-                //Skip sending token for template requests
-                /*if (config.url.substr(config.url.length - 5) == '.html') {
-                    return null;
-                }*/
-
-                var token = AuthenticationService.getToken();
-                if (token) {
-                    if (AuthenticationService.isTokenExpired()) {
-                        //Must try to refresh token if expired => return AuthenticationService.refreshToken();
-                    } else {
-                        return token;
-                    }
-                }
-            }],
-
-            whiteListedDomains: ['192.168.33.10', 'localhost']
-        });
-
-        /*jwtInterceptorProvider.tokenGetter = [
-            'AuthenticationService',
-            //'config',
-            function (AuthenticationService) {
-
-                var token = AuthenticationService.getToken();
-                if (token) {
-                    if (AuthenticationService.isTokenExpired()) {
-                        //Must try to refresh token if expired => return AuthenticationService.refreshToken();
-                    } else {
-                        return token;
-                    }
-                }
-            }];*/
-
-        $httpProvider.interceptors.push('jwtInterceptor');
-
-        stateHelperProvider
-            .state({
-                name: 'login',
-                url: '/login',
-                controller: 'AuthController as auth',
-                templateUrl: 'templates/login.html',
-                data: { loginNotRequired: true }
-            }).state({
-                name: 'restorePassword',
-                url: '/restorePassword?token',
-                controller: 'RestorePasswordController as restorePass',
-                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
-                data: { loginNotRequired: true }
-            });
-    }
-
-    run.$inject = [
-        '$rootScope',
-        '$state',
-        'AuthenticationService',
-        'AUTH_DEFAULTS'
-    ];
-
-    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
-
-        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
-            if ((to.data && !to.data.loginNotRequired) || !to.data) {
-                if (!AuthenticationService.getToken()) {
-                    evt.preventDefault();
-                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
-                        {
-                            message: "Debe iniciar sesión"
-                        },
-                        {
-                            reload: true
-                        });
-                }
-                else if (AuthenticationService.isTokenExpired()) {
-                    AuthenticationService.refreshToken();
-                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
-                    evt.preventDefault();
-                    //$state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
-                    $state.go(AUTH_DEFAULTS.LOGIN_STATE);
-                }
-            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
-                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
-                evt.preventDefault();
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }
-        });
-    }
-
-})();
-(function () {
     'use strict';
 
 
@@ -312,9 +206,30 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@users': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "StatisticsCtrl as statisticsCtrl"
+                    templateUrl: "templates/users.list.html",
+                    controller: "UsersController as usersCtrl"
                 }
+            },
+            resolve: {
+                Roles: ['UsersService', function (UsersService) {
+                    var params = {}
+                    return UsersService.getRoles(params);
+                }],
+
+                Users: ['UsersService', function (UsersService) {
+                    var params = {
+                        relationships: 'role,secretary',
+                        'page': 1,
+                        'items': 15,
+                        'count': true
+                    }
+                    return UsersService.getUsers(params);
+                }],
+                
+                Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }]
             }
         });
 
@@ -466,6 +381,96 @@
 
     });
 })();
+(function () {
+    angular.module('app.authentication', [
+        "angular-jwt"
+    ])
+        .config(routeConfig)
+        .run(run);
+
+    routeConfig.$inject = [
+        'stateHelperProvider',
+        'jwtOptionsProvider',
+        '$httpProvider'
+    ];
+
+    function routeConfig(stateHelperProvider, jwtOptionsProvider, $httpProvider) {
+
+        jwtOptionsProvider.config({
+            tokenGetter: ['AuthenticationService', 'options', function (AuthenticationService, options) {
+                //Skip sending token for template requests
+                if (options.url.substr(options.url.length - 5) == '.html') {
+                    return null;
+                }
+
+                var token = AuthenticationService.getToken();
+                if (token) {
+                    if (AuthenticationService.isTokenExpired()) {
+                        //return AuthenticationService.refreshToken();
+                    } else {
+                        return token;
+                    }
+                }
+            }],
+
+            whiteListedDomains: ['192.168.33.10', 'localhost']
+        });
+
+        $httpProvider.interceptors.push('jwtInterceptor');
+
+        stateHelperProvider
+            .state({
+                name: 'login',
+                url: '/login',
+                controller: 'AuthController as auth',
+                templateUrl: 'templates/login.html',
+                data: { loginNotRequired: true }
+            }).state({
+                name: 'restorePassword',
+                url: '/restorePassword?token',
+                controller: 'RestorePasswordController as restorePass',
+                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
+                data: { loginNotRequired: true }
+            });
+    }
+
+    run.$inject = [
+        '$rootScope',
+        '$state',
+        'AuthenticationService',
+        'AUTH_DEFAULTS'
+    ];
+
+    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
+
+        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
+            if ((to.data && !to.data.loginNotRequired) || !to.data) {
+                if (!AuthenticationService.getToken()) {
+                    evt.preventDefault();
+                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
+                        {
+                            message: "Debe iniciar sesión"
+                        },
+                        {
+                            reload: true
+                        });
+                }
+                else if (AuthenticationService.isTokenExpired()) {
+                    AuthenticationService.refreshToken();
+                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
+                    evt.preventDefault();
+                    //$state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
+                    $state.go(AUTH_DEFAULTS.LOGIN_STATE);
+                }
+            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
+                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
+                evt.preventDefault();
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }
+        });
+    }
+
+})();
 (function (module) {
     "use strict";
 
@@ -482,6 +487,19 @@
         LOGIN_STATE: "login",
         LANDING_PAGE: "dashboard",
         FORBIDDEN_STATE: "forbidden"
+    });
+
+})(angular.module('app'));
+(function (module) {
+    "use strict";
+
+    module.directive('hasPermission', function (AuthenticationService) {
+
+        return function (scope, element, attrs) {
+            if (!AuthenticationService.hasPermission(attrs["hasPermission"])) {
+                element.remove();
+            }
+        }
     });
 
 })(angular.module('app'));
@@ -863,6 +881,41 @@
 (function (module) {
     'use strict';
 
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state",
+        "AuthenticationService"
+    ];
+
+    function NavigationCtrl($scope, $state, AuthenticationService) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+            $scope.currentUser = AuthenticationService.getCurrentUser();
+        }
+
+        self.logOut = function(){
+            AuthenticationService.logout().then(
+                function(response){
+                    AuthenticationService.destroyToken();
+                    $state.go("login");
+                }
+            );
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
     module.controller("AuthController", AuthController);
 
     AuthController.$inject = [
@@ -950,10 +1003,8 @@
             
             var user = {
                 name: payload.name,
-                username: payload.username,
-                role: 'admin',
-                //role: payload.role,
-                //permissions: payload.views
+                role: payload.role.name,
+                permissions: payload.views
             };
             return user;
         };
@@ -1026,7 +1077,7 @@
          */
         self.hasPermission = function (view) {
             var user = self.getCurrentUser();
-            if (user.role.is_admin == true || user.role.is_admin == 'true' || user.permissions[view]) {
+            if ( user.permissions[view] ) {
                 return true;
             }
             return false;
@@ -1042,45 +1093,6 @@
         return self;
     }
 })(angular.module("app.authentication"));
-(function (module) {
-    'use strict';
-
-    module.controller("NavigationCtrl", NavigationCtrl);
-
-    NavigationCtrl.$inject = [
-        "$scope",
-        "$state",
-        "AuthenticationService"
-    ];
-
-    function NavigationCtrl($scope, $state, AuthenticationService) {
-
-        var self = this;
-
-        $scope.active = "";
-
-
-
-        self.init = function() {
-            $scope.active = $state.current.data.state;
-            $scope.currentUser = AuthenticationService.getCurrentUser();
-
-            console.log($scope.currentUser);
-        }
-
-        self.logOut = function(){
-            AuthenticationService.logout().then(
-                function(response){
-                    AuthenticationService.destroyToken();
-                    $state.go("login");
-                }
-            );
-        }
-
-        self.init();
-    }
-})(angular.module("app"));
-
 (function (module) {
     'use strict';
 
@@ -2315,6 +2327,217 @@
             });
         }
 
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("UsersController", UsersController);
+
+    UsersController.$inject = [
+        "$scope",
+        "$uibModal", 
+        "inform",
+        "Roles",
+        "Users",
+        "UsersService",
+        "Secretaries"
+    ];
+
+    function UsersController($scope, $uibModal, inform, Roles, Users, UsersService, Secretaries) {
+
+        var self = this;
+
+        $scope.configDT = {
+            limit: 15,
+            page: 1
+        }
+
+        self.getUsers = function(){
+            var params = {
+                relationships: 'role,secretary',
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true
+            };
+
+            UsersService.getUsers(params).then(
+                function(response){
+                    $scope.users = response.data;
+                }, function (err){
+                    inform.add("Ocurrió un error al consultar los usuarios", {type: "warning"});
+                }
+            );
+        }
+
+        self.delete = function(user){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Eliminar Usuario',
+                ariaDescribedBy: 'eliminar-usuario',
+                templateUrl: 'templates/deleteUser.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        user: user,
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                UsersService.deleteUser(user.id).then(
+                    function (response) {
+                        inform.add("Se ha eliminado correctamente el usuario", { type: "info" });
+                        self.getUsers();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al eliminar el usuario", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.add = function(){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nuevo Usuario',
+                ariaDescribedBy: 'crear-usuario',
+                templateUrl: 'templates/addUser.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        roles: $scope.roles,
+                        secretaries: $scope.secretaries
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                UsersService.addUser(data).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el usuario", { type: "info" });
+                        self.getUsers();
+                    }, function (err) {
+                        var msg = "Ocurrió un error al guardar el usuario: \n"
+                        var key, value, i;
+                        for (var j in err.data) {
+                            key = j;
+                            value = err.data[j];
+                            msg += key + ": ";
+                            for (i = 0; i < err.data[j].length; i++) {
+                                msg += err.data[j][i] + ",";
+                            }
+                            msg += "\n";
+                        }
+                        inform.add(msg, { ttl: -1, type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.edit = function(user){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cambiar Contraseña',
+                ariaDescribedBy: 'cambiar-contraseña',
+                templateUrl: 'templates/updatePassword.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        user: user
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                UsersService.updatePassword(data, user.id).then(
+                    function (response) {
+                        inform.add("Se ha actualizado correctamente el contratista", { type: "info" });
+                        self.getUsers();
+                    }, function (err) {
+                        var msg = "Ocurrió un error al actualizar la contraseña  del usuario: \n"
+                        var key, value, i;
+                        for (var j in err.data) {
+                            key = j;
+                            value = err.data[j];
+                            msg += key + ": ";
+                            for (i = 0; i < err.data[j].length; i++) {
+                                msg += err.data[j][i] + ",";
+                            }
+                            msg += "\n";
+                        }
+                        inform.add(msg, { ttl: -1, type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.init = function () {
+            $scope.roles = Roles.data;
+            $scope.users = Users.data;
+            $scope.secretaries = Secretaries.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("UsersService", UsersService);
+
+    UsersService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function UsersService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.getRoles = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/roles"
+            });
+        }
+
+        self.getUsers = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/users"
+            });
+        }
+
+        self.addUser = function(data){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/users"
+            });
+        }
+
+        self.deleteUser = function(id){
+            return $http({
+                method: 'DELETE',
+                url: APP_DEFAULTS.ENDPOINT + "/users/" + id
+            });
+        }
+
+        self.updatePassword = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + '/users/' + id + '/password'
+            })
+        }
 
     }
 })(angular.module("app"));

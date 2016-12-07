@@ -15,13 +15,9 @@
 
         $scope.active = "";
 
-
-
         self.init = function() {
             $scope.active = $state.current.data.state;
             $scope.currentUser = AuthenticationService.getCurrentUser();
-
-            console.log($scope.currentUser);
         }
 
         self.logOut = function(){

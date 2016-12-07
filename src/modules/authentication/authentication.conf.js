@@ -7,24 +7,23 @@
 
     routeConfig.$inject = [
         'stateHelperProvider',
-        'jwtInterceptorProvider',
         'jwtOptionsProvider',
         '$httpProvider'
     ];
 
-    function routeConfig(stateHelperProvider, jwtInterceptorProvider, jwtOptionsProvider, $httpProvider) {
+    function routeConfig(stateHelperProvider, jwtOptionsProvider, $httpProvider) {
 
         jwtOptionsProvider.config({
-            tokenGetter: ['AuthenticationService', function (AuthenticationService) {
+            tokenGetter: ['AuthenticationService', 'options', function (AuthenticationService, options) {
                 //Skip sending token for template requests
-                /*if (config.url.substr(config.url.length - 5) == '.html') {
+                if (options.url.substr(options.url.length - 5) == '.html') {
                     return null;
-                }*/
+                }
 
                 var token = AuthenticationService.getToken();
                 if (token) {
                     if (AuthenticationService.isTokenExpired()) {
-                        //Must try to refresh token if expired => return AuthenticationService.refreshToken();
+                        //return AuthenticationService.refreshToken();
                     } else {
                         return token;
                     }
@@ -33,21 +32,6 @@
 
             whiteListedDomains: ['192.168.33.10', 'localhost']
         });
-
-        /*jwtInterceptorProvider.tokenGetter = [
-            'AuthenticationService',
-            //'config',
-            function (AuthenticationService) {
-
-                var token = AuthenticationService.getToken();
-                if (token) {
-                    if (AuthenticationService.isTokenExpired()) {
-                        //Must try to refresh token if expired => return AuthenticationService.refreshToken();
-                    } else {
-                        return token;
-                    }
-                }
-            }];*/
 
         $httpProvider.interceptors.push('jwtInterceptor');
 
