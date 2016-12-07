@@ -20,7 +20,8 @@
     "angular-bootstrap-multiselect": "^0.4.0",
     "angular-spinner": "^0.8.1",
     "angular-jwt": "^0.1.8",
-    "a0-angular-storage": "^0.0.15"
+    "a0-angular-storage": "^0.0.15",
+    "angular-block-ui": "^0.2.2"
   },
   "overrides": {
     "font-awesome": {

@@ -7,13 +7,13 @@
         "$scope",
         "AuthenticationService",
         "$state",
-        "AUTH_DEFAULTS"
-        //"blockUI"
+        "AUTH_DEFAULTS",
+        "blockUI",
+        "inform"
     ];
 
-    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS) {
+    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
         var auth = this;
-        //var loginSection = blockUI.instances.get('loginSection');
         auth.credentials = {};
 
         auth.login = function (formLogin) {
@@ -22,17 +22,18 @@
                 return;
             }
 
-            //loginSection.start();
+            blockUI.start();
             auth.error = undefined;
 
             AuthenticationService.login(auth.credentials).then(function () {
                 $state.go(AUTH_DEFAULTS.LANDING_PAGE);
             }).catch(function (error) {
+                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
                 if (error.status == 400) {
                     auth.error = error.data.error;
                 }
             }).finally(function () {
-                //loginSection.stop();
+                blockUI.stop();
             });
         };
 
@@ -49,8 +50,7 @@
         };
 
         auth.recoverPassword = function () {
-
-            //loginSection.start();
+            blockUI.start();
             auth.error = undefined;
 
             AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
@@ -60,7 +60,7 @@
                     auth.error = error.data.error;
                 }
             }).finally(function () {
-                //loginSection.stop();
+                blockUI.stop();
             });
         };
     }

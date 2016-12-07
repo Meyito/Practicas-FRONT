@@ -76,8 +76,7 @@
                     AuthenticationService.refreshToken();
                 } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
                     evt.preventDefault();
-                    //$state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
-                    $state.go(AUTH_DEFAULTS.LOGIN_STATE);
+                    $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
                 }
             } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
                 && to.name === AUTH_DEFAULTS.LOGIN_STATE) {

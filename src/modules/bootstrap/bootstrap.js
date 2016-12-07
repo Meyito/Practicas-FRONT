@@ -19,27 +19,26 @@
         'angularSpinner',
         'angular-jwt',
         'angular-storage',
-        'app.authentication'
-    ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider) {
+        'app.authentication',
+        'blockUI'
+    ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider, blockUIConfig) {
 
-        /*$stateProvider
-            .state('forbidden', {
-                url: "/forbidden",
-                templateUrl: "app/components/home/views/forbidden.view.html",
-                data: {authNotRequired: true}
-            })
-
-            .state('home', {
-                url: "/",
-                templateUrl: "app/components/dashboard/views/dashboard.view.html",
-                controller: "DashboardController as dashboard",
-                data: {authNotRequired: true},
-                resolve: {
-                }
-            });*/
+        blockUIConfig.autoBlock = false;
+        blockUIConfig.templateUrl = "templates/state-change-blocker.html";
             
+        /***************************************/
+        /*********** COMMON VIEWS **************/
+        /***************************************/
 
-        //Dashboard
+        /* ERROR STATE */
+        stateHelperProvider.state({
+            name: 'forbidden',
+            url: '/forbidden',
+            data: {authNotRequired: true},
+            templateUrl: 'templates/forbidden.html'
+        });
+
+        /*Dashboard*/
         stateHelperProvider.state({
             name: 'dashboard',
             url: '/',
@@ -58,7 +57,178 @@
             }
         });
 
-        //Plan de desarrollo
+        /* Contratistas */
+        stateHelperProvider.state({
+            name: 'contracts',
+            url: '/contratistas',
+            data: {
+                state: "contracts"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@contracts': {
+                    templateUrl: "templates/contracts.list.html",
+                    controller: "ContractsCtrl as contractsCtrl"
+                }
+            },
+            resolve: {
+                IdentificationTypes: ['ContractsService', function (ContractsService) {
+                    var params = {}
+                    return ContractsService.getIdentificationTypes(params);
+                }],
+                Contractors: ['ContractsService', function (ContractsService) {
+                    var params = {
+                        relationships: 'contracts,identification_type',
+                        'page': 1,
+                        'items': 15,
+                        'count': true
+                    }
+                    return ContractsService.getContractors(params);
+                }]     
+            }
+        });
+
+        /* Estadística de una Actividad (Admin NO) */
+        stateHelperProvider.state({
+            name: 'activity-statistics',
+            url: '/actividades/{id}/estadistica',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@activity-statistics': {
+                    templateUrl: "templates/empty.html",
+                    //controller: "ActivitiesCtrl as actCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms"
+                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
+            }
+        });
+
+        /***************************************/
+        /************ ADMIN VIEWS **************/
+        /***************************************/
+
+        /* Secretarias */
+        stateHelperProvider.state({
+            name: 'secretaries',
+            url: '/secretarias',
+            data: {
+                state: "secretaries"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@secretaries': {
+                    templateUrl: "templates/secretaries.list.html",
+                    controller: "SecretariesCtrl as secretariesCtrl"
+                }
+            },
+            resolve: {
+                Secretaries: ['SecretariesService', function (SecretariesService) {
+                    var params = {}
+                    return SecretariesService.getSecretaries(params);
+                }],
+            }
+        });
+
+        /* Usuarios */
+        stateHelperProvider.state({
+            name: 'users',
+            url: '/usuarios',
+            data: {
+                state: "users"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@users': {
+                    templateUrl: "templates/users.list.html",
+                    controller: "UsersController as usersCtrl"
+                }
+            },
+            resolve: {
+                Roles: ['UsersService', function (UsersService) {
+                    var params = {}
+                    return UsersService.getRoles(params);
+                }],
+
+                Users: ['UsersService', function (UsersService) {
+                    var params = {
+                        relationships: 'role,secretary',
+                        'page': 1,
+                        'items': 15,
+                        'count': true
+                    }
+                    return UsersService.getUsers(params);
+                }],
+
+                Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }]
+            }
+        });
+
+        /* Administración Territorial */
+        stateHelperProvider.state({
+            name: 'territorial-entities',
+            url: '/entes-territoriales',
+            data: {
+                state: "territorial-entities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@territorial-entities': {
+                    templateUrl: "templates/territorial-entities.view.html",
+                    controller: "TerritorialCtrl as territorialCtrl"
+                }
+            }
+        });
+
+
+        /***************************************/
+        /********* SECRETARIES VIEWS ***********/
+        /***************************************/
+
+        /* Estadisticas SOLO de la Secretaría */
+    
+
+        /* Actividades SOLO de la Secretaría */
+    
+
+
+        /***************************************/
+        /********** PLANEACION VIEWS ***********/
+        /***************************************/
+
+        /* Plan de desarrollo */
         stateHelperProvider.state({
             name: 'development-plan',
             url: '/plan-desarrollo',
@@ -86,32 +256,7 @@
             }
         });
 
-        //Secretarias
-        stateHelperProvider.state({
-            name: 'secretaries',
-            url: '/secretarias',
-            data: {
-                state: "secretaries"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@secretaries': {
-                    templateUrl: "templates/secretaries.list.html",
-                    controller: "SecretariesCtrl as secretariesCtrl"
-                }
-            },
-            resolve: {
-                Secretaries: ['SecretariesService', function (SecretariesService) {
-                    var params = {}
-                    return SecretariesService.getSecretaries(params);
-                }],
-            }
-        });
-
-        //Proyectos
+        /* Proyectos */
         stateHelperProvider.state({
             name: 'projects',
             url: '/proyectos',
@@ -148,7 +293,7 @@
             }
         });
 
-        //Estadisticas
+        /* Estadisticas */
         stateHelperProvider.state({
             name: 'statistics',
             url: '/estadisticas',
@@ -193,100 +338,7 @@
             }
         });
 
-        //Usuarios
-        stateHelperProvider.state({
-            name: 'users',
-            url: '/usuarios',
-            data: {
-                state: "users"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@users': {
-                    templateUrl: "templates/users.list.html",
-                    controller: "UsersController as usersCtrl"
-                }
-            },
-            resolve: {
-                Roles: ['UsersService', function (UsersService) {
-                    var params = {}
-                    return UsersService.getRoles(params);
-                }],
-
-                Users: ['UsersService', function (UsersService) {
-                    var params = {
-                        relationships: 'role,secretary',
-                        'page': 1,
-                        'items': 15,
-                        'count': true
-                    }
-                    return UsersService.getUsers(params);
-                }],
-                
-                Secretaries: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getSecretaries(params);
-                }]
-            }
-        });
-
-        //Contratistas
-        stateHelperProvider.state({
-            name: 'contracts',
-            url: '/contratistas',
-            data: {
-                state: "contracts"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@contracts': {
-                    templateUrl: "templates/contracts.list.html",
-                    controller: "ContractsCtrl as contractsCtrl"
-                }
-            },
-            resolve: {
-                IdentificationTypes: ['ContractsService', function (ContractsService) {
-                    var params = {}
-                    return ContractsService.getIdentificationTypes(params);
-                }],
-                Contractors: ['ContractsService', function (ContractsService) {
-                    var params = {
-                        relationships: 'contracts,identification_type',
-                        'page': 1,
-                        'items': 15,
-                        'count': true
-                    }
-                    return ContractsService.getContractors(params);
-                }]     
-            }
-        });
-
-        //Entes Territoriales
-        stateHelperProvider.state({
-            name: 'territorial-entities',
-            url: '/entes-territoriales',
-            data: {
-                state: "territorial-entities"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@territorial-entities': {
-                    templateUrl: "templates/territorial-entities.view.html",
-                    controller: "TerritorialCtrl as territorialCtrl"
-                }
-            }
-        });
-
-        //Actividades
+        /* Actividades */
         stateHelperProvider.state({
             name: 'activities',
             url: '/actividades',
@@ -324,60 +376,51 @@
             }
         });
 
-        //Estadística de una Actividad
-        stateHelperProvider.state({
-            name: 'activity-statistics',
-            url: '/actividades/{id}/estadistica',
-            data: {
-                state: "activities"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@activity-statistics': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "ActivitiesCtrl as actCtrl"
-                }
-            },
-            resolve: {
-                DevelopmentPlans: ['StatisticService', function (StatisticService) {
-                    var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
-                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
-                    }
-                    return StatisticService.getDevelopmentPlans(params);
-                }],
+        /* Asociar Programa a Secretaría */
+        
 
-                GenericFilters: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getGenericFilters(params);
-                }]
-            }
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+
+    }).run(function ($rootScope, blockUI) {
+        $rootScope.$on('$stateChangeStart',
+            function (event, toState, toParams, fromState, fromParams, options) {
+                console.log("buuuu");
+                if (fromState.name !== toState.name) {
+                    blockUI.start();
+                }
+            });
+
+        $rootScope.$on("$stateChangeSuccess", function (event, toState, toParams, fromState, fromParams) {
+            blockUI.stop();
+            blockUI.stop(); //Because if either token not found or invalid token, it's necessary call it twice
         });
 
-        //Nueva Actividad
-        stateHelperProvider.state({
-            name: 'new-activity',
-            url: '/actividades/nueva',
-            data: {
-                state: "activities"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@new-activity': {
-                    templateUrl: "templates/activities.new.html",
-                    controller: "NewActivityCtrl as newActCtrl"
-                }
-            }
-        });
+        $rootScope.$on('$stateChangeError',
+            function (event, toState, toParams, fromState, fromParams, error) {
+                console.log("hellowsito");
+                blockUI.stop();
+            });
 
-
-    }).run(function ($rootScope) {
-
+        $rootScope.$on('$stateNotFound',
+            function (event, unfoundState, fromState, fromParams, $state) {
+                console.log("hello");
+                $state.go("forbidden");
+                blockUI.stop();
+            });
     });
 })();
