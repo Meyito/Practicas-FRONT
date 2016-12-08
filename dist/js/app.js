@@ -317,7 +317,6 @@
 
 
         /* Actividades SOLO de la Secretaría */
-        /* TODO: Que solo se muestren los programas de la secretaria*/
         stateHelperProvider.state({
             name: 'secretary-activities',
             url: '/actividades/secretaria',
@@ -337,7 +336,7 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
@@ -471,7 +470,7 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
@@ -653,187 +652,6 @@
     }
 })(angular.module("app"));
 
-(function (module) {
-    'use strict';
-
-    module.controller("AuthController", AuthController);
-
-    AuthController.$inject = [
-        "$scope",
-        "AuthenticationService",
-        "$state",
-        "AUTH_DEFAULTS",
-        "blockUI",
-        "inform"
-    ];
-
-    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
-        var auth = this;
-        auth.credentials = {};
-
-        auth.login = function (formLogin) {
-
-            if (formLogin.$invalid) {
-                return;
-            }
-
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.login(auth.credentials).then(function () {
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }).catch(function (error) {
-                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
-                if (error.status == 400) {
-                    auth.error = error.data.error;
-                }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
-
-        auth.showForgotPassword = function () {
-            auth.credentials = {};
-            auth.error = undefined;
-            auth.forgotPassword = true;
-            auth.recoveryEmail = undefined;
-        };
-
-        auth.hideForgotPassword = function () {
-            auth.recoveryEmail = undefined;
-            auth.forgotPassword = false;
-        };
-
-        auth.recoverPassword = function () {
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
-                auth.recoverSuccess = true;
-            }).catch(function (error) {
-                if (error.status == 400) {
-                    auth.error = error.data.error;
-                }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
-    }
-})(angular.module("app.authentication"));
-(function (module) {
-    'use strict';
-
-    module.service("AuthenticationService", AuthenticationService);
-
-    AuthenticationService.$inject = [
-        "$http",
-        "$q",
-        "store",
-        'AUTH_DEFAULTS',
-        "jwtHelper",
-        "APP_DEFAULTS"
-    ];
-
-    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
-        var self = this;
-        var resource = "/authenticate";
-
-        self.getCurrentUser = function () {
-            var payload = jwtHelper.decodeToken(self.getToken());
-            
-            var user = {
-                name: payload.name,
-                role: payload.role.name,
-                permissions: payload.views,
-                secretary_id: payload.secretary_id
-            };
-            return user;
-        };
-
-        self.login = function (credentials) {
-            var deferred = $q.defer();
-
-            $http({
-                method: "POST",
-                data: credentials,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + "/login",
-            }).then(function (response) {
-                self.setToken(response.data.token);
-                deferred.resolve(self.getCurrentUser());
-            }).catch(function (error) {
-                deferred.reject(error);
-            });
-
-            return deferred.promise;
-        };
-
-        self.setToken = function (token) {
-            store.set("token", token);
-        };
-
-        self.getToken = function () {
-            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.isTokenExpired = function () {
-            return jwtHelper.isTokenExpired(self.getToken());
-        };
-
-        self.destroyToken = function () {
-            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.recoverPassword = function (email) {
-            return $http({
-                method: "GET",
-                params: { email: email },
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
-            });
-        };
-
-        self.getRestoreToken = function (token) {
-            return $http({
-                method: "GET",
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
-            });
-        };
-
-        self.updatePassword = function (params, token) {
-            return $http({
-                method: "PUT",
-                data: params,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
-            });
-        };
-
-        /**
-         * Checks if the current user has permissions to
-         * enter to the given view
-         * @param view : view name to check if the user has the permission
-         * @returns {boolean}
-         */
-        self.hasPermission = function (view) {
-            var user = self.getCurrentUser();
-            if ( user.permissions[view] ) {
-                return true;
-            }
-            return false;
-        };
-
-        self.logout = function () {
-            return $http({
-                method: "GET",
-                url: APP_DEFAULTS.ENDPOINT + "/logout"
-            })
-        };
-
-        return self;
-    }
-})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 
@@ -1171,7 +989,7 @@
             });
 
             modalInstance.result.then(function (data) {
-                ActivitiesService.uploadActivity({secretary_id: secretary_id}, data.file).then(
+                ActivitiesService.uploadActivity({ secretary_id: secretary_id }, data.file).then(
                     function (response) {
                         inform.add("Se ha cargado la actividad correctamente", { type: "info" });
                     }, function (err) {
@@ -1196,26 +1014,47 @@
             $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_actividad.xlsx');
         }
 
-        self.clearDevPlan = function(){
+        self.clearDevPlan = function () {
             $scope.dimention = {};
             $scope.axe = {};
             $scope.program = {};
             $scope.subprogram = -1;
         }
 
-        self.clearDim = function(){
+        self.clearDim = function () {
             $scope.axe = {};
             $scope.program = {};
             $scope.subprogram = -1;
         }
 
-        self.clearAxe = function(){
+        self.clearAxe = function () {
             $scope.program = {};
             $scope.subprogram = -1;
+            $scope.program_id = -1;
         }
 
-        self.clearProgram = function () {
+        self.parse = function () {
             $scope.subprogram = -1;
+            $scope.program = {};
+            var i;
+            if ($scope.program_id) {
+                for (i = 0; i < $scope.axe.programs.length; i++) {
+                    if ($scope.axe.programs[i].id == $scope.program_id) {
+                        $scope.program = $scope.axe.programs[i];
+                        break;
+                    }
+                }
+            }
+        }
+
+        self.belongsToSecretary = function (program) {
+            var i;
+            for (i = 0; i < program.secretaries.length; i++) {
+                if (program.secretaries[i].secretary_id == $scope.secretary) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         self.genericFilters = function () {
@@ -1317,6 +1156,187 @@
 
     }
 })(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("AuthController", AuthController);
+
+    AuthController.$inject = [
+        "$scope",
+        "AuthenticationService",
+        "$state",
+        "AUTH_DEFAULTS",
+        "blockUI",
+        "inform"
+    ];
+
+    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
+        var auth = this;
+        auth.credentials = {};
+
+        auth.login = function (formLogin) {
+
+            if (formLogin.$invalid) {
+                return;
+            }
+
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.login(auth.credentials).then(function () {
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }).catch(function (error) {
+                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+
+        auth.showForgotPassword = function () {
+            auth.credentials = {};
+            auth.error = undefined;
+            auth.forgotPassword = true;
+            auth.recoveryEmail = undefined;
+        };
+
+        auth.hideForgotPassword = function () {
+            auth.recoveryEmail = undefined;
+            auth.forgotPassword = false;
+        };
+
+        auth.recoverPassword = function () {
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
+                auth.recoverSuccess = true;
+            }).catch(function (error) {
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+    }
+})(angular.module("app.authentication"));
+(function (module) {
+    'use strict';
+
+    module.service("AuthenticationService", AuthenticationService);
+
+    AuthenticationService.$inject = [
+        "$http",
+        "$q",
+        "store",
+        'AUTH_DEFAULTS',
+        "jwtHelper",
+        "APP_DEFAULTS"
+    ];
+
+    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
+        var self = this;
+        var resource = "/authenticate";
+
+        self.getCurrentUser = function () {
+            var payload = jwtHelper.decodeToken(self.getToken());
+            
+            var user = {
+                name: payload.name,
+                role: payload.role.name,
+                permissions: payload.views,
+                secretary_id: payload.secretary_id
+            };
+            return user;
+        };
+
+        self.login = function (credentials) {
+            var deferred = $q.defer();
+
+            $http({
+                method: "POST",
+                data: credentials,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + "/login",
+            }).then(function (response) {
+                self.setToken(response.data.token);
+                deferred.resolve(self.getCurrentUser());
+            }).catch(function (error) {
+                deferred.reject(error);
+            });
+
+            return deferred.promise;
+        };
+
+        self.setToken = function (token) {
+            store.set("token", token);
+        };
+
+        self.getToken = function () {
+            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.isTokenExpired = function () {
+            return jwtHelper.isTokenExpired(self.getToken());
+        };
+
+        self.destroyToken = function () {
+            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.recoverPassword = function (email) {
+            return $http({
+                method: "GET",
+                params: { email: email },
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
+            });
+        };
+
+        self.getRestoreToken = function (token) {
+            return $http({
+                method: "GET",
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
+            });
+        };
+
+        self.updatePassword = function (params, token) {
+            return $http({
+                method: "PUT",
+                data: params,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
+            });
+        };
+
+        /**
+         * Checks if the current user has permissions to
+         * enter to the given view
+         * @param view : view name to check if the user has the permission
+         * @returns {boolean}
+         */
+        self.hasPermission = function (view) {
+            var user = self.getCurrentUser();
+            if ( user.permissions[view] ) {
+                return true;
+            }
+            return false;
+        };
+
+        self.logout = function () {
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + "/logout"
+            })
+        };
+
+        return self;
+    }
+})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 

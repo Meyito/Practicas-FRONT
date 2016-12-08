@@ -59,7 +59,7 @@
             });
 
             modalInstance.result.then(function (data) {
-                ActivitiesService.uploadActivity({secretary_id: secretary_id}, data.file).then(
+                ActivitiesService.uploadActivity({ secretary_id: secretary_id }, data.file).then(
                     function (response) {
                         inform.add("Se ha cargado la actividad correctamente", { type: "info" });
                     }, function (err) {
@@ -84,26 +84,47 @@
             $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_actividad.xlsx');
         }
 
-        self.clearDevPlan = function(){
+        self.clearDevPlan = function () {
             $scope.dimention = {};
             $scope.axe = {};
             $scope.program = {};
             $scope.subprogram = -1;
         }
 
-        self.clearDim = function(){
+        self.clearDim = function () {
             $scope.axe = {};
             $scope.program = {};
             $scope.subprogram = -1;
         }
 
-        self.clearAxe = function(){
+        self.clearAxe = function () {
             $scope.program = {};
             $scope.subprogram = -1;
+            $scope.program_id = -1;
         }
 
-        self.clearProgram = function () {
+        self.parse = function () {
             $scope.subprogram = -1;
+            $scope.program = {};
+            var i;
+            if ($scope.program_id) {
+                for (i = 0; i < $scope.axe.programs.length; i++) {
+                    if ($scope.axe.programs[i].id == $scope.program_id) {
+                        $scope.program = $scope.axe.programs[i];
+                        break;
+                    }
+                }
+            }
+        }
+
+        self.belongsToSecretary = function (program) {
+            var i;
+            for (i = 0; i < program.secretaries.length; i++) {
+                if (program.secretaries[i].secretary_id == $scope.secretary) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         self.genericFilters = function () {

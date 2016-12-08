@@ -228,7 +228,6 @@
 
 
         /* Actividades SOLO de la Secretaría */
-        /* TODO: Que solo se muestren los programas de la secretaria*/
         stateHelperProvider.state({
             name: 'secretary-activities',
             url: '/actividades/secretaria',
@@ -248,7 +247,7 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
@@ -382,7 +381,7 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
                 }],
