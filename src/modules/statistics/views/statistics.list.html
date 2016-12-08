@@ -16,12 +16,12 @@
 				<div class="row">
 					<div class="form-group col-lg-6">
 						<label>Plan de Desarrollo</label>
-						<select class="form-control" ng-options="dp.name for dp in development_plans" ng-model="development_plan" required>
+						<select class="form-control" ng-options="dp.name for dp in development_plans" ng-model="development_plan" ng-change="statisticsCtrl.clearDevPlan()" required>
 						</select>
 					</div>
 					<div class="form-group col-lg-5">
 						<label>Dimensión</label>
-						<select class="form-control" ng-disabled="!development_plan.id" ng-options="dim.name for dim in development_plan.dimentions"
+						<select class="form-control" ng-disabled="!development_plan.id" ng-change="statisticsCtrl.clearDim()" ng-options="dim.name for dim in development_plan.dimentions"
 							ng-model="dimention">
 						</select>
 					</div>
@@ -32,26 +32,32 @@
 				<div class="row" ng-show="expanded">
 					<div class="form-group col-lg-6">
 						<label>Eje</label>
-						<select class="form-control" ng-disabled="!dimention.id" ng-options="axe.name for axe in dimention.axes" ng-model="axe">
-						</select>
-					</div>
-					<div class="form-group col-lg-6">
-						<label>Dependencia</label>
-						<select class="form-control" ng-model="secretary">
-							<option value="-1"></option>
-							<option ng-repeat="secretary in secretaries" ng-value="secretary.id">{{ secretary.name }}</option>
+						<select class="form-control" ng-disabled="!dimention.id" ng-options="axe.name for axe in dimention.axes" ng-change="statisticsCtrl.clearAxe()" ng-model="axe">
 						</select>
 					</div>
 					<div class="form-group col-lg-6">
 						<label>Programa</label>
-						<select class="form-control" ng-disabled="!axe.id" ng-model="program_id" ng-change="statisticsCtrl.parse()">
-							<option ng-repeat="program in axe.programs" ng-if="statisticsCtrl.belongsToSecretary(program)" ng-value="program.id">{{ program.name }}</option>
+						<select class="form-control" ng-disabled="!axe.id" ng-options="program.name for program in axe.programs" ng-change="statisticsCtrl.clearProgram()" ng-model="program">
 						</select>
 					</div>
 					<div class="form-group col-lg-6">
 						<label>Subprograma</label>
 						<select class="form-control" ng-disabled="!program.id" ng-model="subprogram">
 							<option ng-repeat="subprogram in program.subprograms" ng-value="subprogram.id">{{ subprogram.name }}</option>
+						</select>
+					</div>
+					<div class="form-group col-lg-6" ng-show="!program.id">
+						<label>Dependencia</label>
+						<select class="form-control" ng-model="secretary">
+							<option value="-1"></option>
+							<option ng-repeat="secretary in secretaries" ng-value="secretary.id">{{ secretary.name }}</option>
+						</select>
+					</div>
+					<div class="form-group col-lg-6" ng-show="program.id">
+						<label>Dependencia</label>
+						<select class="form-control" ng-model="secretary">
+							<option value="-1"></option>
+							<option ng-repeat="secretary in program.secretaries" ng-value="secretary.id">{{ secretary.name }}</option>
 						</select>
 					</div>
 				</div>
@@ -89,58 +95,72 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('g.id')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Género')">
 							<label>Género</label>
-							<select class="form-control" ng-options="gender.name for gender in genders" ng-model="filters[0].data" ng-value="gender">
+							<select class="form-control" ng-options="gender.name for gender in genders" ng-model="filtersData[1]" ng-value="gender">
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('ar.id')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Rango Edad')">
 							<label>Rango Edad</label>
-							<select class="form-control" ng-options="ar.name for ar in age_range" ng-model="filters[1].data" ng-value="ar">
+							<select class="form-control" ng-options="ar.name for ar in age_range" ng-model="filtersData[2]" ng-value="ar">
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('sc.id')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Condición Especial')">
 							<label>Condición Especial</label>
-							<select class="form-control" ng-options="sc.name for sc in special_conditions" ng-model="filters[2].data" ng-value="sc">
+							<select class="form-control" ng-options="sc.name for sc in special_conditions" ng-model="filtersData[3]" ng-value="sc">
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('hi.id')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Discapacidad Auditiva')">
 							<label>Discapacidad Auditiva</label>
-							<select class="form-control" ng-options="hi.name for hi in hearing_impairments" ng-model="filters[3].data" ng-value="hi">
+							<select class="form-control" ng-options="hi.name for hi in hearing_impairments" ng-model="filtersData[4]" ng-value="hi">
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('vi.id')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Discapacidad Visual')">
 							<label>Discapacidad Visual</label>
-							<select class="form-control" ng-options="vi.name for vi in visual_impairments" ng-model="filters[4].data" ng-value="vi">
+							<select class="form-control" ng-options="vi.name for vi in visual_impairments" ng-model="filtersData[5]" ng-value="vi">
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('md.id')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Discapacidad Motriz')">
 							<label>Discapacidad Motriz</label>
-							<select class="form-control" ng-options="md.name for md in motor_disabilities" ng-model="filters[5].data" ng-value="md">
+							<select class="form-control" ng-options="md.name for md in motor_disabilities" ng-model="filtersData[6]" ng-value="md">
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('vt.id')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Tipo Víctima')">
 							<label>Tipo Victima</label>
-							<select class="form-control" ng-options="vt.name for vt in victim_types" ng-model="filters[6].data" ng-value="vt">
+							<select class="form-control" ng-options="vt.name for vt in victim_types" ng-model="filtersData[7]" ng-value="vt">
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('eg.id')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Grupo Etnico')">
 							<label>Grupo Étnico</label>
-							<select class="form-control" ng-options="eg.name for eg in ethnic_groups" ng-model="filters[7].data" ng-value="eg">
+							<select class="form-control" ng-options="eg.name for eg in ethnic_groups" ng-model="filtersData[8]" ng-value="eg">
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('ch.is_mother_head')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Madre Cabeza de Hogar')">
 							<label>Madre Cabeza de Hogar</label>
-							<select class="form-control" ng-model="filters[8].data">
+							<select class="form-control" ng-model="filtersData[9]">
 								<option value="true">Aplica</option>
 								<option value="false">No Aplica</option>
 							</select>
 						</div>
-						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('ch.is_mentally_disabled')">
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Discapacidad Mental')">
 							<label>Discapacidad Mental</label>
-							<select class="form-control" ng-model="filters[9].data">
+							<select class="form-control" ng-model="filtersData[10]">
 								<option value="true">Aplica</option>
 								<option value="false">No Aplica</option>
+							</select>
+						</div>
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Número Identificación')">
+							<label>Número de Identificación</label>
+							<input class="form-control" type="text" ng-model="filtersData[11]">
+						</div>
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Zona Sisben')">
+							<label>Tipo de Zona</label>
+							<select class="form-control" ng-options="sz.name for sz in sisben_zones" ng-model="filtersData[12]" ng-value="sz">
+							</select>
+						</div>
+						<div class="form-group col-lg-4" ng-show="statisticsCtrl.applyFilter('Municipio')">
+							<label>Municipio</label>
+							<select class="form-control" ng-options="m.name for m in municipalities" ng-model="filtersData[13]" ng-value="sz">
 							</select>
 						</div>
 					</div>

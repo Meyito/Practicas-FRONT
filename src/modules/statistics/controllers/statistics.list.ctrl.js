@@ -15,12 +15,23 @@
         "usSpinnerService"
     ];
 
-    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService,GenericFilters,usSpinnerService) {
+    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService, GenericFilters, usSpinnerService) {
 
         var self = this;
 
+        /************ SPINNER **********/
         $scope.spinner = false;
 
+        self.startSpin = function () {
+            $scope.spinner = true;
+            usSpinnerService.spin('spinner-1');
+        }
+        self.stopSpin = function () {
+            $scope.spinner = false;
+            usSpinnerService.stop('spinner-1');
+        }
+
+        /******** FILTROS GENÉRICOS ******/
         $scope.expanded = false;
         $scope.development_plan = {};
         $scope.dimention = {};
@@ -29,192 +40,232 @@
         $scope.subprogram = -1;
         $scope.program = {};
         $scope.program_id;
-        $scope.report = false;
+
+        self.clearDevPlan = function () {
+            $scope.dimention = {};
+            $scope.axe = {};
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.clearDim = function () {
+            $scope.axe = {};
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.clearAxe = function () {
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.clearProgram = function () {
+            $scope.subprogram = -1;
+            $scope.secretary = -1;
+        }
+
+        /***** FILTROS REPORTE ******/
+        $scope.filtersData = ["", "", "", "", "", "", "", "", "", "", "", "", "", ""];
         $scope.counter = {};
         $scope.selectedFilters = [];
-        $scope.genders = [];
-        $scope.age_range = [];
-        $scope.special_conditions = [];
-        $scope.hearing_impairments = [];
-        $scope.visual_impairments = [];
-        $scope.motor_disabilities = [];
-        $scope.victim_types = [];
-        $scope.ethnic_groups = [];
-        $scope.reports = [];
 
-        self.startSpin = function(){
-            $scope.spinner = true;
-            usSpinnerService.spin('spinner-1');
-        }
-        self.stopSpin = function(){
-            $scope.spinner = false;
-            usSpinnerService.stop('spinner-1');
-        }
-
-        self.clean = function(){
-            $scope.reports = [];
-        }
-
-        self.parse = function(){
-            $scope.subprogram = -1;
-            $scope.program = {};
+        /* Verifica si el filtro se debe mostrar */
+        self.applyFilter = function (filter) {
             var i;
-            for (i = 0; i < $scope.axe.programs.length; i++) {
-                if ($scope.axe.programs[i].id == $scope.program_id) {
-                    $scope.program = $scope.axe.programs[i];
-                    break;
-                }
-            }
-        }
-
-        self.belongsToSecretary = function (program) {
-            if ($scope.secretary == -1) {
-                return true;
-            }
-            var i;
-            for (i = 0; i < program.secretaries.length; i++) {
-                if (program.secretaries[i].secretary_id == $scope.secretary) {
+            for (i = 0; i < $scope.selectedFilters.length; i++) {
+                if ($scope.selectedFilters[i].label == filter) {
                     return true;
                 }
             }
-
             return false;
         }
 
-        self.genericFilters = function(){
-            var x;
-            x = $scope.genericFilters[5];
-            x.value = $scope.development_plan.id;
-            $scope.req.filters.push(x);
+        /* Inicializa los filtros de acuerdo al Counter elegido */
+        self.getFilters = function () {
+            var i;
+            $scope.filtersData = ["", "", "", "", "", "", "", "", "", "", "", "", "", ""];
 
-            if($scope.dimention.id){
-                x = $scope.genericFilters[4];
-                x.value = $scope.dimention.id;
-                $scope.req.filters.push(x);
+            for (i = 0; i < $scope.counter.filters.length; i++) {
+                self.getData($scope.counter.filters[i]);
             }
 
-            if($scope.axe.id){
-                x = $scope.genericFilters[3];
-                x.value = $scope.axe.id;
-                $scope.req.filters.push(x);
-            }
-
-            if($scope.secretary != -1){
-                x = $scope.genericFilters[2];
-                x.value = $scope.secretary;
-                $scope.req.filters.push(x);
-            }
-
-            if($scope.program.id){
-                x = $scope.genericFilters[1];
-                x.value = $scope.program.id;
-                $scope.req.filters.push(x);
-            }
-
-            if($scope.subprogram != -1){
-                x = $scope.genericFilters[0];
-                x.value = $scope.subprogram;
-                $scope.req.filters.push(x);
-            }
+            $scope.filters = $scope.counter.filters;
         }
 
-        self.getReport = function(){
-            self.startSpin();
-            $scope.res = $scope.counter.response + " ";
-            $scope.report = true;
-            $scope.req = {
-                total: $scope.counter.column,
-            }
-            var i = 0;
-
-            $scope.req.filters = _.filter($scope.filters, function(f){
-                if(f.data){
-                    var x;
-                    if(f.data.id){
-                        f.value = f.data.id;
-                        x = f.data.name
-                    }else{
-                        f.value = f.data;
-                        x = f.value ? "si" : "no";
-                    }
-                    
-                    if( i == 0 ){
-                        $scope.res += "con las siguientes caracteristicas: "
-                        i++;
-                    }
-                    $scope.res += f.label + " - " + x + ", ";
-                    return true;
-                }
-
-                return false;
-            });
-
-            if($scope.counter.label == "Total Personas" || $scope.counter.label == "Total Municipios"){
-                $scope.res += " es: ";
-            }else{
-                $scope.res += " son: ";
-            }
-
-            self.genericFilters();
-
-            StatisticService.getReport($scope.req).then(
-                function(response){
-                    var i;
-                    for(i = 0; i < response.data.length; i++){
-                        for(var key in response.data[i]){
-                            if(i > 0){
-                                $scope.res+= ", "
-                            }
-                            $scope.res += response.data[i][key];
-                        }
-                    }
-                    $scope.reports.push($scope.res);
-                    self.getFilters();
-                    self.stopSpin();
-                },
-                function(err){
-                    inform.add("Ocurrió un error al consultar las estadisticas solicitadas", {type: "warning"});
-                    self.stopSpin();
-                }
-            );
-        }
-
-        self.getData = function(filter){
-            if(filter.endpoint == "NA"){
+        /* Método que se encarga de consultar las opciones 
+        de cada uno de los filtros poblacionales */
+        self.getData = function (filter) {
+            if (filter.endpoint == "NA") {
                 return;
             }
 
             var ep = filter.endpoint.replace("-", "_");
 
-            if( $scope[ep] == 0 ){
+            if (!$scope[ep]) {
                 StatisticService.genericGetter(filter.endpoint).then(
-                    function(response){
+                    function (response) {
                         $scope[ep] = response.data;
                     }
                 );
             }
         }
 
-        self.applyFilter = function(filter){
-            var i;
-            for(i = 0; i < $scope.selectedFilters.length; i++){
-                if($scope.selectedFilters[i].column == filter){
+        /********** REPORTES *********/
+        $scope.report = false;
+        $scope.reports = [];
+
+        /* Limpia los reportes que se han consultado */
+        self.clean = function () {
+            $scope.reports = [];
+        }
+
+        /* Ajusta los filtros genericos para realizar la consulta */
+        self.parseGenericFilters = function () {
+            var x;
+            x = $scope.genericFilters[5];
+            x.value = $scope.development_plan.id;
+            $scope.req.filters.push(x);
+
+            if ($scope.dimention.id) {
+                x = $scope.genericFilters[4];
+                x.value = $scope.dimention.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.axe.id) {
+                x = $scope.genericFilters[3];
+                x.value = $scope.axe.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.secretary != -1) {
+                x = $scope.genericFilters[2];
+                x.value = $scope.secretary;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.program.id) {
+                x = $scope.genericFilters[1];
+                x.value = $scope.program.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.subprogram != -1) {
+                x = $scope.genericFilters[0];
+                x.value = $scope.subprogram;
+                $scope.req.filters.push(x);
+            }
+        }
+
+        /* Ajusta los filtros poblacionales para realizar la consulta */
+        self.parseSpecificFilters = function () {
+            var i = 0;
+
+            $scope.req.filters = _.filter($scope.filters, function (f) {
+                if ($scope.filtersData[f.id] != "") {
+                    var ans = $scope.filtersData[f.id];
+                    var x;
+                    if (ans.id) {
+                        f.value = ans.id;
+                        x = ans.name;
+                    } else {
+                        f.value = ans;
+                        if (f.id == 11) {
+                            x = f.value;
+                        } else {
+                            x = f.value ? "si" : "no";
+                        }
+                    }
+
+                    if (i == 0) {
+                        $scope.res += "con las siguientes caracteristicas: "
+                        i++;
+                    }
+                    $scope.res += f.label + " - " + x + ", ";
                     return true;
                 }
+                return false;
+            });
+
+            if ($scope.counter.label == "Cuales Municipios" || $scope.counter.label == "Cuales Proyectos") {
+                $scope.res += " son: ";
+            } else {
+                $scope.res += " es: ";
             }
-            return false;
         }
 
-        self.getFilters = function(){
+        /* Ajusta la respuesta de los totales */
+        self.parseTotals = function (data) {
+            $scope.res += data[0].total;
+            $scope.reports.push($scope.res);
+        }
+
+        /* Ajusta la respuesta de los cuales */
+        self.parseWhich = function (data) {
             var i;
-
-            for(i = 0; i < $scope.counter.filters.length; i++){
-                delete $scope.counter.filters[i].data;
-                self.getData($scope.counter.filters[i]);
+            for (i = 0; i < data.length; i++) {
+                for (var key in data[i]) {
+                    $scope.res += data[i][key] + ", ";
+                }
             }
-            $scope.filters = $scope.counter.filters;
+            $scope.reports.push($scope.res);
         }
 
+        /* Ajusta la respuesta de los datos agrupados */
+        self.parseTotalGroup = function(data){
+            var i;
+            for (i = 0; i < data.length; i++) {
+                if(data[i].total != 0 ){
+                    $scope.res += " " + data[i].name + ": " + data[i].total + ",";
+                }
+            }
+            $scope.reports.push($scope.res);
+        }
+
+        /* Realiza la consulta con base a los filtros seleccionados */
+        self.getReport = function () {
+            self.startSpin();
+            $scope.res = $scope.counter.response + " ";
+            $scope.report = true;
+            $scope.req = {
+                total: $scope.counter.column,
+                group: $scope.counter.group_by
+            }
+
+            self.parseSpecificFilters();
+            self.parseGenericFilters();
+
+            StatisticService.getReport($scope.req).then(
+                function (response) {
+                    if ($scope.counter.id == 1 || $scope.counter.id == 2) {
+                        self.parseTotals(response.data);
+                    } else if ($scope.counter.id == 3 || $scope.counter.id == 4) {
+                        self.parseWhich(response.data);
+                    } else {
+                        self.parseTotalGroup(response.data);
+                    }
+                    /*var i;
+                    for (i = 0; i < response.data.length; i++) {
+                        for (var key in response.data[i]) {
+                            if (i > 0) {
+                                $scope.res += ", "
+                            }
+                            $scope.res += response.data[i][key];
+                        }
+                    }*/
+                    //$scope.reports.push($scope.res);
+                    self.getFilters();
+                    self.stopSpin();
+                },
+                function (err) {
+                    inform.add("Ocurrió un error al consultar las estadisticas solicitadas", { type: "warning" });
+                    self.stopSpin();
+                }
+            );
+        }
+
+
+        /********** CARGUE INICIAL **********/
         self.init = function () {
             $scope.development_plans = DevelopmentPlans.data;
             $scope.secretaries = Secretaries.data;
@@ -225,11 +276,10 @@
         self.init();
 
 
-        //EXAMPLE CHART
+        /* EXAMPLE CHART
         $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
         $scope.data = [300, 500, 100];
-
-
+        */
 
     }
 })(angular.module("app"));
