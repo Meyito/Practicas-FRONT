@@ -26,26 +26,26 @@
 
                             <v-pane-content>
                                 <div class="row m-r-10 m-l-10">
-                                    <table class="table table-hover">
+                                    <table class="table table-hover" id="development-plan-table">
                                         <thead>
-                                        <tr>
-                                            <th>Programa</th>
-                                            <th>Subprograma</th>
-                                            <th>Meta</th>
-                                        </tr>
+                                            <tr>
+                                                <th>Programa</th>
+                                                <th>Subprograma</th>
+                                                <th>Meta</th>
+                                            </tr>
                                         </thead>
                                         <tbody ng-repeat="program in axe.programs">
-                                        <tr>
-                                            <td rowspan="{{program.total + program.subprograms.length + 1 }}">{{
-                                                program.name }}
-                                            </td>
-                                        </tr>
-                                        <tr ng-repeat-start="subprogram in program.subprograms">
-                                            <td rowspan="{{ subprogram.goals.length + 1 }}"> {{ subprogram.name }}</td>
-                                        </tr>
-                                        <tr ng-repeat-end ng-repeat="goal in subprogram.goals">
-                                            <td>{{ goal.name }}</td>
-                                        </tr>
+                                            <tr>
+                                                <td rowspan="100">
+                                                    {{program.name }}
+                                                </td>
+                                            </tr>
+                                            <tr ng-repeat-start="subprogram in program.subprograms">
+                                                <td rowspan="{{ subprogram.goals.length + 1}}"> {{ subprogram.name }}</td>
+                                            </tr>
+                                            <tr ng-repeat-end ng-repeat="goal in subprogram.goals">
+                                                <td rowspan="1">{{ goal.name }}</td>
+                                            </tr>
                                         </tbody>
                                     </table>
 

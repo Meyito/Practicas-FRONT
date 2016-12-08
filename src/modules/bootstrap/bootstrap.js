@@ -221,6 +221,9 @@
     
 
         /* Actividades SOLO de la Secretaría */
+
+
+        /* Proyectos SOLO de la Secretaría */
     
 
 
@@ -379,23 +382,6 @@
         /* Asociar Programa a Secretaría */
         
 
-        
-
-        
-
-        
-
-        
-
-        
-
-        
-
-        
-
-        
-
-
     }).run(function ($rootScope, blockUI) {
         $rootScope.$on('$stateChangeStart',
             function (event, toState, toParams, fromState, fromParams, options) {
@@ -413,6 +399,7 @@
         $rootScope.$on('$stateChangeError',
             function (event, toState, toParams, fromState, fromParams, error) {
                 console.log("hellowsito");
+                //$state.go("login");
                 blockUI.stop();
             });
 

@@ -310,6 +310,9 @@
     
 
         /* Actividades SOLO de la Secretaría */
+
+
+        /* Proyectos SOLO de la Secretaría */
     
 
 
@@ -468,23 +471,6 @@
         /* Asociar Programa a Secretaría */
         
 
-        
-
-        
-
-        
-
-        
-
-        
-
-        
-
-        
-
-        
-
-
     }).run(function ($rootScope, blockUI) {
         $rootScope.$on('$stateChangeStart',
             function (event, toState, toParams, fromState, fromParams, options) {
@@ -502,6 +488,7 @@
         $rootScope.$on('$stateChangeError',
             function (event, toState, toParams, fromState, fromParams, error) {
                 console.log("hellowsito");
+                //$state.go("login");
                 blockUI.stop();
             });
 
@@ -1356,14 +1343,14 @@
             slogan: "Un norte productivo para todos",
             init_year: 2016,
             end_year: 2019,
-            dimensions: [{
+            dimentions: [{
                 name: "Social",
                 axes: [
                     {
                         name: "Eje 1",
                         programs: [
                             {
-                                total: 4, //cantidad total de metas de ese programa
+                                goals_count: 4, //cantidad total de metas de ese programa
                                 name: "Programa 1",
                                 subprograms:[
                                     {
@@ -1463,7 +1450,7 @@
 
         self.init = function () {
             $scope.plans = DevelopmentPlans.data;
-            $scope.plan = $scope.plans[ $scope.plans.length - 1 ];
+            $scope.plan = $scope.plans[0];
         }
 
         self.init();

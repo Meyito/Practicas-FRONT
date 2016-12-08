@@ -394,6 +394,22 @@ body{
     width: 10%;
 }
 
+#development-plan-table > tbody > tr{
+    border-bottom: 1px solid #ddd;
+}
+
+#development-plan-table tr :nth-child(1){
+    width: 30%;
+}
+
+#development-plan-table tr :nth-child(2){
+    width: 30%;
+}
+
+#development-plan-table tr :nth-child(3){
+    width: 40%;
+}
+
 
 /********* 404 ************/
 .content p{
