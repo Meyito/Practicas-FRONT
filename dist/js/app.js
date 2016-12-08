@@ -87,6 +87,86 @@
     }
 
 })();
+(function (module) {
+    "use strict";
+
+    //var ROOT_PATH = "https://whispering-garden-20822.herokuapp.com/";
+    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
+
+    module.constant("APP_DEFAULTS", {
+        ENDPOINT: ROOT_PATH + "api/v1",
+        ROOT_PATH: ROOT_PATH
+    });
+
+    module.constant("AUTH_DEFAULTS", {
+        TOKEN_NAME: "token",
+        LOGIN_STATE: "login",
+        LANDING_PAGE: "dashboard",
+        FORBIDDEN_STATE: "forbidden"
+    });
+
+})(angular.module('app'));
+(function (module) {
+    "use strict";
+
+    module.directive('hasPermission', function (AuthenticationService) {
+
+        return function (scope, element, attrs) {
+            if (!AuthenticationService.hasPermission(attrs["hasPermission"])) {
+                element.remove();
+            }
+        }
+    });
+
+})(angular.module('app'));
+(function (module) {
+    'use strict';
+
+    module.controller("ModalController", ModalController);
+
+    ModalController.$inject = [
+        "$scope",
+        "$uibModalInstance",
+        "data"
+    ];
+
+    function ModalController($scope, $uibModalInstance, data) {
+
+        var self = this;
+
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
+
+        self.update = function () {
+            $uibModalInstance.close($scope.data);
+        };
+
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
+
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        /* Date Pickers */
+        $scope.formats = ['yyyy','dd-MM-yyyy'];
+        $scope.yearOnly = $scope.formats[0];
+        $scope.dateComplete = $scope.formats[1];
+        $scope.status = [false, false];
+
+        $scope.open = function ($event, i) {
+            $scope.status[i] = true;
+        };
+
+        $scope.yearOptions = {
+            formatYear: 'yyyy',
+            startingDay: 1,
+            minMode: 'year'
+        };
+    }
+})(angular.module("app"));
+
 (function () {
     'use strict';
 
@@ -338,13 +418,17 @@
                 }
             },
             resolve: {
-                DevelopmentPlans: ['PlanService', '$stateParams', function (PlanService, $stateParams) {
-                    var params = {
-                        relationships: "dimentions.axes.programs.subprograms.goals",
-                        //order_by: "id_"
-                    }
+                DevelopmentPlans: ['PlanService', function (PlanService, $stateParams) {
+                    var params = {}
                     return PlanService.getPlans(params);
                 }],
+
+                ActualPlan: ['PlanService', function (PlanService, $stateParams) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms.goals"
+                    }
+                    return PlanService.getLastDevelopmentPlan(params);
+                }]
             }
         });
 
@@ -501,85 +585,220 @@
     });
 })();
 (function (module) {
-    "use strict";
+    'use strict';
 
-    //var ROOT_PATH = "https://whispering-garden-20822.herokuapp.com/";
-    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
+    module.controller("AuthController", AuthController);
 
-    module.constant("APP_DEFAULTS", {
-        ENDPOINT: ROOT_PATH + "api/v1",
-        ROOT_PATH: ROOT_PATH
-    });
+    AuthController.$inject = [
+        "$scope",
+        "AuthenticationService",
+        "$state",
+        "AUTH_DEFAULTS",
+        "blockUI",
+        "inform"
+    ];
 
-    module.constant("AUTH_DEFAULTS", {
-        TOKEN_NAME: "token",
-        LOGIN_STATE: "login",
-        LANDING_PAGE: "dashboard",
-        FORBIDDEN_STATE: "forbidden"
-    });
+    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
+        var auth = this;
+        auth.credentials = {};
 
-})(angular.module('app'));
-(function (module) {
-    "use strict";
+        auth.login = function (formLogin) {
 
-    module.directive('hasPermission', function (AuthenticationService) {
-
-        return function (scope, element, attrs) {
-            if (!AuthenticationService.hasPermission(attrs["hasPermission"])) {
-                element.remove();
+            if (formLogin.$invalid) {
+                return;
             }
-        }
-    });
 
-})(angular.module('app'));
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.login(auth.credentials).then(function () {
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }).catch(function (error) {
+                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+
+        auth.showForgotPassword = function () {
+            auth.credentials = {};
+            auth.error = undefined;
+            auth.forgotPassword = true;
+            auth.recoveryEmail = undefined;
+        };
+
+        auth.hideForgotPassword = function () {
+            auth.recoveryEmail = undefined;
+            auth.forgotPassword = false;
+        };
+
+        auth.recoverPassword = function () {
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
+                auth.recoverSuccess = true;
+            }).catch(function (error) {
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+    }
+})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 
-    module.controller("ModalController", ModalController);
+    module.controller("NavigationCtrl", NavigationCtrl);
 
-    ModalController.$inject = [
+    NavigationCtrl.$inject = [
         "$scope",
-        "$uibModalInstance",
-        "data"
+        "$state",
+        "AuthenticationService"
     ];
 
-    function ModalController($scope, $uibModalInstance, data) {
+    function NavigationCtrl($scope, $state, AuthenticationService) {
 
         var self = this;
 
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
+        $scope.active = "";
 
-        self.update = function () {
-            $uibModalInstance.close($scope.data);
-        };
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+            $scope.currentUser = AuthenticationService.getCurrentUser();
+        }
 
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
+        self.logOut = function(){
+            AuthenticationService.logout().then(
+                function(response){
+                    AuthenticationService.destroyToken();
+                    $state.go("login");
+                }
+            );
+        }
 
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-        /* Date Pickers */
-        $scope.formats = ['yyyy','dd-MM-yyyy'];
-        $scope.yearOnly = $scope.formats[0];
-        $scope.dateComplete = $scope.formats[1];
-        $scope.status = [false, false];
-
-        $scope.open = function ($event, i) {
-            $scope.status[i] = true;
-        };
-
-        $scope.yearOptions = {
-            formatYear: 'yyyy',
-            startingDay: 1,
-            minMode: 'year'
-        };
+        self.init();
     }
 })(angular.module("app"));
 
+(function (module) {
+    'use strict';
+
+    module.service("AuthenticationService", AuthenticationService);
+
+    AuthenticationService.$inject = [
+        "$http",
+        "$q",
+        "store",
+        'AUTH_DEFAULTS',
+        "jwtHelper",
+        "APP_DEFAULTS"
+    ];
+
+    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
+        var self = this;
+        var resource = "/authenticate";
+
+        self.getCurrentUser = function () {
+            var payload = jwtHelper.decodeToken(self.getToken());
+            
+            var user = {
+                name: payload.name,
+                role: payload.role.name,
+                permissions: payload.views
+            };
+            return user;
+        };
+
+        self.login = function (credentials) {
+            var deferred = $q.defer();
+
+            $http({
+                method: "POST",
+                data: credentials,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + "/login",
+            }).then(function (response) {
+                self.setToken(response.data.token);
+                deferred.resolve(self.getCurrentUser());
+            }).catch(function (error) {
+                deferred.reject(error);
+            });
+
+            return deferred.promise;
+        };
+
+        self.setToken = function (token) {
+            store.set("token", token);
+        };
+
+        self.getToken = function () {
+            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.isTokenExpired = function () {
+            return jwtHelper.isTokenExpired(self.getToken());
+        };
+
+        self.destroyToken = function () {
+            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.recoverPassword = function (email) {
+            return $http({
+                method: "GET",
+                params: { email: email },
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
+            });
+        };
+
+        self.getRestoreToken = function (token) {
+            return $http({
+                method: "GET",
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
+            });
+        };
+
+        self.updatePassword = function (params, token) {
+            return $http({
+                method: "PUT",
+                data: params,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
+            });
+        };
+
+        /**
+         * Checks if the current user has permissions to
+         * enter to the given view
+         * @param view : view name to check if the user has the permission
+         * @returns {boolean}
+         */
+        self.hasPermission = function (view) {
+            var user = self.getCurrentUser();
+            if ( user.permissions[view] ) {
+                return true;
+            }
+            return false;
+        };
+
+        self.logout = function () {
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + "/logout"
+            })
+        };
+
+        return self;
+    }
+})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 
@@ -876,252 +1095,6 @@
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("ActivitiesService", ActivitiesService);
-
-    ActivitiesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadActivity = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
-            });
-        }
-
-        self.getActivities = function(params){
-            return $http({
-                method: "POST",
-                data: params,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
-            })
-        }
-
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("AuthController", AuthController);
-
-    AuthController.$inject = [
-        "$scope",
-        "AuthenticationService",
-        "$state",
-        "AUTH_DEFAULTS",
-        "blockUI",
-        "inform"
-    ];
-
-    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
-        var auth = this;
-        auth.credentials = {};
-
-        auth.login = function (formLogin) {
-
-            if (formLogin.$invalid) {
-                return;
-            }
-
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.login(auth.credentials).then(function () {
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }).catch(function (error) {
-                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
-                if (error.status == 400) {
-                    auth.error = error.data.error;
-                }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
-
-        auth.showForgotPassword = function () {
-            auth.credentials = {};
-            auth.error = undefined;
-            auth.forgotPassword = true;
-            auth.recoveryEmail = undefined;
-        };
-
-        auth.hideForgotPassword = function () {
-            auth.recoveryEmail = undefined;
-            auth.forgotPassword = false;
-        };
-
-        auth.recoverPassword = function () {
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
-                auth.recoverSuccess = true;
-            }).catch(function (error) {
-                if (error.status == 400) {
-                    auth.error = error.data.error;
-                }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
-    }
-})(angular.module("app.authentication"));
-(function (module) {
-    'use strict';
-
-    module.service("AuthenticationService", AuthenticationService);
-
-    AuthenticationService.$inject = [
-        "$http",
-        "$q",
-        "store",
-        'AUTH_DEFAULTS',
-        "jwtHelper",
-        "APP_DEFAULTS"
-    ];
-
-    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
-        var self = this;
-        var resource = "/authenticate";
-
-        self.getCurrentUser = function () {
-            var payload = jwtHelper.decodeToken(self.getToken());
-            
-            var user = {
-                name: payload.name,
-                role: payload.role.name,
-                permissions: payload.views
-            };
-            return user;
-        };
-
-        self.login = function (credentials) {
-            var deferred = $q.defer();
-
-            $http({
-                method: "POST",
-                data: credentials,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + "/login",
-            }).then(function (response) {
-                self.setToken(response.data.token);
-                deferred.resolve(self.getCurrentUser());
-            }).catch(function (error) {
-                deferred.reject(error);
-            });
-
-            return deferred.promise;
-        };
-
-        self.setToken = function (token) {
-            store.set("token", token);
-        };
-
-        self.getToken = function () {
-            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.isTokenExpired = function () {
-            return jwtHelper.isTokenExpired(self.getToken());
-        };
-
-        self.destroyToken = function () {
-            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.recoverPassword = function (email) {
-            return $http({
-                method: "GET",
-                params: { email: email },
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
-            });
-        };
-
-        self.getRestoreToken = function (token) {
-            return $http({
-                method: "GET",
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
-            });
-        };
-
-        self.updatePassword = function (params, token) {
-            return $http({
-                method: "PUT",
-                data: params,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
-            });
-        };
-
-        /**
-         * Checks if the current user has permissions to
-         * enter to the given view
-         * @param view : view name to check if the user has the permission
-         * @returns {boolean}
-         */
-        self.hasPermission = function (view) {
-            var user = self.getCurrentUser();
-            if ( user.permissions[view] ) {
-                return true;
-            }
-            return false;
-        };
-
-        self.logout = function () {
-            return $http({
-                method: "GET",
-                url: APP_DEFAULTS.ENDPOINT + "/logout"
-            })
-        };
-
-        return self;
-    }
-})(angular.module("app.authentication"));
-(function (module) {
-    'use strict';
-
-    module.controller("NavigationCtrl", NavigationCtrl);
-
-    NavigationCtrl.$inject = [
-        "$scope",
-        "$state",
-        "AuthenticationService"
-    ];
-
-    function NavigationCtrl($scope, $state, AuthenticationService) {
-
-        var self = this;
-
-        $scope.active = "";
-
-        self.init = function() {
-            $scope.active = $state.current.data.state;
-            $scope.currentUser = AuthenticationService.getCurrentUser();
-        }
-
-        self.logOut = function(){
-            AuthenticationService.logout().then(
-                function(response){
-                    AuthenticationService.destroyToken();
-                    $state.go("login");
-                }
-            );
-        }
-
-        self.init();
-    }
-})(angular.module("app"));
-
 (function (module) {
     'use strict';
 
@@ -1262,6 +1235,154 @@
     }
 })(angular.module("app"));
 
+(function (module) {
+    'use strict';
+
+    module.controller("PlanDetailCtrl", PlanDetailCtrl);
+
+    PlanDetailCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "PlanService",
+        "DevelopmentPlans",
+        "ActualPlan"
+    ];
+
+    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, DevelopmentPlans, ActualPlan) {
+
+        var self = this;
+
+        $scope.active = true;
+
+        self.selectPlan = function (id) {
+            var params = {
+                relationships: 'dimentions.axes.programs.subprograms.goals'
+            }
+
+            PlanService.getPlan(id, params).then(
+                function (response) {
+                    $scope.selectedPlan = response.data;
+                }, function (err) {
+                    inform.add("Ocurrió un error al cargar el plan de desarrollo.", {type: "warning"});
+                }
+            );
+        }
+
+        self.getPlans = function () {
+            return PlanService.getPlans({}).then(
+                function (response) {
+                    $scope.plans = response.data;
+                }
+            );
+        }
+
+        self.uploadPlan = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Plan de Desarrollo',
+                ariaDescribedBy: 'cargar-plan',
+                templateUrl: 'templates/uploadPlan.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                var d = {
+                    name: data.name,
+                    init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
+                    end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
+                }
+
+                PlanService.uploadPlan(data.file, d).then(
+                    function (response) {
+                        inform.add("Se ha cargado el plan de desarrollo correctamente", { type: "info" });
+                        self.getPlans();
+                    }, function (err) {
+                        var msg = "Ocurrió un error al guardar el plan de desarrollo: \n"
+                        var key, value, i;
+                        for (var j in err.data) {
+                            key = j;
+                            value = err.data[j];
+                            msg += key + ": ";
+                            for (i = 0; i < err.data[j].length; i++) {
+                                msg += err.data[j][i] + ",";
+                            }
+                            msg += "\n";
+                        }
+                        inform.add(msg, { ttl: -1, type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.downloadFormat = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Plan_Desarrollo.xlsx');
+        }
+
+        self.init = function () {
+            $scope.plans = DevelopmentPlans.data;
+            $scope.selectedPlan = ActualPlan.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("PlanService", PlanService);
+
+    PlanService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function PlanService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadPlan = function(file, data){
+            return Upload.upload({
+                data: {file: file, data: data},
+                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
+            });
+        }
+
+        self.getPlans = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/development-plans"
+            });
+        }
+
+        self.getLastDevelopmentPlan = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/development-plans/last'
+            })
+        }
+
+        self.getPlan = function(id, params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/development-plans/" + id
+            });
+        }
+    }
+})(angular.module("app"));
 
 (function (module) {
     module.service("ContractsService", ContractsService);
@@ -1317,176 +1438,35 @@
 
     }
 })(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("PlanDetailCtrl", PlanDetailCtrl);
-
-    PlanDetailCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
-        "inform",
-        "PlanService",
-        "DevelopmentPlans"
-    ];
-
-    function PlanDetailCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, PlanService, DevelopmentPlans) {
-
-        var self = this;
-
-        $scope.active = true;
-
-        /*$scope.plan = {
-            slogan: "Un norte productivo para todos",
-            init_year: 2016,
-            end_year: 2019,
-            dimentions: [{
-                name: "Social",
-                axes: [
-                    {
-                        name: "Eje 1",
-                        programs: [
-                            {
-                                goals_count: 4, //cantidad total de metas de ese programa
-                                name: "Programa 1",
-                                subprograms:[
-                                    {
-                                        name: "subprograma 1",
-                                        goals: [
-                                            {
-                                                name: "meta 1"
-                                            },
-                                            {
-                                                name: "meta 2"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        name: "subprograma 2",
-                                        goals: [
-                                            {
-                                                name: "meta 3"
-                                            },
-                                            {
-                                                name: "meta 4"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }]
-        }
-
-        $scope.plans = [
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2016,
-                end_year: 2019
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2012,
-                end_year: 2015
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            },
-            {
-                slogan: "un norte productivo para todos",
-                init_year: 2008,
-                end_year: 2011
-            }
-        ]*/
-
-
-        
-        self.selectPlan = function () {
-            
-        }
-        
-        self.uploadPlan = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Cargar Plan de Desarrollo',
-                ariaDescribedBy: 'cargar-plan',
-                templateUrl : 'templates/uploadPlan.modal.html',
-                controller : 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve:{
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function(data) {
-                var d = {                    
-                    name: data.name,
-                    init_year: $filter('date')(data.init_year, 'yyyy-MM-dd'),
-                    end_year: $filter('date')(data.end_year, 'yyyy-MM-dd')
-                }
-
-                PlanService.uploadPlan(data.file, d).then(
-                    function(response){
-                        inform.add("Se ha cargado el plan de desarrollo correctamente", {type: "info"});
-                        //Refrescar todos los planes de desarrollo
-                    }, function(err){
-                        inform.add("Ocurrió un error al guardar el plan de desarrollo", {type: "warning"});
-                        //Descargar reporte de errores 
-                    }
-                );
-            });
-        }
-        
-        self.downloadFormat = function () {
-            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Plan_Desarrollo.xlsx');
-        }
-
-        self.init = function () {
-            $scope.plans = DevelopmentPlans.data;
-            $scope.plan = $scope.plans[0];
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
 
 (function (module) {
-    module.service("PlanService", PlanService);
+    module.service("ActivitiesService", ActivitiesService);
 
-    PlanService.$inject = [
+    ActivitiesService.$inject = [
         "$http",
         "$q",
         "APP_DEFAULTS",
         "Upload"
     ];
 
-    function PlanService($http, $q, APP_DEFAULTS, Upload) {
+    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        self.uploadPlan = function(file, data){
+        self.uploadActivity = function(file){
             return Upload.upload({
-                data: {file: file, data: data},
-                url: APP_DEFAULTS.ENDPOINT + "/plan/upload"
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
             });
         }
 
-        self.getPlans = function(params){
+        self.getActivities = function(params){
             return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/development-plans"
-            });
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
+            })
         }
+
     }
 })(angular.module("app"));
 (function (module) {
@@ -1729,61 +1709,6 @@
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("ProjectsService", ProjectsService);
-
-    ProjectsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.addProject = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
-            })
-        }
-
-        self.uploadProjects = function(file){
-            return Upload.upload({
-                data: {file: file},
-                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
-            });
-        }
-
-        self.getProjects = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.getDimentions = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
-            })
-        }
-
-    }
-})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1901,52 +1826,6 @@
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("SecretariesService", SecretariesService);
-
-    SecretariesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.getSecretaries = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.saveSecretary = function(data){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.updateSecretary = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
-            })
-        }
-
-        self.deleteSecretary = function(id){
-            return $http({
-                method: 'DELETE',
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
-            })
-        }
-    }
-})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -2243,6 +2122,52 @@
             })
         }
 
+    }
+})(angular.module("app"));
+
+(function (module) {
+    module.service("SecretariesService", SecretariesService);
+
+    SecretariesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.getSecretaries = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+
+        self.saveSecretary = function(data){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+
+        self.updateSecretary = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+
+        self.deleteSecretary = function(id){
+            return $http({
+                method: 'DELETE',
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
     }
 })(angular.module("app"));
 (function (module) {
@@ -2565,6 +2490,61 @@
                 method: 'PUT',
                 data: data,
                 url: APP_DEFAULTS.ENDPOINT + '/users/' + id + '/password'
+            })
+        }
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    module.service("ProjectsService", ProjectsService);
+
+    ProjectsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
+            })
+        }
+
+        self.uploadProjects = function(file){
+            return Upload.upload({
+                data: {file: file},
+                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
+            });
+        }
+
+        self.getProjects = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.getDimentions = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
             })
         }
 

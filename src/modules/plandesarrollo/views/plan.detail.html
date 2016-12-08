@@ -8,20 +8,20 @@
             </h1>
         </div>
         <div class="col-lg-12 centered">
-            <h4>"{{ plan.name }}" {{ plan.init_year }} - {{ plan.end_year }}</h4>
+            <h4>"{{ selectedPlan.name }}" {{ selectedPlan.init_year | date: 'yyyy' }} - {{ selectedPlan.end_year | date: 'yyyy' }}</h4>
         </div>
     </div>
     <!-- /.row -->
 
     <div class="row">
         <uib-tabset active="active">
-            <uib-tab index="$index" ng-repeat="dimention in plan.dimentions" heading="{{ dimention.name }}">
+            <uib-tab index="$index" ng-repeat="dimention in selectedPlan.dimentions" heading="{{ dimention.code }}. {{ dimention.name }}">
                 <div class="col-lg-12 plan-container">
                     <v-accordion class="vAccordion--default">
 
                         <v-pane ng-repeat="axe in dimention.axes" expanded="axe.isExpanded">
                             <v-pane-header>
-                                {{ axe.name }}
+                                {{ axe.code }}. {{ axe.name }}
                             </v-pane-header>
 
                             <v-pane-content>
@@ -37,14 +37,14 @@
                                         <tbody ng-repeat="program in axe.programs">
                                             <tr>
                                                 <td rowspan="100">
-                                                    {{program.name }}
+                                                    {{ program.code }}. {{ program.name }}
                                                 </td>
                                             </tr>
                                             <tr ng-repeat-start="subprogram in program.subprograms">
-                                                <td rowspan="{{ subprogram.goals.length + 1}}"> {{ subprogram.name }}</td>
+                                                <td rowspan="{{ subprogram.goals.length + 1}}"> {{ subprogram.code }}. {{ subprogram.name }}</td>
                                             </tr>
                                             <tr ng-repeat-end ng-repeat="goal in subprogram.goals">
-                                                <td rowspan="1">{{ goal.name }}</td>
+                                                <td rowspan="1">{{ goal.code }}. {{ goal.name }}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -64,10 +64,10 @@
     </div>
 
     <div class="row">
-        <div class="col-sm-4" ng-repeat="plan in plans" ng-click="planCtrl.selectPlan()">
-            <div class="panel panel-danger">
+        <div class="col-sm-4" ng-repeat="plan in plans" ng-click="planCtrl.selectPlan(plan.id)">
+            <div class="panel" ng-class=" plan.id == selectedPlan.id ? 'panel-danger' : 'panel-default'">
                 <div class="panel-heading">
-                    <h3 class="panel-title">{{ plan.init_year }} - {{ plan.end_year}}</h3>
+                    <h3 class="panel-title">{{ plan.init_year | date: 'yyyy' }}  -  {{ plan.end_year | date: 'yyyy'}}</h3>
                 </div>
                 <div class="panel-body">
                     {{ plan.name }}

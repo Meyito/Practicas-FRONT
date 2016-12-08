@@ -26,5 +26,21 @@
                 url: APP_DEFAULTS.ENDPOINT + "/development-plans"
             });
         }
+
+        self.getLastDevelopmentPlan = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + '/development-plans/last'
+            })
+        }
+
+        self.getPlan = function(id, params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/development-plans/" + id
+            });
+        }
     }
 })(angular.module("app"));

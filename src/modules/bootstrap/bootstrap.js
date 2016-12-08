@@ -249,13 +249,17 @@
                 }
             },
             resolve: {
-                DevelopmentPlans: ['PlanService', '$stateParams', function (PlanService, $stateParams) {
-                    var params = {
-                        relationships: "dimentions.axes.programs.subprograms.goals",
-                        //order_by: "id_"
-                    }
+                DevelopmentPlans: ['PlanService', function (PlanService, $stateParams) {
+                    var params = {}
                     return PlanService.getPlans(params);
                 }],
+
+                ActualPlan: ['PlanService', function (PlanService, $stateParams) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms.goals"
+                    }
+                    return PlanService.getLastDevelopmentPlan(params);
+                }]
             }
         });
 
