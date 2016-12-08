@@ -1,173 +1,4 @@
 (function () {
-    angular.module('app.authentication', [
-        "angular-jwt"
-    ])
-        .config(routeConfig)
-        .run(run);
-
-    routeConfig.$inject = [
-        'stateHelperProvider',
-        'jwtOptionsProvider',
-        '$httpProvider'
-    ];
-
-    function routeConfig(stateHelperProvider, jwtOptionsProvider, $httpProvider) {
-
-        jwtOptionsProvider.config({
-            tokenGetter: ['AuthenticationService', 'options', function (AuthenticationService, options) {
-                //Skip sending token for template requests
-                if (options.url.substr(options.url.length - 5) == '.html') {
-                    return null;
-                }
-
-                var token = AuthenticationService.getToken();
-                if (token) {
-                    if (AuthenticationService.isTokenExpired()) {
-                        //return AuthenticationService.refreshToken();
-                    } else {
-                        return token;
-                    }
-                }
-            }],
-
-            whiteListedDomains: ['192.168.33.10', 'localhost']
-        });
-
-        $httpProvider.interceptors.push('jwtInterceptor');
-
-        stateHelperProvider
-            .state({
-                name: 'login',
-                url: '/login',
-                controller: 'AuthController as auth',
-                templateUrl: 'templates/login.html',
-                data: { loginNotRequired: true }
-            }).state({
-                name: 'restorePassword',
-                url: '/restorePassword?token',
-                controller: 'RestorePasswordController as restorePass',
-                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
-                data: { loginNotRequired: true }
-            });
-    }
-
-    run.$inject = [
-        '$rootScope',
-        '$state',
-        'AuthenticationService',
-        'AUTH_DEFAULTS'
-    ];
-
-    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
-
-        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
-            if ((to.data && !to.data.loginNotRequired) || !to.data) {
-                if (!AuthenticationService.getToken()) {
-                    evt.preventDefault();
-                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
-                        {
-                            message: "Debe iniciar sesión"
-                        },
-                        {
-                            reload: true
-                        });
-                }
-                else if (AuthenticationService.isTokenExpired()) {
-                    AuthenticationService.refreshToken();
-                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
-                    evt.preventDefault();
-                    $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
-                }
-            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
-                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
-                evt.preventDefault();
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }
-        });
-    }
-
-})();
-(function (module) {
-    "use strict";
-
-    //var ROOT_PATH = "https://whispering-garden-20822.herokuapp.com/";
-    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
-
-    module.constant("APP_DEFAULTS", {
-        ENDPOINT: ROOT_PATH + "api/v1",
-        ROOT_PATH: ROOT_PATH
-    });
-
-    module.constant("AUTH_DEFAULTS", {
-        TOKEN_NAME: "token",
-        LOGIN_STATE: "login",
-        LANDING_PAGE: "dashboard",
-        FORBIDDEN_STATE: "forbidden"
-    });
-
-})(angular.module('app'));
-(function (module) {
-    "use strict";
-
-    module.directive('hasPermission', function (AuthenticationService) {
-
-        return function (scope, element, attrs) {
-            if (!AuthenticationService.hasPermission(attrs["hasPermission"])) {
-                element.remove();
-            }
-        }
-    });
-
-})(angular.module('app'));
-(function (module) {
-    'use strict';
-
-    module.controller("ModalController", ModalController);
-
-    ModalController.$inject = [
-        "$scope",
-        "$uibModalInstance",
-        "data"
-    ];
-
-    function ModalController($scope, $uibModalInstance, data) {
-
-        var self = this;
-
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
-
-        self.update = function () {
-            $uibModalInstance.close($scope.data);
-        };
-
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
-
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-        /* Date Pickers */
-        $scope.formats = ['yyyy','dd-MM-yyyy'];
-        $scope.yearOnly = $scope.formats[0];
-        $scope.dateComplete = $scope.formats[1];
-        $scope.status = [false, false];
-
-        $scope.open = function ($event, i) {
-            $scope.status[i] = true;
-        };
-
-        $scope.yearOptions = {
-            formatYear: 'yyyy',
-            startingDay: 1,
-            minMode: 'year'
-        };
-    }
-})(angular.module("app"));
-
-(function () {
     'use strict';
 
 
@@ -393,6 +224,33 @@
 
 
         /* Proyectos SOLO de la Secretaría */
+
+        /* Plan de desarrollo */
+        stateHelperProvider.state({
+            name: 'actual-development-plan',
+            url: '/plan-desarrollo-actual',
+            data: {
+                state: "development-plan"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@actual-development-plan': {
+                    templateUrl: "templates/plan.actual.html",
+                    controller: "PlanActualCtrl as planCtrl"
+                }
+            },
+            resolve: {
+                ActualPlan: ['PlanService', function (PlanService, $stateParams) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms.goals"
+                    }
+                    return PlanService.getLastDevelopmentPlan(params);
+                }]
+            }
+        });
     
 
 
@@ -400,7 +258,7 @@
         /********** PLANEACION VIEWS ***********/
         /***************************************/
 
-        /* Plan de desarrollo */
+        /* Planes de desarrollo */
         stateHelperProvider.state({
             name: 'development-plan',
             url: '/plan-desarrollo',
@@ -431,6 +289,48 @@
                 }]
             }
         });
+
+        /* Actividades */
+        stateHelperProvider.state({
+            name: 'activities',
+            url: '/actividades',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@activities': {
+                    templateUrl: "templates/activities.list.html",
+                    controller: "ActivitiesCtrl as actCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        //relationships: "dimentions.axes.programs.subprograms"
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }],
+                
+                Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }]
+            }
+        });
+
+
+
+
 
         /* Proyectos */
         stateHelperProvider.state({
@@ -514,44 +414,6 @@
             }
         });
 
-        /* Actividades */
-        stateHelperProvider.state({
-            name: 'activities',
-            url: '/actividades',
-            data: {
-                state: "activities"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@activities': {
-                    templateUrl: "templates/activities.list.html",
-                    controller: "ActivitiesCtrl as actCtrl"
-                }
-            },
-            resolve: {
-                DevelopmentPlans: ['StatisticService', function (StatisticService) {
-                    var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
-                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
-                    }
-                    return StatisticService.getDevelopmentPlans(params);
-                }],
-
-                GenericFilters: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getGenericFilters(params);
-                }],
-                
-                Secretaries: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getSecretaries(params);
-                }]
-            }
-        });
-
         /* Asociar Programa a Secretaría */
         
 
@@ -584,221 +446,175 @@
             });
     });
 })();
-(function (module) {
-    'use strict';
+(function () {
+    angular.module('app.authentication', [
+        "angular-jwt"
+    ])
+        .config(routeConfig)
+        .run(run);
 
-    module.controller("AuthController", AuthController);
-
-    AuthController.$inject = [
-        "$scope",
-        "AuthenticationService",
-        "$state",
-        "AUTH_DEFAULTS",
-        "blockUI",
-        "inform"
+    routeConfig.$inject = [
+        'stateHelperProvider',
+        'jwtOptionsProvider',
+        '$httpProvider'
     ];
 
-    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
-        var auth = this;
-        auth.credentials = {};
+    function routeConfig(stateHelperProvider, jwtOptionsProvider, $httpProvider) {
 
-        auth.login = function (formLogin) {
-
-            if (formLogin.$invalid) {
-                return;
-            }
-
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.login(auth.credentials).then(function () {
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }).catch(function (error) {
-                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
-                if (error.status == 400) {
-                    auth.error = error.data.error;
+        jwtOptionsProvider.config({
+            tokenGetter: ['AuthenticationService', 'options', function (AuthenticationService, options) {
+                //Skip sending token for template requests
+                if (options.url.substr(options.url.length - 5) == '.html') {
+                    return null;
                 }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
 
-        auth.showForgotPassword = function () {
-            auth.credentials = {};
-            auth.error = undefined;
-            auth.forgotPassword = true;
-            auth.recoveryEmail = undefined;
-        };
-
-        auth.hideForgotPassword = function () {
-            auth.recoveryEmail = undefined;
-            auth.forgotPassword = false;
-        };
-
-        auth.recoverPassword = function () {
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
-                auth.recoverSuccess = true;
-            }).catch(function (error) {
-                if (error.status == 400) {
-                    auth.error = error.data.error;
+                var token = AuthenticationService.getToken();
+                if (token) {
+                    if (AuthenticationService.isTokenExpired()) {
+                        //return AuthenticationService.refreshToken();
+                    } else {
+                        return token;
+                    }
                 }
-            }).finally(function () {
-                blockUI.stop();
+            }],
+
+            whiteListedDomains: ['192.168.33.10', 'localhost']
+        });
+
+        $httpProvider.interceptors.push('jwtInterceptor');
+
+        stateHelperProvider
+            .state({
+                name: 'login',
+                url: '/login',
+                controller: 'AuthController as auth',
+                templateUrl: 'templates/login.html',
+                data: { loginNotRequired: true }
+            }).state({
+                name: 'restorePassword',
+                url: '/restorePassword?token',
+                controller: 'RestorePasswordController as restorePass',
+                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
+                data: { loginNotRequired: true }
             });
-        };
     }
-})(angular.module("app.authentication"));
+
+    run.$inject = [
+        '$rootScope',
+        '$state',
+        'AuthenticationService',
+        'AUTH_DEFAULTS'
+    ];
+
+    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
+
+        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
+            if ((to.data && !to.data.loginNotRequired) || !to.data) {
+                if (!AuthenticationService.getToken()) {
+                    evt.preventDefault();
+                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
+                        {
+                            message: "Debe iniciar sesión"
+                        },
+                        {
+                            reload: true
+                        });
+                }
+                else if (AuthenticationService.isTokenExpired()) {
+                    AuthenticationService.refreshToken();
+                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
+                    evt.preventDefault();
+                    $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
+                }
+            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
+                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
+                evt.preventDefault();
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }
+        });
+    }
+
+})();
+(function (module) {
+    "use strict";
+
+    //var ROOT_PATH = "https://whispering-garden-20822.herokuapp.com/";
+    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
+
+    module.constant("APP_DEFAULTS", {
+        ENDPOINT: ROOT_PATH + "api/v1",
+        ROOT_PATH: ROOT_PATH
+    });
+
+    module.constant("AUTH_DEFAULTS", {
+        TOKEN_NAME: "token",
+        LOGIN_STATE: "login",
+        LANDING_PAGE: "dashboard",
+        FORBIDDEN_STATE: "forbidden"
+    });
+
+})(angular.module('app'));
+(function (module) {
+    "use strict";
+
+    module.directive('hasPermission', function (AuthenticationService) {
+
+        return function (scope, element, attrs) {
+            if (!AuthenticationService.hasPermission(attrs["hasPermission"])) {
+                element.remove();
+            }
+        }
+    });
+
+})(angular.module('app'));
 (function (module) {
     'use strict';
 
-    module.controller("NavigationCtrl", NavigationCtrl);
+    module.controller("ModalController", ModalController);
 
-    NavigationCtrl.$inject = [
+    ModalController.$inject = [
         "$scope",
-        "$state",
-        "AuthenticationService"
+        "$uibModalInstance",
+        "data"
     ];
 
-    function NavigationCtrl($scope, $state, AuthenticationService) {
+    function ModalController($scope, $uibModalInstance, data) {
 
         var self = this;
 
-        $scope.active = "";
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
 
-        self.init = function() {
-            $scope.active = $state.current.data.state;
-            $scope.currentUser = AuthenticationService.getCurrentUser();
-        }
+        self.update = function () {
+            $uibModalInstance.close($scope.data);
+        };
 
-        self.logOut = function(){
-            AuthenticationService.logout().then(
-                function(response){
-                    AuthenticationService.destroyToken();
-                    $state.go("login");
-                }
-            );
-        }
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
 
-        self.init();
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        /* Date Pickers */
+        $scope.formats = ['yyyy','dd-MM-yyyy'];
+        $scope.yearOnly = $scope.formats[0];
+        $scope.dateComplete = $scope.formats[1];
+        $scope.status = [false, false];
+
+        $scope.open = function ($event, i) {
+            $scope.status[i] = true;
+        };
+
+        $scope.yearOptions = {
+            formatYear: 'yyyy',
+            startingDay: 1,
+            minMode: 'year'
+        };
     }
 })(angular.module("app"));
 
-(function (module) {
-    'use strict';
-
-    module.service("AuthenticationService", AuthenticationService);
-
-    AuthenticationService.$inject = [
-        "$http",
-        "$q",
-        "store",
-        'AUTH_DEFAULTS',
-        "jwtHelper",
-        "APP_DEFAULTS"
-    ];
-
-    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
-        var self = this;
-        var resource = "/authenticate";
-
-        self.getCurrentUser = function () {
-            var payload = jwtHelper.decodeToken(self.getToken());
-            
-            var user = {
-                name: payload.name,
-                role: payload.role.name,
-                permissions: payload.views
-            };
-            return user;
-        };
-
-        self.login = function (credentials) {
-            var deferred = $q.defer();
-
-            $http({
-                method: "POST",
-                data: credentials,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + "/login",
-            }).then(function (response) {
-                self.setToken(response.data.token);
-                deferred.resolve(self.getCurrentUser());
-            }).catch(function (error) {
-                deferred.reject(error);
-            });
-
-            return deferred.promise;
-        };
-
-        self.setToken = function (token) {
-            store.set("token", token);
-        };
-
-        self.getToken = function () {
-            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.isTokenExpired = function () {
-            return jwtHelper.isTokenExpired(self.getToken());
-        };
-
-        self.destroyToken = function () {
-            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.recoverPassword = function (email) {
-            return $http({
-                method: "GET",
-                params: { email: email },
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
-            });
-        };
-
-        self.getRestoreToken = function (token) {
-            return $http({
-                method: "GET",
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
-            });
-        };
-
-        self.updatePassword = function (params, token) {
-            return $http({
-                method: "PUT",
-                data: params,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
-            });
-        };
-
-        /**
-         * Checks if the current user has permissions to
-         * enter to the given view
-         * @param view : view name to check if the user has the permission
-         * @returns {boolean}
-         */
-        self.hasPermission = function (view) {
-            var user = self.getCurrentUser();
-            if ( user.permissions[view] ) {
-                return true;
-            }
-            return false;
-        };
-
-        self.logout = function () {
-            return $http({
-                method: "GET",
-                url: APP_DEFAULTS.ENDPOINT + "/logout"
-            })
-        };
-
-        return self;
-    }
-})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 
@@ -1095,6 +911,252 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ActivitiesService", ActivitiesService);
+
+    ActivitiesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadActivity = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+            });
+        }
+
+        self.getActivities = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state",
+        "AuthenticationService"
+    ];
+
+    function NavigationCtrl($scope, $state, AuthenticationService) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+            $scope.currentUser = AuthenticationService.getCurrentUser();
+        }
+
+        self.logOut = function(){
+            AuthenticationService.logout().then(
+                function(response){
+                    AuthenticationService.destroyToken();
+                    $state.go("login");
+                }
+            );
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("AuthController", AuthController);
+
+    AuthController.$inject = [
+        "$scope",
+        "AuthenticationService",
+        "$state",
+        "AUTH_DEFAULTS",
+        "blockUI",
+        "inform"
+    ];
+
+    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
+        var auth = this;
+        auth.credentials = {};
+
+        auth.login = function (formLogin) {
+
+            if (formLogin.$invalid) {
+                return;
+            }
+
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.login(auth.credentials).then(function () {
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }).catch(function (error) {
+                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+
+        auth.showForgotPassword = function () {
+            auth.credentials = {};
+            auth.error = undefined;
+            auth.forgotPassword = true;
+            auth.recoveryEmail = undefined;
+        };
+
+        auth.hideForgotPassword = function () {
+            auth.recoveryEmail = undefined;
+            auth.forgotPassword = false;
+        };
+
+        auth.recoverPassword = function () {
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
+                auth.recoverSuccess = true;
+            }).catch(function (error) {
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+    }
+})(angular.module("app.authentication"));
+(function (module) {
+    'use strict';
+
+    module.service("AuthenticationService", AuthenticationService);
+
+    AuthenticationService.$inject = [
+        "$http",
+        "$q",
+        "store",
+        'AUTH_DEFAULTS',
+        "jwtHelper",
+        "APP_DEFAULTS"
+    ];
+
+    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
+        var self = this;
+        var resource = "/authenticate";
+
+        self.getCurrentUser = function () {
+            var payload = jwtHelper.decodeToken(self.getToken());
+            
+            var user = {
+                name: payload.name,
+                role: payload.role.name,
+                permissions: payload.views
+            };
+            return user;
+        };
+
+        self.login = function (credentials) {
+            var deferred = $q.defer();
+
+            $http({
+                method: "POST",
+                data: credentials,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + "/login",
+            }).then(function (response) {
+                self.setToken(response.data.token);
+                deferred.resolve(self.getCurrentUser());
+            }).catch(function (error) {
+                deferred.reject(error);
+            });
+
+            return deferred.promise;
+        };
+
+        self.setToken = function (token) {
+            store.set("token", token);
+        };
+
+        self.getToken = function () {
+            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.isTokenExpired = function () {
+            return jwtHelper.isTokenExpired(self.getToken());
+        };
+
+        self.destroyToken = function () {
+            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.recoverPassword = function (email) {
+            return $http({
+                method: "GET",
+                params: { email: email },
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
+            });
+        };
+
+        self.getRestoreToken = function (token) {
+            return $http({
+                method: "GET",
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
+            });
+        };
+
+        self.updatePassword = function (params, token) {
+            return $http({
+                method: "PUT",
+                data: params,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
+            });
+        };
+
+        /**
+         * Checks if the current user has permissions to
+         * enter to the given view
+         * @param view : view name to check if the user has the permission
+         * @returns {boolean}
+         */
+        self.hasPermission = function (view) {
+            var user = self.getCurrentUser();
+            if ( user.permissions[view] ) {
+                return true;
+            }
+            return false;
+        };
+
+        self.logout = function () {
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + "/logout"
+            })
+        };
+
+        return self;
+    }
+})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 
@@ -1235,6 +1297,86 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ContractsService", ContractsService);
+
+    ContractsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function ContractsService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.addContractor = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.getContractors = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.updateContractor = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
+            })
+        }
+
+        self.addContract = function(data, id){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
+            })
+        }
+
+        self.getIdentificationTypes = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("PlanActualCtrl", PlanActualCtrl);
+
+    PlanActualCtrl.$inject = [
+        "$scope",
+        "ActualPlan"
+    ];
+
+    function PlanActualCtrl($scope, ActualPlan) {
+
+        var self = this;
+
+        $scope.active = true;
+
+        self.init = function () {
+            $scope.selectedPlan = ActualPlan.data;
+        }
+
+        self.init();
+
+    }
+})(angular.module("app"));
+
 (function (module) {
     'use strict';
 
@@ -1333,7 +1475,6 @@
 
         self.init();
 
-
     }
 })(angular.module("app"));
 
@@ -1381,92 +1522,6 @@
                 url: APP_DEFAULTS.ENDPOINT + "/development-plans/" + id
             });
         }
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("ContractsService", ContractsService);
-
-    ContractsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS"
-    ];
-
-    function ContractsService($http, $q, APP_DEFAULTS) {
-        var self = this;
-
-        self.addContractor = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.getContractors = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.updateContractor = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
-            })
-        }
-
-        self.addContract = function(data, id){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
-            })
-        }
-
-        self.getIdentificationTypes = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
-            })
-        }
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("ActivitiesService", ActivitiesService);
-
-    ActivitiesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadActivity = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
-            });
-        }
-
-        self.getActivities = function(params){
-            return $http({
-                method: "POST",
-                data: params,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
-            })
-        }
-
     }
 })(angular.module("app"));
 (function (module) {
@@ -1709,6 +1764,61 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ProjectsService", ProjectsService);
+
+    ProjectsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
+            })
+        }
+
+        self.uploadProjects = function(file){
+            return Upload.upload({
+                data: {file: file},
+                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
+            });
+        }
+
+        self.getProjects = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.getDimentions = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
+            })
+        }
+
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1826,6 +1936,52 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("SecretariesService", SecretariesService);
+
+    SecretariesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.getSecretaries = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+
+        self.saveSecretary = function(data){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+
+        self.updateSecretary = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+
+        self.deleteSecretary = function(id){
+            return $http({
+                method: 'DELETE',
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -2122,52 +2278,6 @@
             })
         }
 
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("SecretariesService", SecretariesService);
-
-    SecretariesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.getSecretaries = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.saveSecretary = function(data){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.updateSecretary = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
-            })
-        }
-
-        self.deleteSecretary = function(id){
-            return $http({
-                method: 'DELETE',
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
-            })
-        }
     }
 })(angular.module("app"));
 (function (module) {
@@ -2490,61 +2600,6 @@
                 method: 'PUT',
                 data: data,
                 url: APP_DEFAULTS.ENDPOINT + '/users/' + id + '/password'
-            })
-        }
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("ProjectsService", ProjectsService);
-
-    ProjectsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.addProject = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
-            })
-        }
-
-        self.uploadProjects = function(file){
-            return Upload.upload({
-                data: {file: file},
-                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
-            });
-        }
-
-        self.getProjects = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.getDimentions = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
             })
         }
 

@@ -96,6 +96,5 @@
 
         self.init();
 
-
     }
 })(angular.module("app"));

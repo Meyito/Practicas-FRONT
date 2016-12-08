@@ -224,6 +224,33 @@
 
 
         /* Proyectos SOLO de la Secretaría */
+
+        /* Plan de desarrollo */
+        stateHelperProvider.state({
+            name: 'actual-development-plan',
+            url: '/plan-desarrollo-actual',
+            data: {
+                state: "development-plan"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@actual-development-plan': {
+                    templateUrl: "templates/plan.actual.html",
+                    controller: "PlanActualCtrl as planCtrl"
+                }
+            },
+            resolve: {
+                ActualPlan: ['PlanService', function (PlanService, $stateParams) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms.goals"
+                    }
+                    return PlanService.getLastDevelopmentPlan(params);
+                }]
+            }
+        });
     
 
 
@@ -231,7 +258,7 @@
         /********** PLANEACION VIEWS ***********/
         /***************************************/
 
-        /* Plan de desarrollo */
+        /* Planes de desarrollo */
         stateHelperProvider.state({
             name: 'development-plan',
             url: '/plan-desarrollo',
@@ -262,6 +289,48 @@
                 }]
             }
         });
+
+        /* Actividades */
+        stateHelperProvider.state({
+            name: 'activities',
+            url: '/actividades',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@activities': {
+                    templateUrl: "templates/activities.list.html",
+                    controller: "ActivitiesCtrl as actCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        //relationships: "dimentions.axes.programs.subprograms"
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }],
+                
+                Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }]
+            }
+        });
+
+
+
+
 
         /* Proyectos */
         stateHelperProvider.state({
@@ -341,44 +410,6 @@
                 GenericFilters: ['StatisticService', function (StatisticService) {
                     var params = {}
                     return StatisticService.getGenericFilters(params);
-                }]
-            }
-        });
-
-        /* Actividades */
-        stateHelperProvider.state({
-            name: 'activities',
-            url: '/actividades',
-            data: {
-                state: "activities"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@activities': {
-                    templateUrl: "templates/activities.list.html",
-                    controller: "ActivitiesCtrl as actCtrl"
-                }
-            },
-            resolve: {
-                DevelopmentPlans: ['StatisticService', function (StatisticService) {
-                    var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
-                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
-                    }
-                    return StatisticService.getDevelopmentPlans(params);
-                }],
-
-                GenericFilters: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getGenericFilters(params);
-                }],
-                
-                Secretaries: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getSecretaries(params);
                 }]
             }
         });

@@ -1,0 +1,62 @@
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <div class="row">
+        <div class="col-lg-12 centered">
+            <h1 class="page-header m-b-0">
+                PLAN DE DESARROLLO
+            </h1>
+        </div>
+        <div class="col-lg-12 centered">
+            <h4>"{{ selectedPlan.name }}" {{ selectedPlan.init_year | date: 'yyyy' }} - {{ selectedPlan.end_year | date: 'yyyy' }}</h4>
+        </div>
+    </div>
+    <!-- /.row -->
+
+    <div class="row">
+        <uib-tabset active="active">
+            <uib-tab index="$index" ng-repeat="dimention in selectedPlan.dimentions" heading="{{ dimention.code }}. {{ dimention.name }}">
+                <div class="col-lg-12 plan-container">
+                    <v-accordion class="vAccordion--default">
+
+                        <v-pane ng-repeat="axe in dimention.axes" expanded="axe.isExpanded">
+                            <v-pane-header>
+                                {{ axe.code }}. {{ axe.name }}
+                            </v-pane-header>
+
+                            <v-pane-content>
+                                <div class="row m-r-10 m-l-10">
+                                    <table class="table table-hover" id="development-plan-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Programa</th>
+                                                <th>Subprograma</th>
+                                                <th>Meta</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody ng-repeat="program in axe.programs">
+                                            <tr>
+                                                <td rowspan="100">
+                                                    {{ program.code }}. {{ program.name }}
+                                                </td>
+                                            </tr>
+                                            <tr ng-repeat-start="subprogram in program.subprograms">
+                                                <td rowspan="{{ subprogram.goals.length + 1}}"> {{ subprogram.code }}. {{ subprogram.name }}</td>
+                                            </tr>
+                                            <tr ng-repeat-end ng-repeat="goal in subprogram.goals">
+                                                <td rowspan="1">{{ goal.code }}. {{ goal.name }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </v-pane-content>
+                        </v-pane>
+
+                    </v-accordion>
+                </div>
+            </uib-tab>
+        </uib-tabset>
+    </div>
+    
+</div>
