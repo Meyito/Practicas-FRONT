@@ -22,7 +22,8 @@
             var user = {
                 name: payload.name,
                 role: payload.role.name,
-                permissions: payload.views
+                permissions: payload.views,
+                secretary_id: payload.secretary_id
             };
             return user;
         };

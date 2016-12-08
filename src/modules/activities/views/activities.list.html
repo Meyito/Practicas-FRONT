@@ -36,22 +36,28 @@
 						</select>
 					</div>
 					<div class="form-group col-lg-6">
-						<label>Dependencia</label>
-						<select class="form-control" ng-model="secretary">
-							<option value="-1"></option>
-							<option ng-repeat="secretary in secretaries" ng-value="secretary.id">{{ secretary.name }}</option>
-						</select>
-					</div>
-					<div class="form-group col-lg-6">
 						<label>Programa</label>
-						<select class="form-control" ng-disabled="!axe.id" ng-model="program_id" ng-change="actCtrl.parse()">
-							<option ng-repeat="program in axe.programs" ng-if="actCtrl.belongsToSecretary(program)" ng-value="program.id">{{ program.name }}</option>
+						<select class="form-control" ng-disabled="!axe.id" ng-options="program.name for program in axe.programs" ng-change="actCtrl.clearProgram()" ng-model="program">
 						</select>
 					</div>
 					<div class="form-group col-lg-6">
 						<label>Subprograma</label>
 						<select class="form-control" ng-disabled="!program.id" ng-model="subprogram">
 							<option ng-repeat="subprogram in program.subprograms" ng-value="subprogram.id">{{ subprogram.name }}</option>
+						</select>
+					</div>
+					<div class="form-group col-lg-6" ng-show="!program.id">
+						<label>Dependencia</label>
+						<select class="form-control" ng-model="secretary">
+							<option value="-1"></option>
+							<option ng-repeat="secretary in secretaries" ng-value="secretary.id">{{ secretary.name }}</option>
+						</select>
+					</div>
+					<div class="form-group col-lg-6" ng-show="program.id">
+						<label>Dependencia</label>
+						<select class="form-control" ng-model="secretary">
+							<option value="-1"></option>
+							<option ng-repeat="secretary in program.secretaries" ng-value="secretary.id">{{ secretary.name }}</option>
 						</select>
 					</div>
 				</div>

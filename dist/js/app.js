@@ -1,4 +1,93 @@
 (function () {
+    angular.module('app.authentication', [
+        "angular-jwt"
+    ])
+        .config(routeConfig)
+        .run(run);
+
+    routeConfig.$inject = [
+        'stateHelperProvider',
+        'jwtOptionsProvider',
+        '$httpProvider'
+    ];
+
+    function routeConfig(stateHelperProvider, jwtOptionsProvider, $httpProvider) {
+
+        jwtOptionsProvider.config({
+            tokenGetter: ['AuthenticationService', 'options', function (AuthenticationService, options) {
+                //Skip sending token for template requests
+                if (options.url.substr(options.url.length - 5) == '.html') {
+                    return null;
+                }
+
+                var token = AuthenticationService.getToken();
+                if (token) {
+                    if (AuthenticationService.isTokenExpired()) {
+                        //return AuthenticationService.refreshToken();
+                    } else {
+                        return token;
+                    }
+                }
+            }],
+
+            whiteListedDomains: ['192.168.33.10', 'localhost']
+        });
+
+        $httpProvider.interceptors.push('jwtInterceptor');
+
+        stateHelperProvider
+            .state({
+                name: 'login',
+                url: '/login',
+                controller: 'AuthController as auth',
+                templateUrl: 'templates/login.html',
+                data: { loginNotRequired: true }
+            }).state({
+                name: 'restorePassword',
+                url: '/restorePassword?token',
+                controller: 'RestorePasswordController as restorePass',
+                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
+                data: { loginNotRequired: true }
+            });
+    }
+
+    run.$inject = [
+        '$rootScope',
+        '$state',
+        'AuthenticationService',
+        'AUTH_DEFAULTS'
+    ];
+
+    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
+
+        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
+            if ((to.data && !to.data.loginNotRequired) || !to.data) {
+                if (!AuthenticationService.getToken()) {
+                    evt.preventDefault();
+                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
+                        {
+                            message: "Debe iniciar sesión"
+                        },
+                        {
+                            reload: true
+                        });
+                }
+                else if (AuthenticationService.isTokenExpired()) {
+                    AuthenticationService.refreshToken();
+                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
+                    evt.preventDefault();
+                    $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
+                }
+            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
+                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
+                evt.preventDefault();
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }
+        });
+    }
+
+})();
+(function () {
     'use strict';
 
 
@@ -90,6 +179,10 @@
                 }]     
             }
         });
+
+
+
+
 
         /* Estadística de una Actividad (Admin NO) */
         stateHelperProvider.state({
@@ -220,10 +313,41 @@
         /* Estadisticas SOLO de la Secretaría */
     
 
-        /* Actividades SOLO de la Secretaría */
-
-
         /* Proyectos SOLO de la Secretaría */
+
+
+        /* Actividades SOLO de la Secretaría */
+        /* TODO: Que solo se muestren los programas de la secretaria*/
+        stateHelperProvider.state({
+            name: 'secretary-activities',
+            url: '/actividades/secretaria',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@secretary-activities': {
+                    templateUrl: "templates/activities.secretary.html",
+                    controller: "SecretaryActivitiesCtrl as actCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
+            }
+        });
 
         /* Plan de desarrollo */
         stateHelperProvider.state({
@@ -310,7 +434,6 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        //relationships: "dimentions.axes.programs.subprograms"
                         relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
@@ -327,6 +450,52 @@
                 }]
             }
         });
+
+        /* Estadisticas */
+        stateHelperProvider.state({
+            name: 'statistics',
+            url: '/estadisticas',
+            data: {
+                state: "statistics"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@statistics': {
+                    templateUrl: "templates/statistics.list.html",
+                    controller: "StatisticsCtrl as statisticsCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+               Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }],
+
+                Counters: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "filters"
+                    }
+                    return StatisticService.getCounters(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
+            }
+        });
+
+
 
 
 
@@ -369,52 +538,10 @@
             }
         });
 
-        /* Estadisticas */
-        stateHelperProvider.state({
-            name: 'statistics',
-            url: '/estadisticas',
-            data: {
-                state: "statistics"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@statistics': {
-                    templateUrl: "templates/statistics.list.html",
-                    controller: "StatisticsCtrl as statisticsCtrl"
-                }
-            },
-            resolve: {
-                DevelopmentPlans: ['StatisticService', function (StatisticService) {
-                    var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
-                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
-                    }
-                    return StatisticService.getDevelopmentPlans(params);
-                }],
-
-               Secretaries: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getSecretaries(params);
-                }],
-
-                Counters: ['StatisticService', function (StatisticService) {
-                    var params = {
-                        relationships: "filters"
-                    }
-                    return StatisticService.getCounters(params);
-                }],
-
-                GenericFilters: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getGenericFilters(params);
-                }]
-            }
-        });
+        
 
         /* Asociar Programa a Secretaría */
+        /* Acordiones y md-checklist */
         
 
     }).run(function ($rootScope, blockUI) {
@@ -445,95 +572,6 @@
                 blockUI.stop();
             });
     });
-})();
-(function () {
-    angular.module('app.authentication', [
-        "angular-jwt"
-    ])
-        .config(routeConfig)
-        .run(run);
-
-    routeConfig.$inject = [
-        'stateHelperProvider',
-        'jwtOptionsProvider',
-        '$httpProvider'
-    ];
-
-    function routeConfig(stateHelperProvider, jwtOptionsProvider, $httpProvider) {
-
-        jwtOptionsProvider.config({
-            tokenGetter: ['AuthenticationService', 'options', function (AuthenticationService, options) {
-                //Skip sending token for template requests
-                if (options.url.substr(options.url.length - 5) == '.html') {
-                    return null;
-                }
-
-                var token = AuthenticationService.getToken();
-                if (token) {
-                    if (AuthenticationService.isTokenExpired()) {
-                        //return AuthenticationService.refreshToken();
-                    } else {
-                        return token;
-                    }
-                }
-            }],
-
-            whiteListedDomains: ['192.168.33.10', 'localhost']
-        });
-
-        $httpProvider.interceptors.push('jwtInterceptor');
-
-        stateHelperProvider
-            .state({
-                name: 'login',
-                url: '/login',
-                controller: 'AuthController as auth',
-                templateUrl: 'templates/login.html',
-                data: { loginNotRequired: true }
-            }).state({
-                name: 'restorePassword',
-                url: '/restorePassword?token',
-                controller: 'RestorePasswordController as restorePass',
-                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
-                data: { loginNotRequired: true }
-            });
-    }
-
-    run.$inject = [
-        '$rootScope',
-        '$state',
-        'AuthenticationService',
-        'AUTH_DEFAULTS'
-    ];
-
-    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
-
-        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
-            if ((to.data && !to.data.loginNotRequired) || !to.data) {
-                if (!AuthenticationService.getToken()) {
-                    evt.preventDefault();
-                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
-                        {
-                            message: "Debe iniciar sesión"
-                        },
-                        {
-                            reload: true
-                        });
-                }
-                else if (AuthenticationService.isTokenExpired()) {
-                    AuthenticationService.refreshToken();
-                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
-                    evt.preventDefault();
-                    $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
-                }
-            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
-                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
-                evt.preventDefault();
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }
-        });
-    }
-
 })();
 (function (module) {
     "use strict";
@@ -618,6 +656,187 @@
 (function (module) {
     'use strict';
 
+    module.controller("AuthController", AuthController);
+
+    AuthController.$inject = [
+        "$scope",
+        "AuthenticationService",
+        "$state",
+        "AUTH_DEFAULTS",
+        "blockUI",
+        "inform"
+    ];
+
+    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
+        var auth = this;
+        auth.credentials = {};
+
+        auth.login = function (formLogin) {
+
+            if (formLogin.$invalid) {
+                return;
+            }
+
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.login(auth.credentials).then(function () {
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }).catch(function (error) {
+                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+
+        auth.showForgotPassword = function () {
+            auth.credentials = {};
+            auth.error = undefined;
+            auth.forgotPassword = true;
+            auth.recoveryEmail = undefined;
+        };
+
+        auth.hideForgotPassword = function () {
+            auth.recoveryEmail = undefined;
+            auth.forgotPassword = false;
+        };
+
+        auth.recoverPassword = function () {
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
+                auth.recoverSuccess = true;
+            }).catch(function (error) {
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+    }
+})(angular.module("app.authentication"));
+(function (module) {
+    'use strict';
+
+    module.service("AuthenticationService", AuthenticationService);
+
+    AuthenticationService.$inject = [
+        "$http",
+        "$q",
+        "store",
+        'AUTH_DEFAULTS',
+        "jwtHelper",
+        "APP_DEFAULTS"
+    ];
+
+    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
+        var self = this;
+        var resource = "/authenticate";
+
+        self.getCurrentUser = function () {
+            var payload = jwtHelper.decodeToken(self.getToken());
+            
+            var user = {
+                name: payload.name,
+                role: payload.role.name,
+                permissions: payload.views,
+                secretary_id: payload.secretary_id
+            };
+            return user;
+        };
+
+        self.login = function (credentials) {
+            var deferred = $q.defer();
+
+            $http({
+                method: "POST",
+                data: credentials,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + "/login",
+            }).then(function (response) {
+                self.setToken(response.data.token);
+                deferred.resolve(self.getCurrentUser());
+            }).catch(function (error) {
+                deferred.reject(error);
+            });
+
+            return deferred.promise;
+        };
+
+        self.setToken = function (token) {
+            store.set("token", token);
+        };
+
+        self.getToken = function () {
+            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.isTokenExpired = function () {
+            return jwtHelper.isTokenExpired(self.getToken());
+        };
+
+        self.destroyToken = function () {
+            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.recoverPassword = function (email) {
+            return $http({
+                method: "GET",
+                params: { email: email },
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
+            });
+        };
+
+        self.getRestoreToken = function (token) {
+            return $http({
+                method: "GET",
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
+            });
+        };
+
+        self.updatePassword = function (params, token) {
+            return $http({
+                method: "PUT",
+                data: params,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
+            });
+        };
+
+        /**
+         * Checks if the current user has permissions to
+         * enter to the given view
+         * @param view : view name to check if the user has the permission
+         * @returns {boolean}
+         */
+        self.hasPermission = function (view) {
+            var user = self.getCurrentUser();
+            if ( user.permissions[view] ) {
+                return true;
+            }
+            return false;
+        };
+
+        self.logout = function () {
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + "/logout"
+            })
+        };
+
+        return self;
+    }
+})(angular.module("app.authentication"));
+(function (module) {
+    'use strict';
+
     module.controller("ActivitiesCtrl", ActivitiesCtrl);
 
     ActivitiesCtrl.$inject = [
@@ -625,19 +844,21 @@
         "$window",
         "APP_DEFAULTS",
         "$uibModal",
-        "$filter",
         "inform",
         "ActivitiesService",
         "$state",
         "DevelopmentPlans",
         "GenericFilters",
         "usSpinnerService",
-        "Secretaries"
+        "Secretaries",
+        "AuthenticationService"
     ];
 
-    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ActivitiesService, $state, DevelopmentPlans, GenericFilters, usSpinnerService, Secretaries) {
+    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, ActivitiesService, $state, DevelopmentPlans, GenericFilters, usSpinnerService, Secretaries, AuthenticationService) {
 
         var self = this;
+
+        var secretary_id = AuthenticationService.getCurrentUser().secretary_id;
 
         $scope.expanded = false;
         $scope.dimention = {};
@@ -651,6 +872,7 @@
             $scope.spinner = true;
             usSpinnerService.spin('spinner-1');
         }
+
         self.stopSpin = function () {
             $scope.spinner = false;
             usSpinnerService.stop('spinner-1');
@@ -674,7 +896,7 @@
             });
 
             modalInstance.result.then(function (data) {
-                ActivitiesService.uploadActivity(data).then(
+                ActivitiesService.uploadActivity({secretary_id: secretary_id}, data.file).then(
                     function (response) {
                         inform.add("Se ha cargado la actividad correctamente", { type: "info" });
                     }, function (err) {
@@ -717,32 +939,9 @@
             $scope.subprogram = -1;
         }
 
-        self.parse = function () {
+        self.clearProgram = function () {
             $scope.subprogram = -1;
-            $scope.program = {};
-            var i;
-            if ($scope.program_id) {
-                for (i = 0; i < $scope.axe.programs.length; i++) {
-                    if ($scope.axe.programs[i].id == $scope.program_id) {
-                        $scope.program = $scope.axe.programs[i];
-                        break;
-                    }
-                }
-            }
-        }
-
-        self.belongsToSecretary = function (program) {
-            if ($scope.secretary == -1) {
-                return true;
-            }
-            var i;
-            for (i = 0; i < program.secretaries.length; i++) {
-                if (program.secretaries[i].secretary_id == $scope.secretary) {
-                    return true;
-                }
-            }
-
-            return false;
+            $scope.secretary = -1;
         }
 
         self.genericFilters = function () {
@@ -911,6 +1110,182 @@
     }
 })(angular.module("app"));
 
+(function (module) {
+    'use strict';
+
+    module.controller("SecretaryActivitiesCtrl", SecretaryActivitiesCtrl);
+
+    SecretaryActivitiesCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "inform",
+        "ActivitiesService",
+        "$state",
+        "DevelopmentPlans",
+        "GenericFilters",
+        "usSpinnerService",
+        "AuthenticationService"
+    ];
+
+    function SecretaryActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, ActivitiesService, $state, DevelopmentPlans, GenericFilters, usSpinnerService, AuthenticationService) {
+
+        var self = this;
+
+        var secretary_id = AuthenticationService.getCurrentUser().secretary_id;
+
+        $scope.expanded = false;
+        $scope.dimention = {};
+        $scope.axe = {};
+        $scope.secretary = secretary_id;
+        $scope.subprogram = -1;
+        $scope.program = {};
+        $scope.spinner = false;
+
+        self.startSpin = function () {
+            $scope.spinner = true;
+            usSpinnerService.spin('spinner-1');
+        }
+
+        self.stopSpin = function () {
+            $scope.spinner = false;
+            usSpinnerService.stop('spinner-1');
+        }
+
+        self.statistics = function (id) {
+            $state.go("activity-statistics", { id: id });
+        }
+
+        self.newActivity = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Asistentes',
+                ariaDescribedBy: 'cargar-asistentes',
+                templateUrl: 'templates/assistants.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ActivitiesService.uploadActivity({secretary_id: secretary_id}, data.file).then(
+                    function (response) {
+                        inform.add("Se ha cargado la actividad correctamente", { type: "info" });
+                    }, function (err) {
+                        var msg = "Ocurrió un error al guardar la actividad: \n"
+                        var key, value, i;
+                        for (var j in err.data) {
+                            key = j;
+                            value = err.data[j];
+                            msg += key + ": ";
+                            for (i = 0; i < err.data[j].length; i++) {
+                                msg += err.data[j][i] + ",";
+                            }
+                            msg += "\n";
+                        }
+                        inform.add(msg, { ttl: -1, type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.download = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_actividad.xlsx');
+        }
+
+        self.clearDevPlan = function(){
+            $scope.dimention = {};
+            $scope.axe = {};
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.clearDim = function(){
+            $scope.axe = {};
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.clearAxe = function(){
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.clearProgram = function () {
+            $scope.subprogram = -1;
+        }
+
+        self.genericFilters = function () {
+            var x;
+            x = $scope.genericFilters[5];
+            x.value = $scope.development_plan.id;
+            $scope.req.filters.push(x);
+
+            if ($scope.dimention.id) {
+                x = $scope.genericFilters[4];
+                x.value = $scope.dimention.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.axe.id) {
+                x = $scope.genericFilters[3];
+                x.value = $scope.axe.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.secretary != -1) {
+                x = $scope.genericFilters[2];
+                x.value = $scope.secretary;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.program.id) {
+                x = $scope.genericFilters[1];
+                x.value = $scope.program.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.subprogram != -1) {
+                x = $scope.genericFilters[0];
+                x.value = $scope.subprogram;
+                $scope.req.filters.push(x);
+            }
+        }
+
+        self.getActivities = function () {
+            self.startSpin();
+            $scope.activities = [];
+            $scope.req = {
+                filters: []
+            };
+
+            self.genericFilters();
+
+            ActivitiesService.getActivities($scope.req).then(
+                function (response) {
+                    $scope.activities = response.data;
+                    self.stopSpin();
+                }, function (err) {
+                    inform.add("Ocurrió un error al cargar las actividades", { type: "warning" });
+                    self.stopSpin();
+                }
+            )
+        }
+
+        self.init = function () {
+            $scope.development_plans = DevelopmentPlans.data;
+            $scope.genericFilters = GenericFilters.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
 
 (function (module) {
     module.service("ActivitiesService", ActivitiesService);
@@ -925,9 +1300,9 @@
     function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        self.uploadActivity = function(file){
+        self.uploadActivity = function(data, file){
             return Upload.upload({
-                data: file,
+                data: {file: file, data: data},
                 url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
             });
         }
@@ -977,186 +1352,6 @@
     }
 })(angular.module("app"));
 
-(function (module) {
-    'use strict';
-
-    module.controller("AuthController", AuthController);
-
-    AuthController.$inject = [
-        "$scope",
-        "AuthenticationService",
-        "$state",
-        "AUTH_DEFAULTS",
-        "blockUI",
-        "inform"
-    ];
-
-    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
-        var auth = this;
-        auth.credentials = {};
-
-        auth.login = function (formLogin) {
-
-            if (formLogin.$invalid) {
-                return;
-            }
-
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.login(auth.credentials).then(function () {
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }).catch(function (error) {
-                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
-                if (error.status == 400) {
-                    auth.error = error.data.error;
-                }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
-
-        auth.showForgotPassword = function () {
-            auth.credentials = {};
-            auth.error = undefined;
-            auth.forgotPassword = true;
-            auth.recoveryEmail = undefined;
-        };
-
-        auth.hideForgotPassword = function () {
-            auth.recoveryEmail = undefined;
-            auth.forgotPassword = false;
-        };
-
-        auth.recoverPassword = function () {
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
-                auth.recoverSuccess = true;
-            }).catch(function (error) {
-                if (error.status == 400) {
-                    auth.error = error.data.error;
-                }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
-    }
-})(angular.module("app.authentication"));
-(function (module) {
-    'use strict';
-
-    module.service("AuthenticationService", AuthenticationService);
-
-    AuthenticationService.$inject = [
-        "$http",
-        "$q",
-        "store",
-        'AUTH_DEFAULTS',
-        "jwtHelper",
-        "APP_DEFAULTS"
-    ];
-
-    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
-        var self = this;
-        var resource = "/authenticate";
-
-        self.getCurrentUser = function () {
-            var payload = jwtHelper.decodeToken(self.getToken());
-            
-            var user = {
-                name: payload.name,
-                role: payload.role.name,
-                permissions: payload.views
-            };
-            return user;
-        };
-
-        self.login = function (credentials) {
-            var deferred = $q.defer();
-
-            $http({
-                method: "POST",
-                data: credentials,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + "/login",
-            }).then(function (response) {
-                self.setToken(response.data.token);
-                deferred.resolve(self.getCurrentUser());
-            }).catch(function (error) {
-                deferred.reject(error);
-            });
-
-            return deferred.promise;
-        };
-
-        self.setToken = function (token) {
-            store.set("token", token);
-        };
-
-        self.getToken = function () {
-            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.isTokenExpired = function () {
-            return jwtHelper.isTokenExpired(self.getToken());
-        };
-
-        self.destroyToken = function () {
-            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.recoverPassword = function (email) {
-            return $http({
-                method: "GET",
-                params: { email: email },
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
-            });
-        };
-
-        self.getRestoreToken = function (token) {
-            return $http({
-                method: "GET",
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
-            });
-        };
-
-        self.updatePassword = function (params, token) {
-            return $http({
-                method: "PUT",
-                data: params,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
-            });
-        };
-
-        /**
-         * Checks if the current user has permissions to
-         * enter to the given view
-         * @param view : view name to check if the user has the permission
-         * @returns {boolean}
-         */
-        self.hasPermission = function (view) {
-            var user = self.getCurrentUser();
-            if ( user.permissions[view] ) {
-                return true;
-            }
-            return false;
-        };
-
-        self.logout = function () {
-            return $http({
-                method: "GET",
-                url: APP_DEFAULTS.ENDPOINT + "/logout"
-            })
-        };
-
-        return self;
-    }
-})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 

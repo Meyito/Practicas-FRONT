@@ -1,9 +1,9 @@
 (function (module) {
     'use strict';
 
-    module.controller("ActivitiesCtrl", ActivitiesCtrl);
+    module.controller("SecretaryActivitiesCtrl", SecretaryActivitiesCtrl);
 
-    ActivitiesCtrl.$inject = [
+    SecretaryActivitiesCtrl.$inject = [
         "$scope",
         "$window",
         "APP_DEFAULTS",
@@ -14,11 +14,10 @@
         "DevelopmentPlans",
         "GenericFilters",
         "usSpinnerService",
-        "Secretaries",
         "AuthenticationService"
     ];
 
-    function ActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, ActivitiesService, $state, DevelopmentPlans, GenericFilters, usSpinnerService, Secretaries, AuthenticationService) {
+    function SecretaryActivitiesCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, ActivitiesService, $state, DevelopmentPlans, GenericFilters, usSpinnerService, AuthenticationService) {
 
         var self = this;
 
@@ -27,7 +26,7 @@
         $scope.expanded = false;
         $scope.dimention = {};
         $scope.axe = {};
-        $scope.secretary = -1;
+        $scope.secretary = secretary_id;
         $scope.subprogram = -1;
         $scope.program = {};
         $scope.spinner = false;
@@ -105,7 +104,6 @@
 
         self.clearProgram = function () {
             $scope.subprogram = -1;
-            $scope.secretary = -1;
         }
 
         self.genericFilters = function () {
@@ -168,7 +166,6 @@
         self.init = function () {
             $scope.development_plans = DevelopmentPlans.data;
             $scope.genericFilters = GenericFilters.data;
-            $scope.secretaries = Secretaries.data;
         }
 
         self.init();

@@ -12,9 +12,9 @@
     function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        self.uploadActivity = function(file){
+        self.uploadActivity = function(data, file){
             return Upload.upload({
-                data: file,
+                data: {file: file, data: data},
                 url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
             });
         }

@@ -91,6 +91,10 @@
             }
         });
 
+
+
+
+
         /* Estadística de una Actividad (Admin NO) */
         stateHelperProvider.state({
             name: 'activity-statistics',
@@ -220,10 +224,41 @@
         /* Estadisticas SOLO de la Secretaría */
     
 
-        /* Actividades SOLO de la Secretaría */
-
-
         /* Proyectos SOLO de la Secretaría */
+
+
+        /* Actividades SOLO de la Secretaría */
+        /* TODO: Que solo se muestren los programas de la secretaria*/
+        stateHelperProvider.state({
+            name: 'secretary-activities',
+            url: '/actividades/secretaria',
+            data: {
+                state: "activities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@secretary-activities': {
+                    templateUrl: "templates/activities.secretary.html",
+                    controller: "SecretaryActivitiesCtrl as actCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
+            }
+        });
 
         /* Plan de desarrollo */
         stateHelperProvider.state({
@@ -310,7 +345,6 @@
             resolve: {
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
                     var params = {
-                        //relationships: "dimentions.axes.programs.subprograms"
                         relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
                     }
                     return StatisticService.getDevelopmentPlans(params);
@@ -327,6 +361,52 @@
                 }]
             }
         });
+
+        /* Estadisticas */
+        stateHelperProvider.state({
+            name: 'statistics',
+            url: '/estadisticas',
+            data: {
+                state: "statistics"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@statistics': {
+                    templateUrl: "templates/statistics.list.html",
+                    controller: "StatisticsCtrl as statisticsCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+               Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }],
+
+                Counters: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "filters"
+                    }
+                    return StatisticService.getCounters(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
+            }
+        });
+
+
 
 
 
@@ -369,52 +449,10 @@
             }
         });
 
-        /* Estadisticas */
-        stateHelperProvider.state({
-            name: 'statistics',
-            url: '/estadisticas',
-            data: {
-                state: "statistics"
-            },
-            views: {
-                '': {
-                    templateUrl: "templates/template.html",
-                    controller: "NavigationCtrl as navCtrl"
-                },
-                'content@statistics': {
-                    templateUrl: "templates/statistics.list.html",
-                    controller: "StatisticsCtrl as statisticsCtrl"
-                }
-            },
-            resolve: {
-                DevelopmentPlans: ['StatisticService', function (StatisticService) {
-                    var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
-                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
-                    }
-                    return StatisticService.getDevelopmentPlans(params);
-                }],
-
-               Secretaries: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getSecretaries(params);
-                }],
-
-                Counters: ['StatisticService', function (StatisticService) {
-                    var params = {
-                        relationships: "filters"
-                    }
-                    return StatisticService.getCounters(params);
-                }],
-
-                GenericFilters: ['StatisticService', function (StatisticService) {
-                    var params = {}
-                    return StatisticService.getGenericFilters(params);
-                }]
-            }
-        });
+        
 
         /* Asociar Programa a Secretaría */
+        /* Acordiones y md-checklist */
         
 
     }).run(function ($rootScope, blockUI) {
