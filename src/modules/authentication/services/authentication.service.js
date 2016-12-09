@@ -21,7 +21,7 @@
             
             var user = {
                 name: payload.name,
-                role: payload.role.name,
+                role: payload.role.role_name,
                 permissions: payload.views,
                 secretary_id: payload.secretary_id
             };

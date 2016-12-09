@@ -1,9 +1,9 @@
 (function (module) {
     'use strict';
 
-    module.controller("StatisticsCtrl", StatisticsCtrl);
+    module.controller("SecretaryStatisticsCtrl", SecretaryStatisticsCtrl);
 
-    StatisticsCtrl.$inject = [
+    SecretaryStatisticsCtrl.$inject = [
         "$scope",
         "$filter",
         "inform",
@@ -12,10 +12,11 @@
         "Counters",
         "StatisticService",
         "GenericFilters",
-        "usSpinnerService"
+        "usSpinnerService",
+        "AuthenticationService"
     ];
 
-    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService, GenericFilters, usSpinnerService) {
+    function SecretaryStatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService, GenericFilters, usSpinnerService, AuthenticationService) {
 
         var self = this;
 
@@ -59,9 +60,28 @@
             $scope.subprogram = -1;
         }
 
-        self.clearProgram = function () {
+        self.parse = function () {
             $scope.subprogram = -1;
-            $scope.secretary = -1;
+            $scope.program = {};
+            var i;
+            if ($scope.program_id) {
+                for (i = 0; i < $scope.axe.programs.length; i++) {
+                    if ($scope.axe.programs[i].id == $scope.program_id) {
+                        $scope.program = $scope.axe.programs[i];
+                        break;
+                    }
+                }
+            }
+        }
+
+        self.belongsToSecretary = function (program) {
+            var i;
+            for (i = 0; i < program.secretaries.length; i++) {
+                if (program.secretaries[i].secretary_id == $scope.secretary) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /***** FILTROS REPORTE ******/
@@ -244,7 +264,7 @@
                     } else {
                         self.parseTotalGroup(response.data);
                     }
-                    
+                
                     self.getFilters();
                     self.stopSpin();
                 },
@@ -262,6 +282,7 @@
             $scope.secretaries = Secretaries.data;
             $scope.counters = Counters.data;
             $scope.genericFilters = GenericFilters.data;
+            $scope.secretary = AuthenticationService.getCurrentUser().secretary_id;
         }
 
         self.init();

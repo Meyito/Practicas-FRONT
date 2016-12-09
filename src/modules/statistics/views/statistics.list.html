@@ -16,7 +16,8 @@
 				<div class="row">
 					<div class="form-group col-lg-6">
 						<label>Plan de Desarrollo</label>
-						<select class="form-control" ng-options="dp.name for dp in development_plans" ng-model="development_plan" ng-change="statisticsCtrl.clearDevPlan()" required>
+						<select class="form-control" ng-options="dp.name for dp in development_plans" ng-model="development_plan" ng-change="statisticsCtrl.clearDevPlan()"
+							required>
 						</select>
 					</div>
 					<div class="form-group col-lg-5">
@@ -32,12 +33,14 @@
 				<div class="row" ng-show="expanded">
 					<div class="form-group col-lg-6">
 						<label>Eje</label>
-						<select class="form-control" ng-disabled="!dimention.id" ng-options="axe.name for axe in dimention.axes" ng-change="statisticsCtrl.clearAxe()" ng-model="axe">
+						<select class="form-control" ng-disabled="!dimention.id" ng-options="axe.name for axe in dimention.axes" ng-change="statisticsCtrl.clearAxe()"
+							ng-model="axe">
 						</select>
 					</div>
 					<div class="form-group col-lg-6">
 						<label>Programa</label>
-						<select class="form-control" ng-disabled="!axe.id" ng-options="program.name for program in axe.programs" ng-change="statisticsCtrl.clearProgram()" ng-model="program">
+						<select class="form-control" ng-disabled="!axe.id" ng-options="program.name for program in axe.programs" ng-change="statisticsCtrl.clearProgram()"
+							ng-model="program">
 						</select>
 					</div>
 					<div class="form-group col-lg-6">
@@ -81,16 +84,8 @@
 						</div>
 						<div class="form-group col-lg-6">
 							<label>Filtros</label>
-							<multiselect
-								ng-disabled="!counter.filters"
-								style="display: block;"
-								ng-model="selectedFilters"
-								options="f.label for f in counter.filters"    
-								data-multiple="true"                  
-								data-compare-by="id"                  
-								scroll-after-rows="5"                 
-								filter-after-rows="5"                                         
-								tabindex="-1">                        
+							<multiselect ng-disabled="!counter.filters" style="display: block;" ng-model="selectedFilters" options="f.label for f in counter.filters"
+								data-multiple="true" data-compare-by="id" scroll-after-rows="5" filter-after-rows="5" tabindex="-1">
 							</multiselect>
 						</div>
 					</div>

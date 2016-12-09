@@ -87,86 +87,6 @@
     }
 
 })();
-(function (module) {
-    "use strict";
-
-    //var ROOT_PATH = "https://whispering-garden-20822.herokuapp.com/";
-    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
-
-    module.constant("APP_DEFAULTS", {
-        ENDPOINT: ROOT_PATH + "api/v1",
-        ROOT_PATH: ROOT_PATH
-    });
-
-    module.constant("AUTH_DEFAULTS", {
-        TOKEN_NAME: "token",
-        LOGIN_STATE: "login",
-        LANDING_PAGE: "dashboard",
-        FORBIDDEN_STATE: "forbidden"
-    });
-
-})(angular.module('app'));
-(function (module) {
-    "use strict";
-
-    module.directive('hasPermission', function (AuthenticationService) {
-
-        return function (scope, element, attrs) {
-            if (!AuthenticationService.hasPermission(attrs["hasPermission"])) {
-                element.remove();
-            }
-        }
-    });
-
-})(angular.module('app'));
-(function (module) {
-    'use strict';
-
-    module.controller("ModalController", ModalController);
-
-    ModalController.$inject = [
-        "$scope",
-        "$uibModalInstance",
-        "data"
-    ];
-
-    function ModalController($scope, $uibModalInstance, data) {
-
-        var self = this;
-
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
-
-        self.update = function () {
-            $uibModalInstance.close($scope.data);
-        };
-
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
-
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-        /* Date Pickers */
-        $scope.formats = ['yyyy','dd-MM-yyyy'];
-        $scope.yearOnly = $scope.formats[0];
-        $scope.dateComplete = $scope.formats[1];
-        $scope.status = [false, false];
-
-        $scope.open = function ($event, i) {
-            $scope.status[i] = true;
-        };
-
-        $scope.yearOptions = {
-            formatYear: 'yyyy',
-            startingDay: 1,
-            minMode: 'year'
-        };
-    }
-})(angular.module("app"));
-
 (function () {
     'use strict';
 
@@ -260,10 +180,6 @@
             }
         });
 
-
-
-
-
         /* Estadística de una Actividad (Admin NO) */
         stateHelperProvider.state({
             name: 'activity-statistics',
@@ -277,22 +193,21 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@activity-statistics': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "ActivitiesCtrl as actCtrl"
+                    templateUrl: "templates/statistics.activity.html",
+                    controller: "ActivityStatisticCtrl as statisticsCtrl"
                 }
             },
             resolve: {
-                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                Counters: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
-                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                        relationships: "filters"
                     }
-                    return StatisticService.getDevelopmentPlans(params);
+                    return StatisticService.getCounters(params);
                 }],
 
-                GenericFilters: ['StatisticService', function (StatisticService) {
+                Activity: ['ActivitiesService', '$stateParams', function (ActivitiesService, $stateParams) {
                     var params = {}
-                    return StatisticService.getGenericFilters(params);
+                    return ActivitiesService.getActivity(params, $stateParams.id );
                 }]
             }
         });
@@ -391,6 +306,48 @@
         /***************************************/
 
         /* Estadisticas SOLO de la Secretaría */
+        stateHelperProvider.state({
+            name: 'secretary-statistics',
+            url: '/estadisticas/secretaria',
+            data: {
+                state: "statistics"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@secretary-statistics': {
+                    templateUrl: "templates/statistics.secretary.html",
+                    controller: "SecretaryStatisticsCtrl as statisticsCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+               Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }],
+
+                Counters: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "filters"
+                    }
+                    return StatisticService.getCounters(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
+            }
+        });
     
 
         /* Proyectos SOLO de la Secretaría */
@@ -653,323 +610,82 @@
     });
 })();
 (function (module) {
-    'use strict';
+    "use strict";
 
-    module.controller("AuthController", AuthController);
+    //var ROOT_PATH = "https://whispering-garden-20822.herokuapp.com/";
+    var ROOT_PATH = "http://192.168.33.10/Practicas-BACK/public/";
 
-    AuthController.$inject = [
-        "$scope",
-        "AuthenticationService",
-        "$state",
-        "AUTH_DEFAULTS",
-        "blockUI",
-        "inform"
-    ];
+    module.constant("APP_DEFAULTS", {
+        ENDPOINT: ROOT_PATH + "api/v1",
+        ROOT_PATH: ROOT_PATH
+    });
 
-    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
-        var auth = this;
-        auth.credentials = {};
+    module.constant("AUTH_DEFAULTS", {
+        TOKEN_NAME: "token",
+        LOGIN_STATE: "login",
+        LANDING_PAGE: "dashboard",
+        FORBIDDEN_STATE: "forbidden"
+    });
 
-        auth.login = function (formLogin) {
+})(angular.module('app'));
+(function (module) {
+    "use strict";
 
-            if (formLogin.$invalid) {
-                return;
+    module.directive('hasPermission', function (AuthenticationService) {
+
+        return function (scope, element, attrs) {
+            if (!AuthenticationService.hasPermission(attrs["hasPermission"])) {
+                element.remove();
             }
+        }
+    });
 
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.login(auth.credentials).then(function () {
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }).catch(function (error) {
-                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
-                if (error.status == 400) {
-                    auth.error = error.data.error;
-                }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
-
-        auth.showForgotPassword = function () {
-            auth.credentials = {};
-            auth.error = undefined;
-            auth.forgotPassword = true;
-            auth.recoveryEmail = undefined;
-        };
-
-        auth.hideForgotPassword = function () {
-            auth.recoveryEmail = undefined;
-            auth.forgotPassword = false;
-        };
-
-        auth.recoverPassword = function () {
-            blockUI.start();
-            auth.error = undefined;
-
-            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
-                auth.recoverSuccess = true;
-            }).catch(function (error) {
-                if (error.status == 400) {
-                    auth.error = error.data.error;
-                }
-            }).finally(function () {
-                blockUI.stop();
-            });
-        };
-    }
-})(angular.module("app.authentication"));
+})(angular.module('app'));
 (function (module) {
     'use strict';
 
-    module.service("AuthenticationService", AuthenticationService);
+    module.controller("ModalController", ModalController);
 
-    AuthenticationService.$inject = [
-        "$http",
-        "$q",
-        "store",
-        'AUTH_DEFAULTS',
-        "jwtHelper",
-        "APP_DEFAULTS"
-    ];
-
-    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
-        var self = this;
-        var resource = "/authenticate";
-
-        self.getCurrentUser = function () {
-            var payload = jwtHelper.decodeToken(self.getToken());
-            
-            var user = {
-                name: payload.name,
-                role: payload.role.name,
-                permissions: payload.views,
-                secretary_id: payload.secretary_id
-            };
-            return user;
-        };
-
-        self.login = function (credentials) {
-            var deferred = $q.defer();
-
-            $http({
-                method: "POST",
-                data: credentials,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + "/login",
-            }).then(function (response) {
-                self.setToken(response.data.token);
-                deferred.resolve(self.getCurrentUser());
-            }).catch(function (error) {
-                deferred.reject(error);
-            });
-
-            return deferred.promise;
-        };
-
-        self.setToken = function (token) {
-            store.set("token", token);
-        };
-
-        self.getToken = function () {
-            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.isTokenExpired = function () {
-            return jwtHelper.isTokenExpired(self.getToken());
-        };
-
-        self.destroyToken = function () {
-            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.recoverPassword = function (email) {
-            return $http({
-                method: "GET",
-                params: { email: email },
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
-            });
-        };
-
-        self.getRestoreToken = function (token) {
-            return $http({
-                method: "GET",
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
-            });
-        };
-
-        self.updatePassword = function (params, token) {
-            return $http({
-                method: "PUT",
-                data: params,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
-            });
-        };
-
-        /**
-         * Checks if the current user has permissions to
-         * enter to the given view
-         * @param view : view name to check if the user has the permission
-         * @returns {boolean}
-         */
-        self.hasPermission = function (view) {
-            var user = self.getCurrentUser();
-            if ( user.permissions[view] ) {
-                return true;
-            }
-            return false;
-        };
-
-        self.logout = function () {
-            return $http({
-                method: "GET",
-                url: APP_DEFAULTS.ENDPOINT + "/logout"
-            })
-        };
-
-        return self;
-    }
-})(angular.module("app.authentication"));
-(function (module) {
-    'use strict';
-
-    module.controller("ContractsCtrl", ContractsCtrl);
-
-    ContractsCtrl.$inject = [
+    ModalController.$inject = [
         "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
-        "inform",
-        "IdentificationTypes",
-        "ContractsService",
-        "Contractors"
+        "$uibModalInstance",
+        "data"
     ];
 
-    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, IdentificationTypes, ContractsService, Contractors) {
+    function ModalController($scope, $uibModalInstance, data) {
 
         var self = this;
 
-        $scope.configDT = {
-            limit: 15,
-            page: 1
-        }
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
 
-        $scope.selectedContractor = {};
+        self.update = function () {
+            $uibModalInstance.close($scope.data);
+        };
 
-        self.getContractors = function(){
-            var params = {
-                relationships: 'contracts,identification_type',
-                page: $scope.configDT.page,
-                items: $scope.configDT.limit,
-                count: true
-            };
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
 
-            ContractsService.getContractors(params).then(
-                function(response){
-                    $scope.contractors = response.data;
-                }, function (err){
-                    inform.add("Ocurrió un error al consultar los contratistas", {type: "warning"});
-                }
-            );
-        }
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
 
-        self.addContract = function(){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nuevo Contrato',
-                ariaDescribedBy: 'crear-contrato',
-                templateUrl: 'templates/addContract.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
-                }
-            });
+        /* Date Pickers */
+        $scope.formats = ['yyyy','dd-MM-yyyy'];
+        $scope.yearOnly = $scope.formats[0];
+        $scope.dateComplete = $scope.formats[1];
+        $scope.status = [false, false];
 
-            modalInstance.result.then(function (data) {
-                ContractsService.addContract(data, $scope.selectedContractor.id ).then(
-                    function (response) {
-                        inform.add("Se ha guardado correctamente el contrato", { type: "info" });
-                        $scope.selectedContractor.contracts.push(data);
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el contrato", { type: "warning" });
-                    }
-                );
-            });
-        }
+        $scope.open = function ($event, i) {
+            $scope.status[i] = true;
+        };
 
-        self.add = function(){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nuevo Contratista',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/addContractor.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        identificationTypes: $scope.identificationTypes
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ContractsService.addContractor(data).then(
-                    function (response) {
-                        inform.add("Se ha guardado correctamente el contratista", { type: "info" });
-                        self.getContractors();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        self.edit = function(contractor){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Crear Nuevo Proyecto',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/updateContrator.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        identificationTypes: $scope.identificationTypes,
-                        contractor: contractor
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ContractsService.updateContractor(data, data.contractor.id).then(
-                    function (response) {
-                        inform.add("Se ha actualizado correctamente el contratista", { type: "info" });
-                        self.getContractors();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al actualizar el contratista", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        self.selectContractor = function(contractor){
-            $scope.selectedContractor = contractor;
-        }
-
-        self.init = function () {
-            $scope.identificationTypes = IdentificationTypes.data;
-            $scope.contractors = Contractors.data;
-        }
-
-        self.init();
-
-
+        $scope.yearOptions = {
+            formatYear: 'yyyy',
+            startingDay: 1,
+            minMode: 'year'
+        };
     }
 })(angular.module("app"));
 
@@ -1446,6 +1162,456 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ActivitiesService", ActivitiesService);
+
+    ActivitiesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadActivity = function(data, file){
+            return Upload.upload({
+                data: {file: file, data: data},
+                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+            });
+        }
+
+        self.getActivities = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
+            })
+        }
+
+        self.getActivity = function(params, id){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/" + id
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("AuthController", AuthController);
+
+    AuthController.$inject = [
+        "$scope",
+        "AuthenticationService",
+        "$state",
+        "AUTH_DEFAULTS",
+        "blockUI",
+        "inform"
+    ];
+
+    function AuthController($scope, AuthenticationService, $state, AUTH_DEFAULTS, blockUI, inform) {
+        var auth = this;
+        auth.credentials = {};
+
+        auth.login = function (formLogin) {
+
+            if (formLogin.$invalid) {
+                return;
+            }
+
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.login(auth.credentials).then(function () {
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }).catch(function (error) {
+                inform.add("Usuario y/o contraseña incorrectos", {type: "warning"});
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+
+        auth.showForgotPassword = function () {
+            auth.credentials = {};
+            auth.error = undefined;
+            auth.forgotPassword = true;
+            auth.recoveryEmail = undefined;
+        };
+
+        auth.hideForgotPassword = function () {
+            auth.recoveryEmail = undefined;
+            auth.forgotPassword = false;
+        };
+
+        auth.recoverPassword = function () {
+            blockUI.start();
+            auth.error = undefined;
+
+            AuthenticationService.recoverPassword(auth.recoveryEmail).then(function (response) {
+                auth.recoverSuccess = true;
+            }).catch(function (error) {
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        };
+    }
+})(angular.module("app.authentication"));
+(function (module) {
+    'use strict';
+
+    module.service("AuthenticationService", AuthenticationService);
+
+    AuthenticationService.$inject = [
+        "$http",
+        "$q",
+        "store",
+        'AUTH_DEFAULTS',
+        "jwtHelper",
+        "APP_DEFAULTS"
+    ];
+
+    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
+        var self = this;
+        var resource = "/authenticate";
+
+        self.getCurrentUser = function () {
+            var payload = jwtHelper.decodeToken(self.getToken());
+            
+            var user = {
+                name: payload.name,
+                role: payload.role.role_name,
+                permissions: payload.views,
+                secretary_id: payload.secretary_id
+            };
+            return user;
+        };
+
+        self.login = function (credentials) {
+            var deferred = $q.defer();
+
+            $http({
+                method: "POST",
+                data: credentials,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + "/login",
+            }).then(function (response) {
+                self.setToken(response.data.token);
+                deferred.resolve(self.getCurrentUser());
+            }).catch(function (error) {
+                deferred.reject(error);
+            });
+
+            return deferred.promise;
+        };
+
+        self.setToken = function (token) {
+            store.set("token", token);
+        };
+
+        self.getToken = function () {
+            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.isTokenExpired = function () {
+            return jwtHelper.isTokenExpired(self.getToken());
+        };
+
+        self.destroyToken = function () {
+            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.recoverPassword = function (email) {
+            return $http({
+                method: "GET",
+                params: { email: email },
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
+            });
+        };
+
+        self.getRestoreToken = function (token) {
+            return $http({
+                method: "GET",
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
+            });
+        };
+
+        self.updatePassword = function (params, token) {
+            return $http({
+                method: "PUT",
+                data: params,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
+            });
+        };
+
+        /**
+         * Checks if the current user has permissions to
+         * enter to the given view
+         * @param view : view name to check if the user has the permission
+         * @returns {boolean}
+         */
+        self.hasPermission = function (view) {
+            var user = self.getCurrentUser();
+            if ( user.permissions[view] ) {
+                return true;
+            }
+            return false;
+        };
+
+        self.logout = function () {
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + "/logout"
+            })
+        };
+
+        return self;
+    }
+})(angular.module("app.authentication"));
+(function (module) {
+    'use strict';
+
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state",
+        "AuthenticationService"
+    ];
+
+    function NavigationCtrl($scope, $state, AuthenticationService) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+            $scope.currentUser = AuthenticationService.getCurrentUser();
+        }
+
+        self.logOut = function(){
+            AuthenticationService.logout().then(
+                function(response){
+                    AuthenticationService.destroyToken();
+                    $state.go("login");
+                }
+            );
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("ContractsCtrl", ContractsCtrl);
+
+    ContractsCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "IdentificationTypes",
+        "ContractsService",
+        "Contractors"
+    ];
+
+    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, IdentificationTypes, ContractsService, Contractors) {
+
+        var self = this;
+
+        $scope.configDT = {
+            limit: 15,
+            page: 1
+        }
+
+        $scope.selectedContractor = {};
+
+        self.getContractors = function(){
+            var params = {
+                relationships: 'contracts,identification_type',
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true
+            };
+
+            ContractsService.getContractors(params).then(
+                function(response){
+                    $scope.contractors = response.data;
+                }, function (err){
+                    inform.add("Ocurrió un error al consultar los contratistas", {type: "warning"});
+                }
+            );
+        }
+
+        self.addContract = function(){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nuevo Contrato',
+                ariaDescribedBy: 'crear-contrato',
+                templateUrl: 'templates/addContract.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.addContract(data, $scope.selectedContractor.id ).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el contrato", { type: "info" });
+                        $scope.selectedContractor.contracts.push(data);
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el contrato", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.add = function(){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nuevo Contratista',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/addContractor.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        identificationTypes: $scope.identificationTypes
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.addContractor(data).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el contratista", { type: "info" });
+                        self.getContractors();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.edit = function(contractor){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/updateContrator.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        identificationTypes: $scope.identificationTypes,
+                        contractor: contractor
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.updateContractor(data, data.contractor.id).then(
+                    function (response) {
+                        inform.add("Se ha actualizado correctamente el contratista", { type: "info" });
+                        self.getContractors();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al actualizar el contratista", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.selectContractor = function(contractor){
+            $scope.selectedContractor = contractor;
+        }
+
+        self.init = function () {
+            $scope.identificationTypes = IdentificationTypes.data;
+            $scope.contractors = Contractors.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ContractsService", ContractsService);
+
+    ContractsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function ContractsService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.addContractor = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.getContractors = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.updateContractor = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
+            })
+        }
+
+        self.addContract = function(data, id){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
+            })
+        }
+
+        self.getIdentificationTypes = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
+            })
+        }
+
+    }
+})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1572,41 +1738,6 @@
     }
 })(angular.module("app"));
 
-(function (module) {
-    'use strict';
-
-    module.controller("NavigationCtrl", NavigationCtrl);
-
-    NavigationCtrl.$inject = [
-        "$scope",
-        "$state",
-        "AuthenticationService"
-    ];
-
-    function NavigationCtrl($scope, $state, AuthenticationService) {
-
-        var self = this;
-
-        $scope.active = "";
-
-        self.init = function() {
-            $scope.active = $state.current.data.state;
-            $scope.currentUser = AuthenticationService.getCurrentUser();
-        }
-
-        self.logOut = function(){
-            AuthenticationService.logout().then(
-                function(response){
-                    AuthenticationService.destroyToken();
-                    $state.go("login");
-                }
-            );
-        }
-
-        self.init();
-    }
-})(angular.module("app"));
-
 
 (function (module) {
     module.service("PlanService", PlanService);
@@ -1653,92 +1784,682 @@
         }
     }
 })(angular.module("app"));
-
 (function (module) {
-    module.service("ContractsService", ContractsService);
+    'use strict';
 
-    ContractsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS"
+    module.controller("ModalUpdateProjectCtrl", ModalUpdateProjectCtrl);
+
+    ModalUpdateProjectCtrl.$inject = [
+        "$scope",
+        "$uibModalInstance",
+        "data"
     ];
 
-    function ContractsService($http, $q, APP_DEFAULTS) {
+    function ModalUpdateProjectCtrl($scope, $uibModalInstance, data) {
+
         var self = this;
 
-        self.addContractor = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
+
+        self.update = function () {
+            $scope.data.project.status = $scope.data.project.s ? 'Activo' : 'Inactivo';
+            $uibModalInstance.close($scope.data);
+        };
+
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
+
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        self.init = function(){
+            $scope.data.project.s = $scope.data.project.status == 'Activo' ? true : false;
         }
 
-        self.getContractors = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.updateContractor = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
-            })
-        }
-
-        self.addContract = function(data, id){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
-            })
-        }
-
-        self.getIdentificationTypes = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
-            })
-        }
+        self.init();
 
     }
 })(angular.module("app"));
 
 (function (module) {
-    module.service("ActivitiesService", ActivitiesService);
+    'use strict';
 
-    ActivitiesService.$inject = [
+    module.controller("ProjectsCtrl", ProjectsCtrl);
+
+    ProjectsCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "ProjectsService",
+        "Dimentions",
+        "Projects"
+    ];
+
+    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ProjectsService, Dimentions, Projects) {
+
+        var self = this;
+
+        /* Table Config */
+        $scope.configDT = {
+            order: 'SEPPI',
+            limit: 10,
+            page: 1
+        }
+        /* */
+
+        /* Obtiene todos los proyectos del Plan de Desarrollo Actual */
+        self.getProjects = function () {
+            var params = {
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true,
+                relationships: 'subprogram'
+            }
+
+            ProjectsService.getProjects(params).then(
+                function (response) {
+                    $scope.projects = response.data
+                }, function (err) {
+                    inform.add("Ocurrio un error al cargar los proyectos", { type: 'warning' })
+                }
+            )
+        }
+
+        /* Descarga el formato para el cargue de Proyectos */
+        self.downloadFormat = function () {
+            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Proyectos.xlsx');
+        }
+
+        /* Modal para cargar Proyectos de Manera Másiva a traves de un documento de Excel. */
+        self.upload = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Proyectos',
+                ariaDescribedBy: 'cargar-proyecto',
+                templateUrl: 'templates/uploadProjects.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ProjectsService.uploadProjects(data.file).then(
+                    function (response) {
+                        inform.add("Se han cargado los proyectos correctamente", { type: "info" });
+                        self.getProjects();
+                    }, function (err) {
+                        var msg = "Ocurrió un error al guardar los Proyectos: \n"
+                        var key, value, i;
+                        for (var j in err.data) {
+                            key = j;
+                            value = err.data[j];
+                            msg += key + ": " + value;
+                            /*for (i = 0; i < err.data[j].length; i++) {
+                                msg += err.data[j][i] + ",";
+                            }*/
+                            msg += "\n";
+                        }
+                        inform.add(msg, { ttl: -1, type: "warning" });
+                    }
+                );
+            });
+        }
+
+        /* Modal que permite la creación de 1 nuevo proyecto */
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/createProject.modal.html',
+                controller: 'ModalProjectCtrl',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        dimentions: $scope.dimentions
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                data.status = "Activo";
+
+                ProjectsService.addProject(data).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
+                        self.getProjects();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        /* Modal para la actualización de proyectos */
+        self.edit = function (project) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Actualizar Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/updateProject.modal.html',
+                controller: 'ModalUpdateProjectCtrl',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        project: project
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ProjectsService.updateProject(data, data.project.id).then(
+                    function (response) {
+                        inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
+                        self.getProjects();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al actualizar el proyecto", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        /* Configuración inicial de la vista */
+        self.init = function () {
+            $scope.dimentions = Dimentions.data;
+            $scope.projects = Projects.data;
+        }
+
+        self.init();
+
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("ModalProjectCtrl", ModalProjectCtrl);
+
+    ModalProjectCtrl.$inject = [
+        "$scope",
+        "$uibModalInstance",
+        "data"
+    ];
+
+    function ModalProjectCtrl($scope, $uibModalInstance, data) {
+
+        var self = this;
+
+        $scope.data = angular.copy(data);
+        $scope.new_data = {};
+        $scope.dimention = "";
+        $scope.axe = "";
+        $scope.program = "";
+
+        self.update = function () {
+            $uibModalInstance.close($scope.data);
+        };
+
+        self.save = function () {
+            $uibModalInstance.close($scope.new_data);
+        };
+
+        self.cancel = function () {
+            $uibModalInstance.dismiss('cancel');
+        };
+
+        self.init = function(){
+            console.log($scope.data);
+        }
+
+        self.init();
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ProjectsService", ProjectsService);
+
+    ProjectsService.$inject = [
         "$http",
         "$q",
         "APP_DEFAULTS",
         "Upload"
     ];
 
-    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        self.uploadActivity = function(data, file){
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
+            })
+        }
+
+        self.uploadProjects = function(file){
             return Upload.upload({
-                data: {file: file, data: data},
-                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+                data: {file: file},
+                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
             });
         }
 
-        self.getActivities = function(params){
+        self.getProjects = function(params){
             return $http({
-                method: "POST",
-                data: params,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.getDimentions = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
             })
         }
 
     }
 })(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("SecretariesCtrl", SecretariesCtrl);
+
+    SecretariesCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "$filter",
+        "inform",
+        "Secretaries",
+        "SecretariesService"
+    ];
+
+    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, Secretaries, SecretariesService) {
+
+        var self = this;
+
+        self.add = function () {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nueva Secretaría',
+                ariaDescribedBy: 'nueva-secretaría',
+                templateUrl: 'templates/new-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.saveSecretary(data).then(
+                    function(response){
+                        inform.add("Se ha creado la nueva dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al guardar la dependencia", {type: "warning"});
+                    }
+                );
+            });
+        }
+
+        self.edit = function (secretary) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Editar Secretaría',
+                ariaDescribedBy: 'editar-secretaría',
+                templateUrl: 'templates/update-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        secretary: secretary
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.updateSecretary(data, secretary.id).then(
+                    function(response){
+                        inform.add("Se ha actualizado la dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al actualizar la dependencia", {type: "warning"});
+                    }
+                );
+            });
+        }
+
+        self.delete = function (secretary) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Eliminar Secretaría',
+                ariaDescribedBy: 'eliminar-secretaría',
+                templateUrl: 'templates/delete-secretary.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        secretary: secretary
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                SecretariesService.deleteSecretary(secretary.id).then(
+                    function(response){
+                        inform.add("Se ha eliminado la dependencia.", { type: "success" });
+                        self.refresh();
+                    }, function(err){
+                        inform.add("Ocurrió un error al eliminar la dependencia", {type: "warning"});
+                    }
+                );
+            });
+        }
+
+        self.refresh = function(){
+            SecretariesService.getSecretaries({}).then(
+                function(response){
+                    $scope.secretaries = response.data;
+                }
+            );
+        }
+
+        self.init = function () {
+            $scope.secretaries = Secretaries.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("SecretariesService", SecretariesService);
+
+    SecretariesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.getSecretaries = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+
+        self.saveSecretary = function(data){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
+            });
+        }
+
+        self.updateSecretary = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+
+        self.deleteSecretary = function(id){
+            return $http({
+                method: 'DELETE',
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("ActivityStatisticCtrl", ActivityStatisticCtrl);
+
+    ActivityStatisticCtrl.$inject = [
+        "$scope",
+        "inform",
+        "Counters",
+        "StatisticService",
+        "usSpinnerService",
+        "AuthenticationService",
+        "$stateParams",
+        "$state",
+        "Activity"
+    ];
+
+    function ActivityStatisticCtrl($scope, inform, Counters, StatisticService, usSpinnerService, AuthenticationService, $stateParams, $state, Activity) {
+
+        var self = this;
+
+        /************ SPINNER **********/
+        $scope.spinner = false;
+
+        self.startSpin = function () {
+            $scope.spinner = true;
+            usSpinnerService.spin('spinner-1');
+        }
+        self.stopSpin = function () {
+            $scope.spinner = false;
+            usSpinnerService.stop('spinner-1');
+        }
+
+        /***** FILTROS REPORTE ******/
+        $scope.filtersData = ["", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+        $scope.counter = {};
+        $scope.selectedFilters = [];
+
+        /* Verifica si el filtro se debe mostrar */
+        self.applyFilter = function (filter) {
+            var i;
+            for (i = 0; i < $scope.selectedFilters.length; i++) {
+                if ($scope.selectedFilters[i].label == filter) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /* Inicializa los filtros de acuerdo al Counter elegido */
+        self.getFilters = function () {
+            var i;
+            $scope.filtersData = ["", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+
+            for (i = 0; i < $scope.counter.filters.length; i++) {
+                self.getData($scope.counter.filters[i]);
+            }
+
+            $scope.filters = $scope.counter.filters;
+        }
+
+        /* Método que se encarga de consultar las opciones 
+        de cada uno de los filtros poblacionales */
+        self.getData = function (filter) {
+            if (filter.endpoint == "NA") {
+                return;
+            }
+
+            var ep = filter.endpoint.replace("-", "_");
+
+            if (!$scope[ep]) {
+                StatisticService.genericGetter(filter.endpoint).then(
+                    function (response) {
+                        $scope[ep] = response.data;
+                    }
+                );
+            }
+        }
+
+        /********** REPORTES *********/
+        $scope.report = false;
+        $scope.reports = [];
+
+        /* Limpia los reportes que se han consultado */
+        self.clean = function () {
+            $scope.reports = [];
+        }
+
+        /* Ajusta los filtros genericos para realizar la consulta */
+        self.parseGenericFilters = function () {
+            var secretary = {
+                column: "sp.id",
+                value: $scope.secretary
+            }
+
+            var secretary = {
+                column: "a.id",
+                value: $stateParams.id
+            }
+
+            $scope.req.filters.push(secretary);
+        }
+
+        /* Ajusta los filtros poblacionales para realizar la consulta */
+        self.parseSpecificFilters = function () {
+            var i = 0;
+
+            $scope.req.filters = _.filter($scope.filters, function (f) {
+                if ($scope.filtersData[f.id] != "") {
+                    var ans = $scope.filtersData[f.id];
+                    var x;
+                    if (ans.id) {
+                        f.value = ans.id;
+                        x = ans.name;
+                    } else {
+                        f.value = ans;
+                        if (f.id == 11) {
+                            x = f.value;
+                        } else {
+                            x = f.value ? "si" : "no";
+                        }
+                    }
+
+                    if (i == 0) {
+                        $scope.res += "con las siguientes caracteristicas: "
+                        i++;
+                    }
+                    $scope.res += f.label + " - " + x + ", ";
+                    return true;
+                }
+                return false;
+            });
+
+            if ($scope.counter.label == "Cuales Municipios" || $scope.counter.label == "Cuales Proyectos") {
+                $scope.res += " son: ";
+            } else {
+                $scope.res += " es: ";
+            }
+        }
+
+        /* Ajusta la respuesta de los totales */
+        self.parseTotals = function (data) {
+            $scope.res += data[0].total;
+            $scope.reports.push($scope.res);
+        }
+
+        /* Ajusta la respuesta de los cuales */
+        self.parseWhich = function (data) {
+            var i;
+            for (i = 0; i < data.length; i++) {
+                for (var key in data[i]) {
+                    $scope.res += data[i][key] + ", ";
+                }
+            }
+            $scope.reports.push($scope.res);
+        }
+
+        /* Ajusta la respuesta de los datos agrupados */
+        self.parseTotalGroup = function(data){
+            var i;
+            for (i = 0; i < data.length; i++) {
+                if(data[i].total != 0 ){
+                    $scope.res += " " + data[i].name + ": " + data[i].total + ",";
+                }
+            }
+            $scope.reports.push($scope.res);
+        }
+
+        /* Realiza la consulta con base a los filtros seleccionados */
+        self.getReport = function () {
+            self.startSpin();
+            $scope.res = $scope.counter.response + " ";
+            $scope.report = true;
+            $scope.req = {
+                total: $scope.counter.column,
+                group: $scope.counter.group_by
+            }
+
+            self.parseSpecificFilters();
+            self.parseGenericFilters();
+
+            StatisticService.getReport($scope.req).then(
+                function (response) {
+                    if ($scope.counter.id == 1 || $scope.counter.id == 2) {
+                        self.parseTotals(response.data);
+                    } else if ($scope.counter.id == 3 || $scope.counter.id == 4) {
+                        self.parseWhich(response.data);
+                    } else {
+                        self.parseTotalGroup(response.data);
+                    }
+                    
+                    self.getFilters();
+                    self.stopSpin();
+                },
+                function (err) {
+                    inform.add("Ocurrió un error al consultar las estadisticas solicitadas", { type: "warning" });
+                    self.stopSpin();
+                }
+            );
+        }
+
+
+        /********** CARGUE INICIAL **********/
+        self.init = function () {
+            $scope.counters = Counters.data;
+            $scope.secretary = AuthenticationService.getCurrentUser().secretary_id;
+            $scope.rol = AuthenticationService.getCurrentUser().role;
+
+            if(Activity.data.secretary_id != $scope.secretary && $scope.rol != "planeacion" ){
+                $state.go("forbidden");
+            }
+        }
+
+        self.init();
+
+    }
+})(angular.module("app"));
+
 (function (module) {
     'use strict';
 
@@ -1985,16 +2706,7 @@
                     } else {
                         self.parseTotalGroup(response.data);
                     }
-                    /*var i;
-                    for (i = 0; i < response.data.length; i++) {
-                        for (var key in response.data[i]) {
-                            if (i > 0) {
-                                $scope.res += ", "
-                            }
-                            $scope.res += response.data[i][key];
-                        }
-                    }*/
-                    //$scope.reports.push($scope.res);
+                    
                     self.getFilters();
                     self.stopSpin();
                 },
@@ -2028,166 +2740,301 @@
 (function (module) {
     'use strict';
 
-    module.controller("SecretariesCtrl", SecretariesCtrl);
+    module.controller("SecretaryStatisticsCtrl", SecretaryStatisticsCtrl);
 
-    SecretariesCtrl.$inject = [
+    SecretaryStatisticsCtrl.$inject = [
         "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
         "$filter",
         "inform",
+        "DevelopmentPlans",
         "Secretaries",
-        "SecretariesService"
+        "Counters",
+        "StatisticService",
+        "GenericFilters",
+        "usSpinnerService",
+        "AuthenticationService"
     ];
 
-    function SecretariesCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, Secretaries, SecretariesService) {
+    function SecretaryStatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService, GenericFilters, usSpinnerService, AuthenticationService) {
 
         var self = this;
 
-        self.add = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nueva Secretaría',
-                ariaDescribedBy: 'nueva-secretaría',
-                templateUrl: 'templates/new-secretary.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
-                }
-            });
+        /************ SPINNER **********/
+        $scope.spinner = false;
 
-            modalInstance.result.then(function (data) {
-                SecretariesService.saveSecretary(data).then(
-                    function(response){
-                        inform.add("Se ha creado la nueva dependencia.", { type: "success" });
-                        self.refresh();
-                    }, function(err){
-                        inform.add("Ocurrió un error al guardar la dependencia", {type: "warning"});
-                    }
-                );
-            });
+        self.startSpin = function () {
+            $scope.spinner = true;
+            usSpinnerService.spin('spinner-1');
+        }
+        self.stopSpin = function () {
+            $scope.spinner = false;
+            usSpinnerService.stop('spinner-1');
         }
 
-        self.edit = function (secretary) {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Editar Secretaría',
-                ariaDescribedBy: 'editar-secretaría',
-                templateUrl: 'templates/update-secretary.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        secretary: secretary
-                    }
-                }
-            });
+        /******** FILTROS GENÉRICOS ******/
+        $scope.expanded = false;
+        $scope.development_plan = {};
+        $scope.dimention = {};
+        $scope.axe = {};
+        $scope.secretary = -1;
+        $scope.subprogram = -1;
+        $scope.program = {};
+        $scope.program_id;
 
-            modalInstance.result.then(function (data) {
-                SecretariesService.updateSecretary(data, secretary.id).then(
-                    function(response){
-                        inform.add("Se ha actualizado la dependencia.", { type: "success" });
-                        self.refresh();
-                    }, function(err){
-                        inform.add("Ocurrió un error al actualizar la dependencia", {type: "warning"});
-                    }
-                );
-            });
+        self.clearDevPlan = function () {
+            $scope.dimention = {};
+            $scope.axe = {};
+            $scope.program = {};
+            $scope.subprogram = -1;
         }
 
-        self.delete = function (secretary) {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Eliminar Secretaría',
-                ariaDescribedBy: 'eliminar-secretaría',
-                templateUrl: 'templates/delete-secretary.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        secretary: secretary
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                SecretariesService.deleteSecretary(secretary.id).then(
-                    function(response){
-                        inform.add("Se ha eliminado la dependencia.", { type: "success" });
-                        self.refresh();
-                    }, function(err){
-                        inform.add("Ocurrió un error al eliminar la dependencia", {type: "warning"});
-                    }
-                );
-            });
+        self.clearDim = function () {
+            $scope.axe = {};
+            $scope.program = {};
+            $scope.subprogram = -1;
         }
 
-        self.refresh = function(){
-            SecretariesService.getSecretaries({}).then(
-                function(response){
-                    $scope.secretaries = response.data;
+        self.clearAxe = function () {
+            $scope.program = {};
+            $scope.subprogram = -1;
+        }
+
+        self.parse = function () {
+            $scope.subprogram = -1;
+            $scope.program = {};
+            var i;
+            if ($scope.program_id) {
+                for (i = 0; i < $scope.axe.programs.length; i++) {
+                    if ($scope.axe.programs[i].id == $scope.program_id) {
+                        $scope.program = $scope.axe.programs[i];
+                        break;
+                    }
+                }
+            }
+        }
+
+        self.belongsToSecretary = function (program) {
+            var i;
+            for (i = 0; i < program.secretaries.length; i++) {
+                if (program.secretaries[i].secretary_id == $scope.secretary) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /***** FILTROS REPORTE ******/
+        $scope.filtersData = ["", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+        $scope.counter = {};
+        $scope.selectedFilters = [];
+
+        /* Verifica si el filtro se debe mostrar */
+        self.applyFilter = function (filter) {
+            var i;
+            for (i = 0; i < $scope.selectedFilters.length; i++) {
+                if ($scope.selectedFilters[i].label == filter) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /* Inicializa los filtros de acuerdo al Counter elegido */
+        self.getFilters = function () {
+            var i;
+            $scope.filtersData = ["", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+
+            for (i = 0; i < $scope.counter.filters.length; i++) {
+                self.getData($scope.counter.filters[i]);
+            }
+
+            $scope.filters = $scope.counter.filters;
+        }
+
+        /* Método que se encarga de consultar las opciones 
+        de cada uno de los filtros poblacionales */
+        self.getData = function (filter) {
+            if (filter.endpoint == "NA") {
+                return;
+            }
+
+            var ep = filter.endpoint.replace("-", "_");
+
+            if (!$scope[ep]) {
+                StatisticService.genericGetter(filter.endpoint).then(
+                    function (response) {
+                        $scope[ep] = response.data;
+                    }
+                );
+            }
+        }
+
+        /********** REPORTES *********/
+        $scope.report = false;
+        $scope.reports = [];
+
+        /* Limpia los reportes que se han consultado */
+        self.clean = function () {
+            $scope.reports = [];
+        }
+
+        /* Ajusta los filtros genericos para realizar la consulta */
+        self.parseGenericFilters = function () {
+            var x;
+            x = $scope.genericFilters[5];
+            x.value = $scope.development_plan.id;
+            $scope.req.filters.push(x);
+
+            if ($scope.dimention.id) {
+                x = $scope.genericFilters[4];
+                x.value = $scope.dimention.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.axe.id) {
+                x = $scope.genericFilters[3];
+                x.value = $scope.axe.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.secretary != -1) {
+                x = $scope.genericFilters[2];
+                x.value = $scope.secretary;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.program.id) {
+                x = $scope.genericFilters[1];
+                x.value = $scope.program.id;
+                $scope.req.filters.push(x);
+            }
+
+            if ($scope.subprogram != -1) {
+                x = $scope.genericFilters[0];
+                x.value = $scope.subprogram;
+                $scope.req.filters.push(x);
+            }
+        }
+
+        /* Ajusta los filtros poblacionales para realizar la consulta */
+        self.parseSpecificFilters = function () {
+            var i = 0;
+
+            $scope.req.filters = _.filter($scope.filters, function (f) {
+                if ($scope.filtersData[f.id] != "") {
+                    var ans = $scope.filtersData[f.id];
+                    var x;
+                    if (ans.id) {
+                        f.value = ans.id;
+                        x = ans.name;
+                    } else {
+                        f.value = ans;
+                        if (f.id == 11) {
+                            x = f.value;
+                        } else {
+                            x = f.value ? "si" : "no";
+                        }
+                    }
+
+                    if (i == 0) {
+                        $scope.res += "con las siguientes caracteristicas: "
+                        i++;
+                    }
+                    $scope.res += f.label + " - " + x + ", ";
+                    return true;
+                }
+                return false;
+            });
+
+            if ($scope.counter.label == "Cuales Municipios" || $scope.counter.label == "Cuales Proyectos") {
+                $scope.res += " son: ";
+            } else {
+                $scope.res += " es: ";
+            }
+        }
+
+        /* Ajusta la respuesta de los totales */
+        self.parseTotals = function (data) {
+            $scope.res += data[0].total;
+            $scope.reports.push($scope.res);
+        }
+
+        /* Ajusta la respuesta de los cuales */
+        self.parseWhich = function (data) {
+            var i;
+            for (i = 0; i < data.length; i++) {
+                for (var key in data[i]) {
+                    $scope.res += data[i][key] + ", ";
+                }
+            }
+            $scope.reports.push($scope.res);
+        }
+
+        /* Ajusta la respuesta de los datos agrupados */
+        self.parseTotalGroup = function(data){
+            var i;
+            for (i = 0; i < data.length; i++) {
+                if(data[i].total != 0 ){
+                    $scope.res += " " + data[i].name + ": " + data[i].total + ",";
+                }
+            }
+            $scope.reports.push($scope.res);
+        }
+
+        /* Realiza la consulta con base a los filtros seleccionados */
+        self.getReport = function () {
+            self.startSpin();
+            $scope.res = $scope.counter.response + " ";
+            $scope.report = true;
+            $scope.req = {
+                total: $scope.counter.column,
+                group: $scope.counter.group_by
+            }
+
+            self.parseSpecificFilters();
+            self.parseGenericFilters();
+
+            StatisticService.getReport($scope.req).then(
+                function (response) {
+                    if ($scope.counter.id == 1 || $scope.counter.id == 2) {
+                        self.parseTotals(response.data);
+                    } else if ($scope.counter.id == 3 || $scope.counter.id == 4) {
+                        self.parseWhich(response.data);
+                    } else {
+                        self.parseTotalGroup(response.data);
+                    }
+                
+                    self.getFilters();
+                    self.stopSpin();
+                },
+                function (err) {
+                    inform.add("Ocurrió un error al consultar las estadisticas solicitadas", { type: "warning" });
+                    self.stopSpin();
                 }
             );
         }
 
+
+        /********** CARGUE INICIAL **********/
         self.init = function () {
+            $scope.development_plans = DevelopmentPlans.data;
             $scope.secretaries = Secretaries.data;
+            $scope.counters = Counters.data;
+            $scope.genericFilters = GenericFilters.data;
+            $scope.secretary = AuthenticationService.getCurrentUser().secretary_id;
         }
 
         self.init();
 
 
+        /* EXAMPLE CHART
+        $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
+        $scope.data = [300, 500, 100];
+        */
+
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("SecretariesService", SecretariesService);
-
-    SecretariesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.getSecretaries = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.saveSecretary = function(data){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.updateSecretary = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
-            })
-        }
-
-        self.deleteSecretary = function(id){
-            return $http({
-                method: 'DELETE',
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
-            })
-        }
-    }
-})(angular.module("app"));
 
 (function (module) {
     module.service("StatisticService", StatisticService);
@@ -2253,243 +3100,117 @@
 (function (module) {
     'use strict';
 
-    module.controller("ModalUpdateProjectCtrl", ModalUpdateProjectCtrl);
+    module.controller("TerritorialCtrl", TerritorialCtrl);
 
-    ModalUpdateProjectCtrl.$inject = [
-        "$scope",
-        "$uibModalInstance",
-        "data"
-    ];
-
-    function ModalUpdateProjectCtrl($scope, $uibModalInstance, data) {
-
-        var self = this;
-
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
-
-        self.update = function () {
-            $scope.data.project.status = $scope.data.project.s ? 'Activo' : 'Inactivo';
-            $uibModalInstance.close($scope.data);
-        };
-
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
-
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-        self.init = function(){
-            $scope.data.project.s = $scope.data.project.status == 'Activo' ? true : false;
-        }
-
-        self.init();
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("ProjectsCtrl", ProjectsCtrl);
-
-    ProjectsCtrl.$inject = [
+    TerritorialCtrl.$inject = [
         "$scope",
         "$window",
         "APP_DEFAULTS",
         "$uibModal",
-        "$filter",
         "inform",
-        "ProjectsService",
-        "Dimentions",
-        "Projects"
+        "TerritorialService"
     ];
 
-    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ProjectsService, Dimentions, Projects) {
+    function TerritorialCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, TerritorialService) {
 
         var self = this;
 
-        /* Table Config */
-        $scope.configDT = {
-            order: 'SEPPI',
-            limit: 10,
-            page: 1
-        }
-        /* */
-
-        /* Obtiene todos los proyectos del Plan de Desarrollo Actual */
-        self.getProjects = function () {
-            var params = {
-                page: $scope.configDT.page,
-                items: $scope.configDT.limit,
-                count: true,
-                relationships: 'subprogram'
-            }
-
-            ProjectsService.getProjects(params).then(
-                function (response) {
-                    $scope.projects = response.data
-                }, function (err) {
-                    inform.add("Ocurrio un error al cargar los proyectos", { type: 'warning' })
-                }
-            )
-        }
-
-        /* Descarga el formato para el cargue de Proyectos */
-        self.downloadFormat = function () {
-            $window.open(APP_DEFAULTS.ROOT_PATH + '/formats/Formato_Proyectos.xlsx');
-        }
-
-        /* Modal para cargar Proyectos de Manera Másiva a traves de un documento de Excel. */
-        self.upload = function () {
+        self.uploadData = function (id, string) {
             var modalInstance = $uibModal.open({
                 animation: true,
-                ariaLabelledBy: 'Cargar Proyectos',
-                ariaDescribedBy: 'cargar-proyecto',
-                templateUrl: 'templates/uploadProjects.modal.html',
+                ariaLabelledBy: 'Cargar Ordenamiento',
+                ariaDescribedBy: 'cargar-ordenamiento',
+                templateUrl: 'templates/upload-territories.modal.html',
                 controller: 'ModalController',
                 controllerAs: 'modalCtrl',
                 resolve: {
-                    data: {}
+                    data: {
+                        type: string
+                    }
                 }
             });
 
             modalInstance.result.then(function (data) {
-                ProjectsService.uploadProjects(data.file).then(
-                    function (response) {
-                        inform.add("Se han cargado los proyectos correctamente", { type: "info" });
-                        self.getProjects();
-                    }, function (err) {
-                        var msg = "Ocurrió un error al guardar los Proyectos: \n"
-                        var key, value, i;
-                        for (var j in err.data) {
-                            key = j;
-                            value = err.data[j];
-                            msg += key + ": " + value;
-                            /*for (i = 0; i < err.data[j].length; i++) {
-                                msg += err.data[j][i] + ",";
-                            }*/
-                            msg += "\n";
+                if( id == 1){
+                    TerritorialService.uploadMunicipalities(data).then(
+                        function(response){
+                            inform.add("Se han cargado los municipios.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar los municipios.", {type: "warning"});
                         }
-                        inform.add(msg, { ttl: -1, type: "warning" });
-                    }
-                );
-            });
-        }
-
-        /* Modal que permite la creación de 1 nuevo proyecto */
-        self.add = function () {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Crear Nuevo Proyecto',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/createProject.modal.html',
-                controller: 'ModalProjectCtrl',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        dimentions: $scope.dimentions
-                    }
+                    );
+                }else if(id == 2){
+                    TerritorialService.uploadAreas(data).then(
+                        function(response){
+                            inform.add("Se han cargado las areas.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
+                        }
+                    );
+                }else if(id == 3){
+                    TerritorialService.uploadAdministrativeUnits(data).then(
+                        function(response){
+                            inform.add("Se han cargado las unidades administrativas.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar las unidades administrativas.", {type: "warning"});
+                        }
+                    );
                 }
             });
-
-            modalInstance.result.then(function (data) {
-                data.status = "Activo";
-
-                ProjectsService.addProject(data).then(
-                    function (response) {
-                        inform.add("Se ha guardado correctamente el proyecto", { type: "info" });
-                        self.getProjects();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
-                    }
-                );
-            });
         }
 
-        /* Modal para la actualización de proyectos */
-        self.edit = function (project) {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Actualizar Proyecto',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/updateProject.modal.html',
-                controller: 'ModalUpdateProjectCtrl',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        project: project
-                    }
-                }
-            });
 
-            modalInstance.result.then(function (data) {
-                ProjectsService.updateProject(data, data.project.id).then(
-                    function (response) {
-                        inform.add("Se ha actualizado correctamente el proyecto", { type: "info" });
-                        self.getProjects();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al actualizar el proyecto", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        /* Configuración inicial de la vista */
         self.init = function () {
-            $scope.dimentions = Dimentions.data;
-            $scope.projects = Projects.data;
+            
         }
 
         self.init();
 
+
     }
 })(angular.module("app"));
+
 
 (function (module) {
-    'use strict';
+    module.service("TerritorialService", TerritorialService);
 
-    module.controller("ModalProjectCtrl", ModalProjectCtrl);
-
-    ModalProjectCtrl.$inject = [
-        "$scope",
-        "$uibModalInstance",
-        "data"
+    TerritorialService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
     ];
 
-    function ModalProjectCtrl($scope, $uibModalInstance, data) {
-
+    function TerritorialService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        $scope.data = angular.copy(data);
-        $scope.new_data = {};
-        $scope.dimention = "";
-        $scope.axe = "";
-        $scope.program = "";
-
-        self.update = function () {
-            $uibModalInstance.close($scope.data);
-        };
-
-        self.save = function () {
-            $uibModalInstance.close($scope.new_data);
-        };
-
-        self.cancel = function () {
-            $uibModalInstance.dismiss('cancel');
-        };
-
-        self.init = function(){
-            console.log($scope.data);
+        self.uploadMunicipalities = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/municipalities/upload"
+            });
         }
 
-        self.init();
+        self.uploadAreas = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/areas/upload"
+            });
+        }
+
+        self.uploadAdministrativeUnits = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/upload"
+            });
+        }
+
 
     }
 })(angular.module("app"));
-
 (function (module) {
     'use strict';
 
@@ -2696,175 +3417,6 @@
                 method: 'PUT',
                 data: data,
                 url: APP_DEFAULTS.ENDPOINT + '/users/' + id + '/password'
-            })
-        }
-
-    }
-})(angular.module("app"));
-
-(function (module) {
-    module.service("TerritorialService", TerritorialService);
-
-    TerritorialService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function TerritorialService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadMunicipalities = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/municipalities/upload"
-            });
-        }
-
-        self.uploadAreas = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/areas/upload"
-            });
-        }
-
-        self.uploadAdministrativeUnits = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/upload"
-            });
-        }
-
-
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("TerritorialCtrl", TerritorialCtrl);
-
-    TerritorialCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
-        "inform",
-        "TerritorialService"
-    ];
-
-    function TerritorialCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, TerritorialService) {
-
-        var self = this;
-
-        self.uploadData = function (id, string) {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Cargar Ordenamiento',
-                ariaDescribedBy: 'cargar-ordenamiento',
-                templateUrl: 'templates/upload-territories.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        type: string
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                if( id == 1){
-                    TerritorialService.uploadMunicipalities(data).then(
-                        function(response){
-                            inform.add("Se han cargado los municipios.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar los municipios.", {type: "warning"});
-                        }
-                    );
-                }else if(id == 2){
-                    TerritorialService.uploadAreas(data).then(
-                        function(response){
-                            inform.add("Se han cargado las areas.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
-                        }
-                    );
-                }else if(id == 3){
-                    TerritorialService.uploadAdministrativeUnits(data).then(
-                        function(response){
-                            inform.add("Se han cargado las unidades administrativas.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar las unidades administrativas.", {type: "warning"});
-                        }
-                    );
-                }
-            });
-        }
-
-
-        self.init = function () {
-            
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-
-(function (module) {
-    module.service("ProjectsService", ProjectsService);
-
-    ProjectsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.addProject = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
-            })
-        }
-
-        self.uploadProjects = function(file){
-            return Upload.upload({
-                data: {file: file},
-                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
-            });
-        }
-
-        self.getProjects = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.getDimentions = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
             })
         }
 

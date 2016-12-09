@@ -27,5 +27,13 @@
             })
         }
 
+        self.getActivity = function(params, id){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/" + id
+            })
+        }
+
     }
 })(angular.module("app"));

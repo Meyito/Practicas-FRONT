@@ -1,21 +1,21 @@
 (function (module) {
     'use strict';
 
-    module.controller("StatisticsCtrl", StatisticsCtrl);
+    module.controller("ActivityStatisticCtrl", ActivityStatisticCtrl);
 
-    StatisticsCtrl.$inject = [
+    ActivityStatisticCtrl.$inject = [
         "$scope",
-        "$filter",
         "inform",
-        "DevelopmentPlans",
-        "Secretaries",
         "Counters",
         "StatisticService",
-        "GenericFilters",
-        "usSpinnerService"
+        "usSpinnerService",
+        "AuthenticationService",
+        "$stateParams",
+        "$state",
+        "Activity"
     ];
 
-    function StatisticsCtrl($scope, $filter, inform, DevelopmentPlans, Secretaries, Counters, StatisticService, GenericFilters, usSpinnerService) {
+    function ActivityStatisticCtrl($scope, inform, Counters, StatisticService, usSpinnerService, AuthenticationService, $stateParams, $state, Activity) {
 
         var self = this;
 
@@ -29,39 +29,6 @@
         self.stopSpin = function () {
             $scope.spinner = false;
             usSpinnerService.stop('spinner-1');
-        }
-
-        /******** FILTROS GENÉRICOS ******/
-        $scope.expanded = false;
-        $scope.development_plan = {};
-        $scope.dimention = {};
-        $scope.axe = {};
-        $scope.secretary = -1;
-        $scope.subprogram = -1;
-        $scope.program = {};
-        $scope.program_id;
-
-        self.clearDevPlan = function () {
-            $scope.dimention = {};
-            $scope.axe = {};
-            $scope.program = {};
-            $scope.subprogram = -1;
-        }
-
-        self.clearDim = function () {
-            $scope.axe = {};
-            $scope.program = {};
-            $scope.subprogram = -1;
-        }
-
-        self.clearAxe = function () {
-            $scope.program = {};
-            $scope.subprogram = -1;
-        }
-
-        self.clearProgram = function () {
-            $scope.subprogram = -1;
-            $scope.secretary = -1;
         }
 
         /***** FILTROS REPORTE ******/
@@ -121,40 +88,17 @@
 
         /* Ajusta los filtros genericos para realizar la consulta */
         self.parseGenericFilters = function () {
-            var x;
-            x = $scope.genericFilters[5];
-            x.value = $scope.development_plan.id;
-            $scope.req.filters.push(x);
-
-            if ($scope.dimention.id) {
-                x = $scope.genericFilters[4];
-                x.value = $scope.dimention.id;
-                $scope.req.filters.push(x);
+            var secretary = {
+                column: "sp.id",
+                value: $scope.secretary
             }
 
-            if ($scope.axe.id) {
-                x = $scope.genericFilters[3];
-                x.value = $scope.axe.id;
-                $scope.req.filters.push(x);
+            var secretary = {
+                column: "a.id",
+                value: $stateParams.id
             }
 
-            if ($scope.secretary != -1) {
-                x = $scope.genericFilters[2];
-                x.value = $scope.secretary;
-                $scope.req.filters.push(x);
-            }
-
-            if ($scope.program.id) {
-                x = $scope.genericFilters[1];
-                x.value = $scope.program.id;
-                $scope.req.filters.push(x);
-            }
-
-            if ($scope.subprogram != -1) {
-                x = $scope.genericFilters[0];
-                x.value = $scope.subprogram;
-                $scope.req.filters.push(x);
-            }
+            $scope.req.filters.push(secretary);
         }
 
         /* Ajusta los filtros poblacionales para realizar la consulta */
@@ -258,19 +202,16 @@
 
         /********** CARGUE INICIAL **********/
         self.init = function () {
-            $scope.development_plans = DevelopmentPlans.data;
-            $scope.secretaries = Secretaries.data;
             $scope.counters = Counters.data;
-            $scope.genericFilters = GenericFilters.data;
+            $scope.secretary = AuthenticationService.getCurrentUser().secretary_id;
+            $scope.rol = AuthenticationService.getCurrentUser().role;
+
+            if(Activity.data.secretary_id != $scope.secretary && $scope.rol != "planeacion" ){
+                $state.go("forbidden");
+            }
         }
 
         self.init();
-
-
-        /* EXAMPLE CHART
-        $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
-        $scope.data = [300, 500, 100];
-        */
 
     }
 })(angular.module("app"));

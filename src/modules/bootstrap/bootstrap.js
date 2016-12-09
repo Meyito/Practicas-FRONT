@@ -91,10 +91,6 @@
             }
         });
 
-
-
-
-
         /* Estadística de una Actividad (Admin NO) */
         stateHelperProvider.state({
             name: 'activity-statistics',
@@ -108,22 +104,21 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@activity-statistics': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "ActivitiesCtrl as actCtrl"
+                    templateUrl: "templates/statistics.activity.html",
+                    controller: "ActivityStatisticCtrl as statisticsCtrl"
                 }
             },
             resolve: {
-                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                Counters: ['StatisticService', function (StatisticService) {
                     var params = {
-                        relationships: "dimentions.axes.programs.subprograms"
-                        //relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                        relationships: "filters"
                     }
-                    return StatisticService.getDevelopmentPlans(params);
+                    return StatisticService.getCounters(params);
                 }],
 
-                GenericFilters: ['StatisticService', function (StatisticService) {
+                Activity: ['ActivitiesService', '$stateParams', function (ActivitiesService, $stateParams) {
                     var params = {}
-                    return StatisticService.getGenericFilters(params);
+                    return ActivitiesService.getActivity(params, $stateParams.id );
                 }]
             }
         });
@@ -222,6 +217,48 @@
         /***************************************/
 
         /* Estadisticas SOLO de la Secretaría */
+        stateHelperProvider.state({
+            name: 'secretary-statistics',
+            url: '/estadisticas/secretaria',
+            data: {
+                state: "statistics"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@secretary-statistics': {
+                    templateUrl: "templates/statistics.secretary.html",
+                    controller: "SecretaryStatisticsCtrl as statisticsCtrl"
+                }
+            },
+            resolve: {
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "dimentions.axes.programs.subprograms,dimentions.axes.programs.secretaries"
+                    }
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
+               Secretaries: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getSecretaries(params);
+                }],
+
+                Counters: ['StatisticService', function (StatisticService) {
+                    var params = {
+                        relationships: "filters"
+                    }
+                    return StatisticService.getCounters(params);
+                }],
+
+                GenericFilters: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getGenericFilters(params);
+                }]
+            }
+        });
     
 
         /* Proyectos SOLO de la Secretaría */
