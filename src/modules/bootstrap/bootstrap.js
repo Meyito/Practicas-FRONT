@@ -25,7 +25,7 @@
 
         blockUIConfig.autoBlock = false;
         blockUIConfig.templateUrl = "templates/state-change-blocker.html";
-            
+
         /***************************************/
         /*********** COMMON VIEWS **************/
         /***************************************/
@@ -34,7 +34,7 @@
         stateHelperProvider.state({
             name: 'forbidden',
             url: '/forbidden',
-            data: {authNotRequired: true},
+            data: { authNotRequired: true },
             templateUrl: 'templates/forbidden.html'
         });
 
@@ -87,7 +87,7 @@
                         'count': true
                     }
                     return ContractsService.getContractors(params);
-                }]     
+                }]
             }
         });
 
@@ -118,7 +118,7 @@
 
                 Activity: ['ActivitiesService', '$stateParams', function (ActivitiesService, $stateParams) {
                     var params = {}
-                    return ActivitiesService.getActivity(params, $stateParams.id );
+                    return ActivitiesService.getActivity(params, $stateParams.id);
                 }]
             }
         });
@@ -241,7 +241,7 @@
                     return StatisticService.getDevelopmentPlans(params);
                 }],
 
-               Secretaries: ['StatisticService', function (StatisticService) {
+                Secretaries: ['StatisticService', function (StatisticService) {
                     var params = {}
                     return StatisticService.getSecretaries(params);
                 }],
@@ -259,7 +259,7 @@
                 }]
             }
         });
-    
+
 
         /* Proyectos SOLO de la Secretaría */
 
@@ -322,7 +322,7 @@
                 }]
             }
         });
-    
+
 
 
         /***************************************/
@@ -390,7 +390,7 @@
                     var params = {}
                     return StatisticService.getGenericFilters(params);
                 }],
-                
+
                 Secretaries: ['StatisticService', function (StatisticService) {
                     var params = {}
                     return StatisticService.getSecretaries(params);
@@ -423,7 +423,7 @@
                     return StatisticService.getDevelopmentPlans(params);
                 }],
 
-               Secretaries: ['StatisticService', function (StatisticService) {
+                Secretaries: ['StatisticService', function (StatisticService) {
                     var params = {}
                     return StatisticService.getSecretaries(params);
                 }],
@@ -441,12 +441,6 @@
                 }]
             }
         });
-
-
-
-
-
-
 
         /* Proyectos */
         stateHelperProvider.state({
@@ -466,30 +460,31 @@
                 }
             },
             resolve: {
+                DevPlan: ['ProjectsService', 'PlanService', function (ProjectsService, PlanService) {
+                    return PlanService.getLastDevelopmentPlan({}).then();
+                }],
+
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
                 Dimentions: ['ProjectsService', function (ProjectsService) {
                     var params = {
                         relationships: "axes.programs.subprograms"
                     }
                     return ProjectsService.getDimentions(params);
                 }],
-
-                Projects: ['ProjectsService', function(ProjectsService){
-                    var params = {
-                        relationships: "subprogram",
-                        'page': 1,
-                        'items': 10,
-                        'count': true
-                    }
-                    return ProjectsService.getProjects(params);
-                }]
             }
         });
 
-        
+
+
+
 
         /* Asociar Programa a Secretaría */
         /* Acordiones y md-checklist */
-        
+
 
     }).run(function ($rootScope, blockUI) {
         $rootScope.$on('$stateChangeStart',

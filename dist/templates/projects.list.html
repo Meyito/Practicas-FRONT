@@ -20,6 +20,24 @@
 	<!-- /.row -->
 
 	<div class="row container-bordered-white">
+		<div class="row">
+			<div class="form-group col-lg-6">
+				<label>Plan de Desarrollo</label>
+				<select class="form-control" ng-options="dp.name for dp in development_plans" ng-value="dp.id" ng-model="development_plan">
+				</select>
+			</div>
+			<div class="form-group col-lg-5">
+				<label>Estado</label>
+				<select class="form-control" ng-model="status">
+					<option value="Activo">Activo</option>
+					<option value="Inactivo">Inactivo</option>
+				</select>
+			</div>
+			<div class="form-group col-lg-1 centered chevron-filter" ng-click="projectsCtrl.search()">
+				<i class="fa fa-search m-t-27"></i>
+			</div>
+		</div>
+
 		<div class="col-lg-12">
 			<md-table-container>
 				<table md-table id="projects-table">
@@ -48,8 +66,8 @@
 				</table>
 			</md-table-container>
 
-			<md-table-pagination md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="configDT.limit" md-limit-options="[5, 10, 15]" md-page="configDT.page" md-total="{{projects.count}}"
-				md-on-paginate="projectsCtrl.getProjects" md-page-select="true" ></md-table-pagination>
+			<md-table-pagination md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="configDT.limit" md-limit-options="[5, 10, 15]"
+				md-page="configDT.page" md-total="{{projects.count}}" md-on-paginate="projectsCtrl.getProjects" md-page-select="true"></md-table-pagination>
 		</div>
 	</div>
 	<!-- /.row -->

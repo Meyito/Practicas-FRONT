@@ -114,7 +114,7 @@
 
         blockUIConfig.autoBlock = false;
         blockUIConfig.templateUrl = "templates/state-change-blocker.html";
-            
+
         /***************************************/
         /*********** COMMON VIEWS **************/
         /***************************************/
@@ -123,7 +123,7 @@
         stateHelperProvider.state({
             name: 'forbidden',
             url: '/forbidden',
-            data: {authNotRequired: true},
+            data: { authNotRequired: true },
             templateUrl: 'templates/forbidden.html'
         });
 
@@ -176,7 +176,7 @@
                         'count': true
                     }
                     return ContractsService.getContractors(params);
-                }]     
+                }]
             }
         });
 
@@ -207,7 +207,7 @@
 
                 Activity: ['ActivitiesService', '$stateParams', function (ActivitiesService, $stateParams) {
                     var params = {}
-                    return ActivitiesService.getActivity(params, $stateParams.id );
+                    return ActivitiesService.getActivity(params, $stateParams.id);
                 }]
             }
         });
@@ -330,7 +330,7 @@
                     return StatisticService.getDevelopmentPlans(params);
                 }],
 
-               Secretaries: ['StatisticService', function (StatisticService) {
+                Secretaries: ['StatisticService', function (StatisticService) {
                     var params = {}
                     return StatisticService.getSecretaries(params);
                 }],
@@ -348,7 +348,7 @@
                 }]
             }
         });
-    
+
 
         /* Proyectos SOLO de la Secretaría */
 
@@ -411,7 +411,7 @@
                 }]
             }
         });
-    
+
 
 
         /***************************************/
@@ -479,7 +479,7 @@
                     var params = {}
                     return StatisticService.getGenericFilters(params);
                 }],
-                
+
                 Secretaries: ['StatisticService', function (StatisticService) {
                     var params = {}
                     return StatisticService.getSecretaries(params);
@@ -512,7 +512,7 @@
                     return StatisticService.getDevelopmentPlans(params);
                 }],
 
-               Secretaries: ['StatisticService', function (StatisticService) {
+                Secretaries: ['StatisticService', function (StatisticService) {
                     var params = {}
                     return StatisticService.getSecretaries(params);
                 }],
@@ -530,12 +530,6 @@
                 }]
             }
         });
-
-
-
-
-
-
 
         /* Proyectos */
         stateHelperProvider.state({
@@ -555,30 +549,31 @@
                 }
             },
             resolve: {
+                DevPlan: ['ProjectsService', 'PlanService', function (ProjectsService, PlanService) {
+                    return PlanService.getLastDevelopmentPlan({}).then();
+                }],
+
+                DevelopmentPlans: ['StatisticService', function (StatisticService) {
+                    var params = {}
+                    return StatisticService.getDevelopmentPlans(params);
+                }],
+
                 Dimentions: ['ProjectsService', function (ProjectsService) {
                     var params = {
                         relationships: "axes.programs.subprograms"
                     }
                     return ProjectsService.getDimentions(params);
                 }],
-
-                Projects: ['ProjectsService', function(ProjectsService){
-                    var params = {
-                        relationships: "subprogram",
-                        'page': 1,
-                        'items': 10,
-                        'count': true
-                    }
-                    return ProjectsService.getProjects(params);
-                }]
             }
         });
 
-        
+
+
+
 
         /* Asociar Programa a Secretaría */
         /* Acordiones y md-checklist */
-        
+
 
     }).run(function ($rootScope, blockUI) {
         $rootScope.$on('$stateChangeStart',
@@ -1834,16 +1829,17 @@
         "$window",
         "APP_DEFAULTS",
         "$uibModal",
-        "$filter",
         "inform",
         "ProjectsService",
-        "Dimentions",
-        "Projects"
+        "DevPlan",
+        "DevelopmentPlans",
+        "Dimentions"
     ];
 
-    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, ProjectsService, Dimentions, Projects) {
+    function ProjectsCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, ProjectsService, DevPlan, DevelopmentPlans, Dimentions) {
 
         var self = this;
+        $scope.status = "Activo"
 
         /* Table Config */
         $scope.configDT = {
@@ -1853,13 +1849,21 @@
         }
         /* */
 
-        /* Obtiene todos los proyectos del Plan de Desarrollo Actual */
+        /* Filtro de Proyectos */
+        self.search = function(){
+            $scope.configDT.page = 1;
+            self.getProjects();
+        }
+
+        /* Obtiene todos los proyectos del Plan de Desarrollo */
         self.getProjects = function () {
             var params = {
                 page: $scope.configDT.page,
                 items: $scope.configDT.limit,
                 count: true,
-                relationships: 'subprogram'
+                relationships: 'subprogram',
+                status: $scope.status,
+                development_plan_id: $scope.development_plan
             }
 
             ProjectsService.getProjects(params).then(
@@ -1901,10 +1905,10 @@
                         for (var j in err.data) {
                             key = j;
                             value = err.data[j];
-                            msg += key + ": " + value;
-                            /*for (i = 0; i < err.data[j].length; i++) {
+                            msg += key + ": ";
+                            for (i = 0; i < err.data[j].length; i++) {
                                 msg += err.data[j][i] + ",";
-                            }*/
+                            }
                             msg += "\n";
                         }
                         inform.add(msg, { ttl: -1, type: "warning" });
@@ -1973,8 +1977,10 @@
 
         /* Configuración inicial de la vista */
         self.init = function () {
+            $scope.development_plan = DevPlan.data.id;
+            self.getProjects();
+            $scope.development_plans = DevelopmentPlans.data;
             $scope.dimentions = Dimentions.data;
-            $scope.projects = Projects.data;
         }
 
         self.init();
