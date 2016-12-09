@@ -123,6 +123,8 @@
             }
         });
 
+        /* Entes Territoriales (Admin NO) */
+
         /***************************************/
         /************ ADMIN VIEWS **************/
         /***************************************/
@@ -260,8 +262,29 @@
             }
         });
 
-
-        /* Proyectos SOLO de la Secretaría */
+        /* Proyectos */
+        stateHelperProvider.state({
+            name: 'secretary-projects',
+            url: '/proyectos/secretaria',
+            data: {
+                state: "projects"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@secretary-projects': {
+                    templateUrl: "templates/projects.secretary.html",
+                    controller: "SecretaryProjectsCtrl as projectsCtrl"
+                }
+            },
+            resolve: {
+                DevPlan: ['ProjectsService', 'PlanService', function (ProjectsService, PlanService) {
+                    return PlanService.getLastDevelopmentPlan({}).then();
+                }]
+            }
+        });
 
 
         /* Actividades SOLO de la Secretaría */
@@ -322,7 +345,6 @@
                 }]
             }
         });
-
 
 
         /***************************************/

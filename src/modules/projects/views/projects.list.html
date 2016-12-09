@@ -23,7 +23,8 @@
 		<div class="row">
 			<div class="form-group col-lg-6">
 				<label>Plan de Desarrollo</label>
-				<select class="form-control" ng-options="dp.name for dp in development_plans" ng-value="dp.id" ng-model="development_plan">
+				<select class="form-control" ng-model="development_plan">
+					<option ng-repeat="dp in development_plans" ng-value="dp.id">{{dp.name}}</option>
 				</select>
 			</div>
 			<div class="form-group col-lg-5">
