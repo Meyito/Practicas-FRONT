@@ -26,8 +26,7 @@
             limit: 10,
             page: 1
         }
-        /* */
-
+        
         /* Filtro de Proyectos */
         self.search = function(){
             $scope.configDT.page = 1;

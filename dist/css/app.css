@@ -410,6 +410,43 @@ body{
     width: 40%;
 }
 
+#territorial-table tr :nth-child(1){
+    width: 5%;
+}
+
+#territorial-table tr :nth-child(2){
+    width: 20%;
+}
+
+#territorial-table tr :nth-child(3){
+    width: 5%;
+}
+
+#territorial-table tr :nth-child(4){
+    width: 25%;
+}
+
+#territorial-table tr :nth-child(5){
+    width: 5%;
+}
+
+#territorial-table tr :nth-child(6){
+    width: 10%;
+}
+
+#territorial-table tr :nth-child(7){
+    width: 5%;
+}
+
+#territorial-table tr :nth-child(8){
+    width: 5%;
+}
+
+#territorial-table tr :nth-child(9){
+    width: 20%;
+}
+
+
 
 /********* 404 ************/
 .content p{

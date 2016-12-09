@@ -125,6 +125,44 @@
         });
 
         /* Entes Territoriales (Admin NO) */
+        stateHelperProvider.state({
+            name: 'territorial-list',
+            url: '/territorios',
+            data: {
+                state: "territorial-entities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@territorial-list': {
+                    templateUrl: "templates/territorial.list.html",
+                    controller: "TerritorialListCtrl as territorialCtrl"
+                }
+            },
+            resolve: {
+                Municipalities: ['TerritorialService', function (TerritorialService) {
+                    var params = {}
+                    return TerritorialService.getMunicipalities(params);
+                }],
+
+                SisbenZones: ['TerritorialService', function (TerritorialService) {
+                    var params = {}
+                    return TerritorialService.getSisbenZones(params);
+                }],
+
+                AdministrativeUnits: ['TerritorialService', function (TerritorialService) {
+                    var params = {
+                        relationships: 'administrative_unit_type,area.municipality,area.area_type.sisben_zone',
+                        'page': 1,
+                        'items': 15,
+                        'count': true
+                    }
+                    return TerritorialService.getAdministrativeUnits(params);
+                }]
+            }
+        });
 
         /***************************************/
         /************ ADMIN VIEWS **************/
@@ -501,7 +539,6 @@
         });
 
         /* Asociar Programa a Secretaría */
-        /* Acordiones y md-checklist */
         stateHelperProvider.state({
             name: 'programs',
             url: '/programas',

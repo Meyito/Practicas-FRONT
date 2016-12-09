@@ -33,6 +33,46 @@
             });
         }
 
+        self.queryCode = function(data){
+            return $http({
+                method: "GET",
+                params: data,
+                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/query"
+            })
+        }
+
+        self.getMunicipalities = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/municipalities"
+            });
+        }
+
+        self.getSisbenZones = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/sisben-zones"
+            });
+        } 
+
+        self.getAreas = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/areas"
+            });
+        }
+
+        self.getAdministrativeUnits = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/administrative-units"
+            });
+        }
+
 
     }
 })(angular.module("app"));

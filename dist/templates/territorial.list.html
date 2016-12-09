@@ -1,0 +1,91 @@
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="page-header">
+                Ordenamiento Territorial
+            </h1>
+        </div>
+    </div>
+    <!-- /.row -->
+
+    <div class="row container-bordered-white">
+        <div class="row">
+            <div class="form-group col-lg-3">
+                <label>Código Territorio</label>
+                <input class="form-control" type="text" ng-model="searchCode">
+            </div>
+            <div class="form-group col-lg-1 centered chevron-filter" ng-click="territorialCtrl.searchCode()">
+                <i class="fa fa-search m-t-27"></i>
+            </div>
+            <div class="form-group col-lg-8 chevron-filter">
+                <label class="m-t-27">{{answer}}</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row container-bordered-white m-t-20">
+        <div class="row">
+            <div class="form-group col-lg-4">
+                <label>Municipio</label>
+                <select class="form-control" ng-options="m.name for m in municipalities" ng-model="municipality" ng-change="territorialCtrl.findAreas()">
+				</select>
+            </div>
+            <div class="form-group col-lg-3">
+                <label>Zona Sisben</label>
+                <select class="form-control" ng-model="sisben_zone" ng-change="territorialCtrl.findAreas()">
+					<option value="-1"> </option>
+                    <option ng-repeat="sz in sisbenZones" ng-value="sz.id">{{ sz.name }}</option>
+				</select>
+            </div>
+            <div class="form-group col-lg-4">
+                <label>Area</label>
+                <select class="form-control" ng-model="area" ng-disabled="areas.length == 0">
+                    <option value="-1"> </option>
+                    <option ng-repeat="a in areas" value="{{a.id}}">{{a.area_type.name}} {{ a.name }}</option>
+				</select>
+            </div>
+            <div class="form-group col-lg-1 centered chevron-filter" ng-click="territorialCtrl.searchTerritories()">
+                <i class="fa fa-search m-t-27"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <md-table-container>
+                <table md-table id="territorial-table">
+                    <thead md-head md-order="configDT.order">
+                        <tr md-row>
+                            <th md-column><span>Cod.</span></th>
+                            <th md-column><span>Departamento</span></th>
+                            <th md-column>Cod.</th>
+                            <th md-column>Municipio</th>
+                            <th md-column>Cod.</th>
+                            <th md-column>Zona Sisben</th>
+                            <th md-column>Unidad Admin.</th>
+                            <th md-column>Código Sisben</th>
+                            <th md-column>Unidad Administrativa</th>
+                        </tr>
+                    </thead>
+                    <tbody md-body>
+                        <tr md-row ng-repeat="au in administrativeUnits.items">
+                            <td md-cell>54</td>
+                            <td md-cell>Norte de Santander</td>
+                            <td md-cell>{{au.area.municipality.code}}</td>
+                            <td md-cell>{{au.area.municipality.name}}</td>
+                            <td md-cell>{{au.area.area_type.sisben_zone.code}}</td>
+                            <td md-cell>{{au.area.area_type.sisben_zone.name}}</td>
+                            <td md-cell>{{au.administrative_unit_type.name}}</td>
+                            <td md-cell>{{au.sisben_code}}</td>
+                            <td md-cell>{{au.name}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </md-table-container>
+
+            <md-table-pagination md-label="{page: 'Página:', rowsPerPage: 'Filas por página:', of: 'de'}" md-limit="configDT.limit" md-limit-options="[10, 15, 20]"
+                md-page="configDT.page" md-total="{{administrativeUnits.count}}" md-on-paginate="territorialCtrl.getTerritories" md-page-select="true"></md-table-pagination>
+        </div>
+    </div>
+    <!-- /.row -->
+</div>

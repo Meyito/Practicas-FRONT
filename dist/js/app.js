@@ -1,93 +1,4 @@
 (function () {
-    angular.module('app.authentication', [
-        "angular-jwt"
-    ])
-        .config(routeConfig)
-        .run(run);
-
-    routeConfig.$inject = [
-        'stateHelperProvider',
-        'jwtOptionsProvider',
-        '$httpProvider'
-    ];
-
-    function routeConfig(stateHelperProvider, jwtOptionsProvider, $httpProvider) {
-
-        jwtOptionsProvider.config({
-            tokenGetter: ['AuthenticationService', 'options', function (AuthenticationService, options) {
-                //Skip sending token for template requests
-                if (options.url.substr(options.url.length - 5) == '.html') {
-                    return null;
-                }
-
-                var token = AuthenticationService.getToken();
-                if (token) {
-                    if (AuthenticationService.isTokenExpired()) {
-                        //return AuthenticationService.refreshToken();
-                    } else {
-                        return token;
-                    }
-                }
-            }],
-
-            whiteListedDomains: ['192.168.33.10', 'localhost']
-        });
-
-        $httpProvider.interceptors.push('jwtInterceptor');
-
-        stateHelperProvider
-            .state({
-                name: 'login',
-                url: '/login',
-                controller: 'AuthController as auth',
-                templateUrl: 'templates/login.html',
-                data: { loginNotRequired: true }
-            }).state({
-                name: 'restorePassword',
-                url: '/restorePassword?token',
-                controller: 'RestorePasswordController as restorePass',
-                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
-                data: { loginNotRequired: true }
-            });
-    }
-
-    run.$inject = [
-        '$rootScope',
-        '$state',
-        'AuthenticationService',
-        'AUTH_DEFAULTS'
-    ];
-
-    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
-
-        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
-            if ((to.data && !to.data.loginNotRequired) || !to.data) {
-                if (!AuthenticationService.getToken()) {
-                    evt.preventDefault();
-                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
-                        {
-                            message: "Debe iniciar sesión"
-                        },
-                        {
-                            reload: true
-                        });
-                }
-                else if (AuthenticationService.isTokenExpired()) {
-                    AuthenticationService.refreshToken();
-                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
-                    evt.preventDefault();
-                    $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
-                }
-            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
-                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
-                evt.preventDefault();
-                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
-            }
-        });
-    }
-
-})();
-(function () {
     'use strict';
 
 
@@ -214,6 +125,44 @@
         });
 
         /* Entes Territoriales (Admin NO) */
+        stateHelperProvider.state({
+            name: 'territorial-list',
+            url: '/territorios',
+            data: {
+                state: "territorial-entities"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@territorial-list': {
+                    templateUrl: "templates/territorial.list.html",
+                    controller: "TerritorialListCtrl as territorialCtrl"
+                }
+            },
+            resolve: {
+                Municipalities: ['TerritorialService', function (TerritorialService) {
+                    var params = {}
+                    return TerritorialService.getMunicipalities(params);
+                }],
+
+                SisbenZones: ['TerritorialService', function (TerritorialService) {
+                    var params = {}
+                    return TerritorialService.getSisbenZones(params);
+                }],
+
+                AdministrativeUnits: ['TerritorialService', function (TerritorialService) {
+                    var params = {
+                        relationships: 'administrative_unit_type,area.municipality,area.area_type.sisben_zone',
+                        'page': 1,
+                        'items': 15,
+                        'count': true
+                    }
+                    return TerritorialService.getAdministrativeUnits(params);
+                }]
+            }
+        });
 
         /***************************************/
         /************ ADMIN VIEWS **************/
@@ -590,7 +539,6 @@
         });
 
         /* Asociar Programa a Secretaría */
-        /* Acordiones y md-checklist */
         stateHelperProvider.state({
             name: 'programs',
             url: '/programas',
@@ -648,6 +596,95 @@
                 blockUI.stop();
             });
     });
+})();
+(function () {
+    angular.module('app.authentication', [
+        "angular-jwt"
+    ])
+        .config(routeConfig)
+        .run(run);
+
+    routeConfig.$inject = [
+        'stateHelperProvider',
+        'jwtOptionsProvider',
+        '$httpProvider'
+    ];
+
+    function routeConfig(stateHelperProvider, jwtOptionsProvider, $httpProvider) {
+
+        jwtOptionsProvider.config({
+            tokenGetter: ['AuthenticationService', 'options', function (AuthenticationService, options) {
+                //Skip sending token for template requests
+                if (options.url.substr(options.url.length - 5) == '.html') {
+                    return null;
+                }
+
+                var token = AuthenticationService.getToken();
+                if (token) {
+                    if (AuthenticationService.isTokenExpired()) {
+                        //return AuthenticationService.refreshToken();
+                    } else {
+                        return token;
+                    }
+                }
+            }],
+
+            whiteListedDomains: ['192.168.33.10', 'localhost']
+        });
+
+        $httpProvider.interceptors.push('jwtInterceptor');
+
+        stateHelperProvider
+            .state({
+                name: 'login',
+                url: '/login',
+                controller: 'AuthController as auth',
+                templateUrl: 'templates/login.html',
+                data: { loginNotRequired: true }
+            }).state({
+                name: 'restorePassword',
+                url: '/restorePassword?token',
+                controller: 'RestorePasswordController as restorePass',
+                templateUrl: 'app/components/authentication/views/auth.restorePassword.view.html',
+                data: { loginNotRequired: true }
+            });
+    }
+
+    run.$inject = [
+        '$rootScope',
+        '$state',
+        'AuthenticationService',
+        'AUTH_DEFAULTS'
+    ];
+
+    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
+
+        $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
+            if ((to.data && !to.data.loginNotRequired) || !to.data) {
+                if (!AuthenticationService.getToken()) {
+                    evt.preventDefault();
+                    $state.go(AUTH_DEFAULTS.LOGIN_STATE,
+                        {
+                            message: "Debe iniciar sesión"
+                        },
+                        {
+                            reload: true
+                        });
+                }
+                else if (AuthenticationService.isTokenExpired()) {
+                    AuthenticationService.refreshToken();
+                } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
+                    evt.preventDefault();
+                    $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
+                }
+            } else if (AuthenticationService.getToken() && !AuthenticationService.isTokenExpired()
+                && to.name === AUTH_DEFAULTS.LOGIN_STATE) {
+                evt.preventDefault();
+                $state.go(AUTH_DEFAULTS.LANDING_PAGE);
+            }
+        });
+    }
+
 })();
 (function (module) {
     "use strict";
@@ -729,6 +766,80 @@
     }
 })(angular.module("app"));
 
+
+(function (module) {
+    module.service("ActivitiesService", ActivitiesService);
+
+    ActivitiesService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadActivity = function(data, file){
+            return Upload.upload({
+                data: {file: file, data: data},
+                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
+            });
+        }
+
+        self.getActivities = function(params){
+            return $http({
+                method: "POST",
+                data: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
+            })
+        }
+
+        self.getActivity = function(params, id){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/activities/" + id
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("NavigationCtrl", NavigationCtrl);
+
+    NavigationCtrl.$inject = [
+        "$scope",
+        "$state",
+        "AuthenticationService"
+    ];
+
+    function NavigationCtrl($scope, $state, AuthenticationService) {
+
+        var self = this;
+
+        $scope.active = "";
+
+        self.init = function() {
+            $scope.active = $state.current.data.state;
+            $scope.currentUser = AuthenticationService.getCurrentUser();
+        }
+
+        self.logOut = function(){
+            AuthenticationService.logout().then(
+                function(response){
+                    AuthenticationService.destroyToken();
+                    $state.go("login");
+                }
+            );
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
 (function (module) {
     'use strict';
 
@@ -794,120 +905,6 @@
                 blockUI.stop();
             });
         };
-    }
-})(angular.module("app.authentication"));
-(function (module) {
-    'use strict';
-
-    module.service("AuthenticationService", AuthenticationService);
-
-    AuthenticationService.$inject = [
-        "$http",
-        "$q",
-        "store",
-        'AUTH_DEFAULTS',
-        "jwtHelper",
-        "APP_DEFAULTS"
-    ];
-
-    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
-        var self = this;
-        var resource = "/authenticate";
-
-        self.getCurrentUser = function () {
-            var payload = jwtHelper.decodeToken(self.getToken());
-            
-            var user = {
-                name: payload.name,
-                role: payload.role.role_name,
-                permissions: payload.views,
-                secretary_id: payload.secretary_id
-            };
-            return user;
-        };
-
-        self.login = function (credentials) {
-            var deferred = $q.defer();
-
-            $http({
-                method: "POST",
-                data: credentials,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + "/login",
-            }).then(function (response) {
-                self.setToken(response.data.token);
-                deferred.resolve(self.getCurrentUser());
-            }).catch(function (error) {
-                deferred.reject(error);
-            });
-
-            return deferred.promise;
-        };
-
-        self.setToken = function (token) {
-            store.set("token", token);
-        };
-
-        self.getToken = function () {
-            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.isTokenExpired = function () {
-            return jwtHelper.isTokenExpired(self.getToken());
-        };
-
-        self.destroyToken = function () {
-            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
-        };
-
-        self.recoverPassword = function (email) {
-            return $http({
-                method: "GET",
-                params: { email: email },
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
-            });
-        };
-
-        self.getRestoreToken = function (token) {
-            return $http({
-                method: "GET",
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
-            });
-        };
-
-        self.updatePassword = function (params, token) {
-            return $http({
-                method: "PUT",
-                data: params,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
-            });
-        };
-
-        /**
-         * Checks if the current user has permissions to
-         * enter to the given view
-         * @param view : view name to check if the user has the permission
-         * @returns {boolean}
-         */
-        self.hasPermission = function (view) {
-            var user = self.getCurrentUser();
-            if ( user.permissions[view] ) {
-                return true;
-            }
-            return false;
-        };
-
-        self.logout = function () {
-            return $http({
-                method: "GET",
-                url: APP_DEFAULTS.ENDPOINT + "/logout"
-            })
-        };
-
-        return self;
     }
 })(angular.module("app.authentication"));
 (function (module) {
@@ -1383,275 +1380,6 @@
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("ActivitiesService", ActivitiesService);
-
-    ActivitiesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function ActivitiesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.uploadActivity = function(data, file){
-            return Upload.upload({
-                data: {file: file, data: data},
-                url: APP_DEFAULTS.ENDPOINT + "/activities/upload"
-            });
-        }
-
-        self.getActivities = function(params){
-            return $http({
-                method: "POST",
-                data: params,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/lite"
-            })
-        }
-
-        self.getActivity = function(params, id){
-            return $http({
-                method: "GET",
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/activities/" + id
-            })
-        }
-
-    }
-})(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("NavigationCtrl", NavigationCtrl);
-
-    NavigationCtrl.$inject = [
-        "$scope",
-        "$state",
-        "AuthenticationService"
-    ];
-
-    function NavigationCtrl($scope, $state, AuthenticationService) {
-
-        var self = this;
-
-        $scope.active = "";
-
-        self.init = function() {
-            $scope.active = $state.current.data.state;
-            $scope.currentUser = AuthenticationService.getCurrentUser();
-        }
-
-        self.logOut = function(){
-            AuthenticationService.logout().then(
-                function(response){
-                    AuthenticationService.destroyToken();
-                    $state.go("login");
-                }
-            );
-        }
-
-        self.init();
-    }
-})(angular.module("app"));
-
-(function (module) {
-    'use strict';
-
-    module.controller("ContractsCtrl", ContractsCtrl);
-
-    ContractsCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal", 
-        "$filter", 
-        "inform",
-        "IdentificationTypes",
-        "ContractsService",
-        "Contractors"
-    ];
-
-    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, IdentificationTypes, ContractsService, Contractors) {
-
-        var self = this;
-
-        $scope.configDT = {
-            limit: 15,
-            page: 1
-        }
-
-        $scope.selectedContractor = {};
-
-        self.getContractors = function(){
-            var params = {
-                relationships: 'contracts,identification_type',
-                page: $scope.configDT.page,
-                items: $scope.configDT.limit,
-                count: true
-            };
-
-            ContractsService.getContractors(params).then(
-                function(response){
-                    $scope.contractors = response.data;
-                }, function (err){
-                    inform.add("Ocurrió un error al consultar los contratistas", {type: "warning"});
-                }
-            );
-        }
-
-        self.addContract = function(){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nuevo Contrato',
-                ariaDescribedBy: 'crear-contrato',
-                templateUrl: 'templates/addContract.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {}
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ContractsService.addContract(data, $scope.selectedContractor.id ).then(
-                    function (response) {
-                        inform.add("Se ha guardado correctamente el contrato", { type: "info" });
-                        $scope.selectedContractor.contracts.push(data);
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el contrato", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        self.add = function(){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Nuevo Contratista',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/addContractor.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        identificationTypes: $scope.identificationTypes
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ContractsService.addContractor(data).then(
-                    function (response) {
-                        inform.add("Se ha guardado correctamente el contratista", { type: "info" });
-                        self.getContractors();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        self.edit = function(contractor){
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Crear Nuevo Proyecto',
-                ariaDescribedBy: 'crear-proyecto',
-                templateUrl: 'templates/updateContrator.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        identificationTypes: $scope.identificationTypes,
-                        contractor: contractor
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                ContractsService.updateContractor(data, data.contractor.id).then(
-                    function (response) {
-                        inform.add("Se ha actualizado correctamente el contratista", { type: "info" });
-                        self.getContractors();
-                    }, function (err) {
-                        inform.add("Ocurrió un error al actualizar el contratista", { type: "warning" });
-                    }
-                );
-            });
-        }
-
-        self.selectContractor = function(contractor){
-            $scope.selectedContractor = contractor;
-        }
-
-        self.init = function () {
-            $scope.identificationTypes = IdentificationTypes.data;
-            $scope.contractors = Contractors.data;
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
-
-(function (module) {
-    module.service("ContractsService", ContractsService);
-
-    ContractsService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS"
-    ];
-
-    function ContractsService($http, $q, APP_DEFAULTS) {
-        var self = this;
-
-        self.addContractor = function(data){
-            return $http({
-                method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.getContractors = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors"
-            })
-        }
-
-        self.updateContractor = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
-            })
-        }
-
-        self.addContract = function(data, id){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
-            })
-        }
-
-        self.getIdentificationTypes = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
-            })
-        }
-
-    }
-})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -1926,6 +1654,478 @@
 (function (module) {
     'use strict';
 
+    module.controller("ContractsCtrl", ContractsCtrl);
+
+    ContractsCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal", 
+        "$filter", 
+        "inform",
+        "IdentificationTypes",
+        "ContractsService",
+        "Contractors"
+    ];
+
+    function ContractsCtrl($scope, $window, APP_DEFAULTS, $uibModal, $filter, inform, IdentificationTypes, ContractsService, Contractors) {
+
+        var self = this;
+
+        $scope.configDT = {
+            limit: 15,
+            page: 1
+        }
+
+        $scope.selectedContractor = {};
+
+        self.getContractors = function(){
+            var params = {
+                relationships: 'contracts,identification_type',
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true
+            };
+
+            ContractsService.getContractors(params).then(
+                function(response){
+                    $scope.contractors = response.data;
+                }, function (err){
+                    inform.add("Ocurrió un error al consultar los contratistas", {type: "warning"});
+                }
+            );
+        }
+
+        self.addContract = function(){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nuevo Contrato',
+                ariaDescribedBy: 'crear-contrato',
+                templateUrl: 'templates/addContract.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {}
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.addContract(data, $scope.selectedContractor.id ).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el contrato", { type: "info" });
+                        $scope.selectedContractor.contracts.push(data);
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el contrato", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.add = function(){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Nuevo Contratista',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/addContractor.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        identificationTypes: $scope.identificationTypes
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.addContractor(data).then(
+                    function (response) {
+                        inform.add("Se ha guardado correctamente el contratista", { type: "info" });
+                        self.getContractors();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al guardar el nuevo proyecto", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.edit = function(contractor){
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Crear Nuevo Proyecto',
+                ariaDescribedBy: 'crear-proyecto',
+                templateUrl: 'templates/updateContrator.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        identificationTypes: $scope.identificationTypes,
+                        contractor: contractor
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                ContractsService.updateContractor(data, data.contractor.id).then(
+                    function (response) {
+                        inform.add("Se ha actualizado correctamente el contratista", { type: "info" });
+                        self.getContractors();
+                    }, function (err) {
+                        inform.add("Ocurrió un error al actualizar el contratista", { type: "warning" });
+                    }
+                );
+            });
+        }
+
+        self.selectContractor = function(contractor){
+            $scope.selectedContractor = contractor;
+        }
+
+        self.init = function () {
+            $scope.identificationTypes = IdentificationTypes.data;
+            $scope.contractors = Contractors.data;
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("ContractsService", ContractsService);
+
+    ContractsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS"
+    ];
+
+    function ContractsService($http, $q, APP_DEFAULTS) {
+        var self = this;
+
+        self.addContractor = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.getContractors = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors"
+            })
+        }
+
+        self.updateContractor = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id
+            })
+        }
+
+        self.addContract = function(data, id){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/contractors/" + id + "/contracts"
+            })
+        }
+
+        self.getIdentificationTypes = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/identification-types"
+            })
+        }
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
+    module.controller("TerritorialListCtrl", TerritorialListCtrl);
+
+    TerritorialListCtrl.$inject = [
+        "$scope",
+        "inform",
+        "TerritorialService",
+        "Municipalities",
+        "SisbenZones",
+        "AdministrativeUnits"
+    ];
+
+    function TerritorialListCtrl($scope, inform, TerritorialService, Municipalities, SisbenZones, AdministrativeUnits) {
+
+        var self = this;
+
+        $scope.searchCode = "";
+        $scope.answer = "";
+        $scope.municipality = {};
+        $scope.sisben_zone = -1;
+        $scope.area = -1;
+        $scope.areas = [];
+
+        /* Table Config */
+        $scope.configDT = {
+            limit: 15,
+            page: 1
+        }
+
+        self.getTerritories = function () {
+            var params = {
+                page: $scope.configDT.page,
+                items: $scope.configDT.limit,
+                count: true,
+                relationships: 'administrative_unit_type,area.municipality,area.area_type.sisben_zone',
+            }
+
+            if( $scope.municipality.id ){
+                params.municipality_id = $scope.municipality.id;
+            }
+
+            if( $scope.sisben_zone != -1 ){
+                params.sisben_zone_id = $scope.sisben_zone;
+            }
+
+            console.log($scope.area);
+            if( $scope.area != -1 ){
+                params.area_id = $scope.area;
+            }
+
+            TerritorialService.getAdministrativeUnits(params).then(
+                function (response) {
+                    $scope.administrativeUnits = response.data
+                }, function (err) {
+                    inform.add("Ocurrio un error al cargar las unidades administrativas", { type: 'warning' })
+                }
+            )
+        }
+
+        self.searchTerritories = function(){
+            $scope.configDT.page = 1;
+            self.getTerritories();
+        }
+
+        self.searchCode = function () {
+            var data = {
+                code: $scope.searchCode
+            }
+
+            TerritorialService.queryCode(data).then(
+                function (response) {
+                    $scope.answer = "El código corresponde a la " + response.data[0].tipoU + " " + response.data[0].name + 
+                    " del Municipio " + response.data[0].municipio ;
+                }, function (err) {
+                    var msg = "Ocurrió un error al consultar el territorio: ";
+                    var key, value, i;
+                    for (var j in err.data) {
+                        key = j;
+                        value = err.data[j];
+                        msg += key + ": " + err.data[j];
+                        msg += "\n";
+                    }
+                    inform.add(msg, { type: "warning" });
+                }
+            );
+        }
+
+        self.findAreas = function(){
+            $scope.areas = [];
+            $scope.area = -1;
+
+            var params = {
+                relationships: "area_type"
+            };
+
+            if( $scope.municipality.id ){
+                params.municipality_id = $scope.municipality.id;
+            }
+
+            if( $scope.sisben_zone != -1 ){
+                params.sisben_zone_id = $scope.sisben_zone;
+            }
+
+            TerritorialService.getAreas(params).then(
+                function(response){
+                    $scope.areas = response.data;
+                }
+            );
+
+        }
+
+        self.init = function () {
+            $scope.municipalities = Municipalities.data;
+            $scope.sisbenZones = SisbenZones.data;
+            $scope.administrativeUnits = AdministrativeUnits.data;
+        }
+
+        self.init();
+    }
+})(angular.module("app"));
+
+(function (module) {
+    'use strict';
+
+    module.controller("TerritorialCtrl", TerritorialCtrl);
+
+    TerritorialCtrl.$inject = [
+        "$scope",
+        "$window",
+        "APP_DEFAULTS",
+        "$uibModal",
+        "inform",
+        "TerritorialService"
+    ];
+
+    function TerritorialCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, TerritorialService) {
+
+        var self = this;
+
+        self.uploadData = function (id, string) {
+            var modalInstance = $uibModal.open({
+                animation: true,
+                ariaLabelledBy: 'Cargar Ordenamiento',
+                ariaDescribedBy: 'cargar-ordenamiento',
+                templateUrl: 'templates/upload-territories.modal.html',
+                controller: 'ModalController',
+                controllerAs: 'modalCtrl',
+                resolve: {
+                    data: {
+                        type: string
+                    }
+                }
+            });
+
+            modalInstance.result.then(function (data) {
+                if( id == 1){
+                    TerritorialService.uploadMunicipalities(data).then(
+                        function(response){
+                            inform.add("Se han cargado los municipios.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar los municipios.", {type: "warning"});
+                        }
+                    );
+                }else if(id == 2){
+                    TerritorialService.uploadAreas(data).then(
+                        function(response){
+                            inform.add("Se han cargado las areas.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
+                        }
+                    );
+                }else if(id == 3){
+                    TerritorialService.uploadAdministrativeUnits(data).then(
+                        function(response){
+                            inform.add("Se han cargado las unidades administrativas.", { type: "success" });
+                            //self.refresh();
+                        }, function(err){
+                            inform.add("Ocurrió un error al guardar las unidades administrativas.", {type: "warning"});
+                        }
+                    );
+                }
+            });
+        }
+
+
+        self.init = function () {
+            
+        }
+
+        self.init();
+
+
+    }
+})(angular.module("app"));
+
+
+(function (module) {
+    module.service("TerritorialService", TerritorialService);
+
+    TerritorialService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function TerritorialService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.uploadMunicipalities = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/municipalities/upload"
+            });
+        }
+
+        self.uploadAreas = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/areas/upload"
+            });
+        }
+
+        self.uploadAdministrativeUnits = function(file){
+            return Upload.upload({
+                data: file,
+                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/upload"
+            });
+        }
+
+        self.queryCode = function(data){
+            return $http({
+                method: "GET",
+                params: data,
+                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/query"
+            })
+        }
+
+        self.getMunicipalities = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/municipalities"
+            });
+        }
+
+        self.getSisbenZones = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/sisben-zones"
+            });
+        } 
+
+        self.getAreas = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/areas"
+            });
+        }
+
+        self.getAdministrativeUnits = function(params){
+            return $http({
+                method: "GET",
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/administrative-units"
+            });
+        }
+
+
+    }
+})(angular.module("app"));
+(function (module) {
+    'use strict';
+
     module.controller("ModalUpdateProjectCtrl", ModalUpdateProjectCtrl);
 
     ModalUpdateProjectCtrl.$inject = [
@@ -1991,8 +2191,7 @@
             limit: 10,
             page: 1
         }
-        /* */
-
+        
         /* Filtro de Proyectos */
         self.search = function(){
             $scope.configDT.page = 1;
@@ -2229,61 +2428,120 @@
     }
 })(angular.module("app"));
 
-
 (function (module) {
-    module.service("ProjectsService", ProjectsService);
+    'use strict';
 
-    ProjectsService.$inject = [
+    module.service("AuthenticationService", AuthenticationService);
+
+    AuthenticationService.$inject = [
         "$http",
         "$q",
-        "APP_DEFAULTS",
-        "Upload"
+        "store",
+        'AUTH_DEFAULTS',
+        "jwtHelper",
+        "APP_DEFAULTS"
     ];
 
-    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
+    function AuthenticationService($http, $q, store, AUTH_DEFAULTS, jwtHelper, APP_DEFAULTS) {
         var self = this;
+        var resource = "/authenticate";
 
-        self.addProject = function(data){
-            return $http({
+        self.getCurrentUser = function () {
+            var payload = jwtHelper.decodeToken(self.getToken());
+            
+            var user = {
+                name: payload.name,
+                role: payload.role.role_name,
+                permissions: payload.views,
+                secretary_id: payload.secretary_id
+            };
+            return user;
+        };
+
+        self.login = function (credentials) {
+            var deferred = $q.defer();
+
+            $http({
                 method: "POST",
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
-
-        self.updateProject = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
-            })
-        }
-
-        self.uploadProjects = function(file){
-            return Upload.upload({
-                data: {file: file},
-                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
+                data: credentials,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + "/login",
+            }).then(function (response) {
+                self.setToken(response.data.token);
+                deferred.resolve(self.getCurrentUser());
+            }).catch(function (error) {
+                deferred.reject(error);
             });
-        }
 
-        self.getProjects = function(params){
+            return deferred.promise;
+        };
+
+        self.setToken = function (token) {
+            store.set("token", token);
+        };
+
+        self.getToken = function () {
+            return store.get(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.isTokenExpired = function () {
+            return jwtHelper.isTokenExpired(self.getToken());
+        };
+
+        self.destroyToken = function () {
+            return store.remove(AUTH_DEFAULTS.TOKEN_NAME);
+        };
+
+        self.recoverPassword = function (email) {
             return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/projects"
-            })
-        }
+                method: "GET",
+                params: { email: email },
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/recover-password",
+            });
+        };
 
-        self.getDimentions = function(params){
+        self.getRestoreToken = function (token) {
             return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
-            })
-        }
+                method: "GET",
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/restore-token/" + token,
+            });
+        };
 
+        self.updatePassword = function (params, token) {
+            return $http({
+                method: "PUT",
+                data: params,
+                skipAuthorization: true,
+                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
+            });
+        };
+
+        /**
+         * Checks if the current user has permissions to
+         * enter to the given view
+         * @param view : view name to check if the user has the permission
+         * @returns {boolean}
+         */
+        self.hasPermission = function (view) {
+            var user = self.getCurrentUser();
+            if ( user.permissions[view] ) {
+                return true;
+            }
+            return false;
+        };
+
+        self.logout = function () {
+            return $http({
+                method: "GET",
+                url: APP_DEFAULTS.ENDPOINT + "/logout"
+            })
+        };
+
+        return self;
     }
-})(angular.module("app"));
+})(angular.module("app.authentication"));
 (function (module) {
     'use strict';
 
@@ -2401,52 +2659,6 @@
     }
 })(angular.module("app"));
 
-
-(function (module) {
-    module.service("SecretariesService", SecretariesService);
-
-    SecretariesService.$inject = [
-        "$http",
-        "$q",
-        "APP_DEFAULTS",
-        "Upload"
-    ];
-
-    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
-        var self = this;
-
-        self.getSecretaries = function(params){
-            return $http({
-                method: 'GET',
-                params: params,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.saveSecretary = function(data){
-            return $http({
-                method: 'POST',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
-            });
-        }
-
-        self.updateSecretary = function(data, id){
-            return $http({
-                method: 'PUT',
-                data: data,
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
-            })
-        }
-
-        self.deleteSecretary = function(id){
-            return $http({
-                method: 'DELETE',
-                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
-            })
-        }
-    }
-})(angular.module("app"));
 (function (module) {
     'use strict';
 
@@ -3302,117 +3514,104 @@
 
     }
 })(angular.module("app"));
-(function (module) {
-    'use strict';
-
-    module.controller("TerritorialCtrl", TerritorialCtrl);
-
-    TerritorialCtrl.$inject = [
-        "$scope",
-        "$window",
-        "APP_DEFAULTS",
-        "$uibModal",
-        "inform",
-        "TerritorialService"
-    ];
-
-    function TerritorialCtrl($scope, $window, APP_DEFAULTS, $uibModal, inform, TerritorialService) {
-
-        var self = this;
-
-        self.uploadData = function (id, string) {
-            var modalInstance = $uibModal.open({
-                animation: true,
-                ariaLabelledBy: 'Cargar Ordenamiento',
-                ariaDescribedBy: 'cargar-ordenamiento',
-                templateUrl: 'templates/upload-territories.modal.html',
-                controller: 'ModalController',
-                controllerAs: 'modalCtrl',
-                resolve: {
-                    data: {
-                        type: string
-                    }
-                }
-            });
-
-            modalInstance.result.then(function (data) {
-                if( id == 1){
-                    TerritorialService.uploadMunicipalities(data).then(
-                        function(response){
-                            inform.add("Se han cargado los municipios.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar los municipios.", {type: "warning"});
-                        }
-                    );
-                }else if(id == 2){
-                    TerritorialService.uploadAreas(data).then(
-                        function(response){
-                            inform.add("Se han cargado las areas.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar las areas.", {type: "warning"});
-                        }
-                    );
-                }else if(id == 3){
-                    TerritorialService.uploadAdministrativeUnits(data).then(
-                        function(response){
-                            inform.add("Se han cargado las unidades administrativas.", { type: "success" });
-                            //self.refresh();
-                        }, function(err){
-                            inform.add("Ocurrió un error al guardar las unidades administrativas.", {type: "warning"});
-                        }
-                    );
-                }
-            });
-        }
-
-
-        self.init = function () {
-            
-        }
-
-        self.init();
-
-
-    }
-})(angular.module("app"));
-
 
 (function (module) {
-    module.service("TerritorialService", TerritorialService);
+    module.service("SecretariesService", SecretariesService);
 
-    TerritorialService.$inject = [
+    SecretariesService.$inject = [
         "$http",
         "$q",
         "APP_DEFAULTS",
         "Upload"
     ];
 
-    function TerritorialService($http, $q, APP_DEFAULTS, Upload) {
+    function SecretariesService($http, $q, APP_DEFAULTS, Upload) {
         var self = this;
 
-        self.uploadMunicipalities = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/municipalities/upload"
+        self.getSecretaries = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
             });
         }
 
-        self.uploadAreas = function(file){
-            return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/areas/upload"
+        self.saveSecretary = function(data){
+            return $http({
+                method: 'POST',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries"
             });
         }
 
-        self.uploadAdministrativeUnits = function(file){
+        self.updateSecretary = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+
+        self.deleteSecretary = function(id){
+            return $http({
+                method: 'DELETE',
+                url: APP_DEFAULTS.ENDPOINT + "/secretaries/" + id
+            })
+        }
+    }
+})(angular.module("app"));
+
+(function (module) {
+    module.service("ProjectsService", ProjectsService);
+
+    ProjectsService.$inject = [
+        "$http",
+        "$q",
+        "APP_DEFAULTS",
+        "Upload"
+    ];
+
+    function ProjectsService($http, $q, APP_DEFAULTS, Upload) {
+        var self = this;
+
+        self.addProject = function(data){
+            return $http({
+                method: "POST",
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.updateProject = function(data, id){
+            return $http({
+                method: 'PUT',
+                data: data,
+                url: APP_DEFAULTS.ENDPOINT + "/projects/" + id
+            })
+        }
+
+        self.uploadProjects = function(file){
             return Upload.upload({
-                data: file,
-                url: APP_DEFAULTS.ENDPOINT + "/administrative-units/upload"
+                data: {file: file},
+                url: APP_DEFAULTS.ENDPOINT + "/projects/upload"
             });
         }
 
+        self.getProjects = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/projects"
+            })
+        }
+
+        self.getDimentions = function(params){
+            return $http({
+                method: 'GET',
+                params: params,
+                url: APP_DEFAULTS.ENDPOINT + "/dimentions"
+            })
+        }
 
     }
 })(angular.module("app"));
