@@ -1,0 +1,45 @@
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="page-header">
+                Programas
+            </h1>
+        </div>
+    </div>
+    <!-- /.row -->
+
+    <div class="row container-bordered-white">
+        <div class="col-lg-12">
+            <v-accordion class="vAccordion--default">
+
+                <v-pane ng-repeat="program in programs" expanded="program.isExpanded">
+                    <v-pane-header>
+                        {{ program.axe.dimention.code }}.{{ program.axe.code }}.{{ program.code }} {{ program.name }}
+                    </v-pane-header>
+
+                    <v-pane-content>
+                        <div class="row">
+                            <div class="col-lg-4" ng-repeat="sec in program_secretaries[$index]">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" checklist-model="program.secretaries" checklist-value="sec" checklist-comparator=".id">
+                                        {{sec.name}}
+                                </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row centered m-10">
+                            <p>
+                                <button type="button" class="btn btn-success button-md" ng-click="programsCtrl.updateProgram($index)">Guardar</button>
+                            </p>
+                        </div>
+                    </v-pane-content>
+                </v-pane>
+            </v-accordion>
+        </div>
+
+    </div>
+    <!-- /.row -->
+</div>

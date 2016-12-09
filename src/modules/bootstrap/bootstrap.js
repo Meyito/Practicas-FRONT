@@ -20,7 +20,8 @@
         'angular-jwt',
         'angular-storage',
         'app.authentication',
-        'blockUI'
+        'blockUI',
+        'checklist-model'
     ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider, blockUIConfig) {
 
         blockUIConfig.autoBlock = false;
@@ -281,11 +282,10 @@
             },
             resolve: {
                 DevPlan: ['ProjectsService', 'PlanService', function (ProjectsService, PlanService) {
-                    return PlanService.getLastDevelopmentPlan({}).then();
+                    return PlanService.getLastDevelopmentPlan({});
                 }]
             }
         });
-
 
         /* Actividades SOLO de la Secretaría */
         stateHelperProvider.state({
@@ -483,7 +483,7 @@
             },
             resolve: {
                 DevPlan: ['ProjectsService', 'PlanService', function (ProjectsService, PlanService) {
-                    return PlanService.getLastDevelopmentPlan({}).then();
+                    return PlanService.getLastDevelopmentPlan({});
                 }],
 
                 DevelopmentPlans: ['StatisticService', function (StatisticService) {
@@ -500,12 +500,35 @@
             }
         });
 
-
-
-
-
         /* Asociar Programa a Secretaría */
         /* Acordiones y md-checklist */
+        stateHelperProvider.state({
+            name: 'programs',
+            url: '/programas',
+            data: {
+                state: "programs"
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@programs': {
+                    templateUrl: "templates/programs.list.html",
+                    controller: "ProgramsCtrl as programsCtrl"
+                }
+            },
+            resolve: {
+                DevPlan: ['ProjectsService', 'PlanService', function (ProjectsService, PlanService) {
+                    return PlanService.getLastDevelopmentPlan({});
+                }],
+
+                Secretaries: ['SecretariesService', function (SecretariesService) {
+                    var params = {}
+                    return SecretariesService.getSecretaries(params);
+                }],
+            }
+        });
 
 
     }).run(function ($rootScope, blockUI) {
