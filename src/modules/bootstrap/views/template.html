@@ -8,12 +8,15 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="index.html">Secretaría de Planeación y Desarrollo Territorial</a>
+            <a class="navbar-brand" ui-sref="dashboard">Plataforma PILI</a>
         </div>
         <!-- Top Menu Items -->
         <ul class="nav navbar-right top-nav hidden-bar">
             <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {{currentUser.name}}</a>
+                <a ui-sref="dashboard" class="dropdown-toggle"><i class="fa fa-user"></i> {{currentUser.name}}</a>
+            </li>
+            <li class="dropdown" uib-tooltip="Cambiar Contraseña" tooltip-placement="bottom">
+                <a class="dropdown-toggle" data-toggle="dropdown" ng-click="navCtrl.updatePassword()"><i class="fa fa-cog"></i></a>
             </li>
             <li class="dropdown" uib-tooltip="Cerrar Sesión" tooltip-placement="bottom">
                 <a class="dropdown-toggle" data-toggle="dropdown" ng-click="navCtrl.logOut()"><i class="fa fa-sign-out"></i></a>

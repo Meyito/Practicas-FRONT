@@ -62,9 +62,9 @@
                             <th md-column>Municipio</th>
                             <th md-column>Cod.</th>
                             <th md-column>Zona Sisben</th>
-                            <th md-column>Unidad Admin.</th>
                             <th md-column>Código Sisben</th>
-                            <th md-column>Unidad Administrativa</th>
+                            <th md-column>Unidad Admin.</th>
+                            <th md-column>Nombre</th>
                         </tr>
                     </thead>
                     <tbody md-body>
@@ -75,8 +75,8 @@
                             <td md-cell>{{au.area.municipality.name}}</td>
                             <td md-cell>{{au.area.area_type.sisben_zone.code}}</td>
                             <td md-cell>{{au.area.area_type.sisben_zone.name}}</td>
-                            <td md-cell>{{au.administrative_unit_type.name}}</td>
                             <td md-cell>{{au.sisben_code}}</td>
+                            <td md-cell>{{au.administrative_unit_type.name}}</td>
                             <td md-cell>{{au.name}}</td>
                         </tr>
                     </tbody>

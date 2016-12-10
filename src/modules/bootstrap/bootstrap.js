@@ -58,6 +58,25 @@
             }
         });
 
+        /*Cambio Contraseña*/
+        stateHelperProvider.state({
+            name: 'password',
+            url: '/password',
+            data: {
+                state: ""
+            },
+            views: {
+                '': {
+                    templateUrl: "templates/template.html",
+                    controller: "NavigationCtrl as navCtrl"
+                },
+                'content@password': {
+                    templateUrl: "templates/updatePassword.html",
+                    controller: "AuthController as auth"
+                }
+            }
+        });
+
         /* Contratistas */
         stateHelperProvider.state({
             name: 'contracts',

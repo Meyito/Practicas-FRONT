@@ -20,6 +20,10 @@
             $scope.currentUser = AuthenticationService.getCurrentUser();
         }
 
+        self.updatePassword = function(){
+            $state.go("password");
+        }
+
         self.logOut = function(){
             AuthenticationService.logout().then(
                 function(response){

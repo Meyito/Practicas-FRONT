@@ -20,11 +20,13 @@
             var payload = jwtHelper.decodeToken(self.getToken());
             
             var user = {
+                id: payload.id,
                 name: payload.name,
                 role: payload.role.role_name,
                 permissions: payload.views,
                 secretary_id: payload.secretary_id
             };
+
             return user;
         };
 
@@ -79,12 +81,11 @@
             });
         };
 
-        self.updatePassword = function (params, token) {
+        self.updatePassword = function (params, id) {
             return $http({
                 method: "PUT",
                 data: params,
-                skipAuthorization: true,
-                url: APP_DEFAULTS.ENDPOINT + resource + "/" + token + "/update-password"
+                url: APP_DEFAULTS.ENDPOINT + "/authentication/" + id + "/update"
             });
         };
 

@@ -17,7 +17,6 @@
         auth.credentials = {};
 
         auth.login = function (formLogin) {
-
             if (formLogin.$invalid) {
                 return;
             }
@@ -63,5 +62,33 @@
                 blockUI.stop();
             });
         };
+
+        auth.restorePassword = function (restoreLogin) {
+            if (restoreLogin.$invalid) {
+                return;
+            }
+            blockUI.start();
+            auth.error = undefined;
+
+            var data = {
+                password: auth.credentials.new_password,
+                actual_password: auth.credentials.password
+            }
+
+            var id = AuthenticationService.getCurrentUser().id;
+
+            AuthenticationService.updatePassword(data, id).then(function () {
+                inform.add("Se ha actualizado la contraseña exitosamente", {type: "success"});
+                AuthenticationService.destroyToken();
+                $state.go("login");
+            }).catch(function (error) {
+                inform.add("Ocurrió un error al actualizar la contraseña", {type: "warning"});
+                if (error.status == 400) {
+                    auth.error = error.data.error;
+                }
+            }).finally(function () {
+                blockUI.stop();
+            });
+        }
     }
 })(angular.module("app.authentication"));

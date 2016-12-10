@@ -446,6 +446,58 @@ body{
     width: 20%;
 }
 
+.restore-form {
+    max-width: 320px;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 35px;
+    border-radius: 4px;
+    color: #333;
+    font-weight: bold;
+    font-size: 1.125em;
+    position: relative;
+}
+
+.restore-form input {
+    padding: 10px 15px;
+    border: 1px solid transparent;
+    background-color: #f0f0f0;
+    outline: 0;
+    transition: background .15s ease-in, border .25s ease-in;
+    border-radius: 5px;
+    font-size: 1em;
+    margin: 5% 0;
+    box-sizing: border-box;
+}
+
+.restore-form a{
+    color: #fff;
+    text-decoration: none;
+}
+
+.restore-form button {
+    margin: 20px 0 0;
+    padding: 10px 5px;
+    outline: 0;
+    border: none;
+    background-color: #ad1c1c;
+    transition: background .2s ease-in;
+    font-size: 1.1em;
+    color: #fff;
+    border-radius: 5px;
+}
+
+.restore-form input[type=text], .restore-form input[type=password], .restore-form label, .restore-form button {
+    display: block;
+    width: 100%;
+}
+
+.error{
+    color: #a94442;
+}
+
 
 
 /********* 404 ************/
