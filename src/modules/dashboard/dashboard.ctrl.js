@@ -18,11 +18,5 @@
             //Descargar el manual de usuario de acuerdo al rol del usuario.
         }
 
-        self.init = function(){
-            console.log($scope.data);
-        }
-
-        self.init();
-
     }
 })(angular.module("app"));

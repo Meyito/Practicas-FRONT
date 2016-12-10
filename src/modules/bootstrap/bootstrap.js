@@ -590,7 +590,6 @@
     }).run(function ($rootScope, blockUI) {
         $rootScope.$on('$stateChangeStart',
             function (event, toState, toParams, fromState, fromParams, options) {
-                console.log("buuuu");
                 if (fromState.name !== toState.name) {
                     blockUI.start();
                 }
@@ -603,14 +602,12 @@
 
         $rootScope.$on('$stateChangeError',
             function (event, toState, toParams, fromState, fromParams, error) {
-                console.log("hellowsito");
-                //$state.go("login");
+                $state.go("login");
                 blockUI.stop();
             });
 
         $rootScope.$on('$stateNotFound',
             function (event, unfoundState, fromState, fromParams, $state) {
-                console.log("hello");
                 $state.go("forbidden");
                 blockUI.stop();
             });

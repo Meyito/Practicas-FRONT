@@ -73,7 +73,9 @@
                         });
                 }
                 else if (AuthenticationService.isTokenExpired()) {
-                    AuthenticationService.refreshToken();
+                    inform.add("Debe volver a Iniciar Sesión");
+                    AuthenticationService.destroyToken();
+                    $state.go("login");
                 } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
                     evt.preventDefault();
                     $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);
