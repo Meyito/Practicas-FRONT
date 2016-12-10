@@ -52,8 +52,8 @@
                     controller: "NavigationCtrl as navCtrl"
                 },
                 'content@dashboard': {
-                    templateUrl: "templates/empty.html",
-                    //controller: "ActivitiesCtrl as actCtrl"
+                    templateUrl: "templates/dashboard.html",
+                    controller: "DashboardCtrl as dCtrl"
                 }
             }
         });
