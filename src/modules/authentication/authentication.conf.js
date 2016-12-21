@@ -55,10 +55,12 @@
         '$rootScope',
         '$state',
         'AuthenticationService',
-        'AUTH_DEFAULTS'
+        'AUTH_DEFAULTS',
+        'inform',
+        '$state'
     ];
 
-    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS) {
+    function run($rootScope, $state, AuthenticationService, AUTH_DEFAULTS,inform, $state) {
 
         $rootScope.$on('$stateChangeStart', function (evt, to, toParams, from) {
             if ((to.data && !to.data.loginNotRequired) || !to.data) {
@@ -74,8 +76,9 @@
                 }
                 else if (AuthenticationService.isTokenExpired()) {
                     inform.add("Debe volver a Iniciar Sesión");
+                    evt.preventDefault();
                     AuthenticationService.destroyToken();
-                    $state.go("login");
+                    $state.go(AUTH_DEFAULTS.LOGIN_STATE);
                 } else if ((to.data && !to.data.authNotRequired) && !AuthenticationService.hasPermission(to.name)) {
                     evt.preventDefault();
                     $state.go(AUTH_DEFAULTS.FORBIDDEN_STATE);

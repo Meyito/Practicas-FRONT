@@ -602,13 +602,13 @@
 
         $rootScope.$on('$stateChangeError',
             function (event, toState, toParams, fromState, fromParams, error) {
-                $state.go("login");
+                event.preventDefault();
                 blockUI.stop();
             });
 
         $rootScope.$on('$stateNotFound',
-            function (event, unfoundState, fromState, fromParams, $state) {
-                $state.go("forbidden");
+            function (event, unfoundState, fromState, fromParams) {
+                event.preventDefault();
                 blockUI.stop();
             });
     });
