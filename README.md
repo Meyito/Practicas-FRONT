@@ -1,3 +1,47 @@
-# Practicas-FRONT
+# API Restful de la Aplicación PILI
 
-Proyecto de prácticas en Ingeniería de Sistemas
+[![Github Issues](https://img.shields.io/github/issues/Meyito/Practicas-FRONT.svg)](http://github.com/Meyito/Practicas-FRONT/issues)
+
+La aplicación fue desarrollada con [AngularJS](https://angularjs.org/).
+
+## Requisitos
+
+- [NodeJS](https://nodejs.org/en/)
+- [Bower](https://bower.io/)
+- [Gulp](http://gulpjs.com/)
+
+
+## Instalación
+
+### Instalar dependencias 
+- Node
+```
+(sudo) npm install
+```
+
+- Bower
+```
+bower install
+```
+
+### Variables de entorno y configuración
+- Cambiar la linea 5 del archivo `src/modules/common/constants.js` por la dirección real en la que se encuentra desplegado el Backend de la aplicación. A esta ruta se dirigirán todas las peticiones realizadas.
+
+
+## Compilar la Aplicación
+- En la raiz del proyecto ejecutar el siguiente comando 
+```
+gulp buildAssets
+```
+
+Esta instrucción compilará todos los archivos y los unificará en la carpeta `dist`.
+
+- Para desarrollo ejecutar únicamente
+```
+gulp
+```
+Esta instrucción compilará todos los archivos, los unificará en la carpeta `dist` y montará un servidor de pruebas en `http://localhost:9000/#/`.
+
+
+## Despliegue de la Aplicación
+Para realizar el despliegue de la aplicación solo es necesario copiar la carpeta `dist`al servidor.
