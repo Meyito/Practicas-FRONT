@@ -45,7 +45,6 @@
                 params.sisben_zone_id = $scope.sisben_zone;
             }
 
-            console.log($scope.area);
             if( $scope.area != -1 ){
                 params.area_id = $scope.area;
             }

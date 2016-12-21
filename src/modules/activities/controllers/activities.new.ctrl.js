@@ -74,7 +74,6 @@
                         inform.add("Se ha cargado la actividad correctamente", { type: "info" });
                     }, function (err) {
                         inform.add("Ocurrió un error al guardar la actividad", { type: "warning" });
-                        //Descargar reporte de errores 
                     }
                 );
             });
@@ -83,7 +82,6 @@
 
         self.init = function () {
             $scope.saved = false;
-            //$scope.saved = true;
         }
 
         self.init();

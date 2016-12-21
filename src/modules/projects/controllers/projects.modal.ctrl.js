@@ -32,7 +32,6 @@
         };
 
         self.init = function(){
-            console.log($scope.data);
         }
 
         self.init();
