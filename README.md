@@ -6,9 +6,9 @@ La aplicación fue desarrollada con [AngularJS](https://angularjs.org/).
 
 ## Requisitos
 
-- [NodeJS](https://nodejs.org/en/)
-- [Bower](https://bower.io/)
-- [Gulp](http://gulpjs.com/)
+- [NodeJS v4.6.0](https://nodejs.org/en/)
+- [Bower v1.7.9](https://bower.io/)
+- [Gulp v3.9.1](http://gulpjs.com/)
 
 
 ## Instalación
