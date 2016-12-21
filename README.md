@@ -44,4 +44,4 @@ Esta instrucción compilará todos los archivos, los unificará en la carpeta `d
 
 
 ## Despliegue de la Aplicación
-Para realizar el despliegue de la aplicación solo es necesario copiar la carpeta `dist`al servidor.
+Para realizar el despliegue de la aplicación solo es necesario copiar la carpeta `dist` al servidor.
