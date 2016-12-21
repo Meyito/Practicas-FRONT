@@ -16,7 +16,7 @@ La aplicación fue desarrollada con [AngularJS](https://angularjs.org/).
 ### Instalar dependencias 
 - Node
 ```
-(sudo) npm install
+npm install
 ```
 
 - Bower
