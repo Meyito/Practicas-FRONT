@@ -22,7 +22,10 @@
         'app.authentication',
         'blockUI',
         'checklist-model'
-    ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider, blockUIConfig) {
+    ]).config(function ($stateProvider, $urlRouterProvider, stateHelperProvider, blockUIConfig, $routeProvider) {
+        
+       $routeProvider
+          .otherwise({redirectTo:'/'});
 
         blockUIConfig.autoBlock = false;
         blockUIConfig.templateUrl = "templates/state-change-blocker.html";
